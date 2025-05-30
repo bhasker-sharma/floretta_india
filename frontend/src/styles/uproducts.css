@@ -1,0 +1,64 @@
+.uproduct-gallery {
+  padding: 60px 0; /* Removed horizontal padding */
+  background-color: #fff;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  width: 100vw; /* Full viewport width */
+  margin-left: calc(-50vw + 50%); /* Stretch to browser edges */
+}
+
+.section-heading {
+  font-size: 32px;
+  color: #da3e4b;
+  margin-bottom: 50px;
+  font-weight: 600;
+}
+
+.uproduct-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 150px; /* Increased from 40px to 50px */
+}
+
+.uproduct-card {
+  width: 260px; /* Increased width */
+  transition: transform 0.3s ease;
+}
+
+.uproduct-card:hover {
+  transform: scale(1.05);
+}
+
+.uproduct-image-wrapper {
+  position: relative;
+  width: 350px;
+  height: 450px; /* Increased height */
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.main-img,
+.hover-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+  border-radius: 10px;
+}
+
+.hover-img {
+  opacity: 0;
+}
+
+.uproduct-image-wrapper:hover .hover-img {
+  opacity: 1;
+}
+
+.uproduct-image-wrapper:hover .main-img {
+  opacity: 0;
+}

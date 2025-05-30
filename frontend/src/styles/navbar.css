@@ -1,0 +1,191 @@
+/* Main navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  color: #8C3F45;
+  font-family: 'Segoe UI', sans-serif;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Logo section */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 50px;
+  filter: brightness(95%);
+}
+
+.logo-text {
+  font-weight: bold;
+  font-size: 18px;
+  color: #da3e4b;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.subtext {
+  font-size: 11px;
+  color: #da3e4b;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Default nav - hidden for small screens */
+nav {
+  display: none;
+}
+
+/* Desktop nav */
+@media (min-width: 768px) {
+  nav {
+    display: flex;
+    gap: 28px;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #da3e4b;
+  }
+
+  nav a {
+    text-decoration: none;
+    color: #da3e4b;
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.3s ease;
+  }
+
+  nav a:hover::after,
+  nav a.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #8C3F45;
+  }
+}
+
+/* Icon buttons */
+.icon-buttons {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  position: relative;
+}
+
+.icon-buttons button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.icon-buttons svg {
+  width: 20px;
+  height: 20px;
+  stroke: #da3e4b;
+  stroke-width: 1.8;
+  fill: none;
+}
+
+/* Search box */
+.search-box-wide {
+  display: flex;
+  align-items: center;
+  border: 1px solid #da3e4b;
+  border-radius: 2px;
+  padding: 6px 10px;
+  background-color: #fff;
+  max-width: 280px;
+  margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+.search-input-wide {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #8C3F45;
+  background-color: transparent;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.search-submit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding-left: 10px;
+}
+
+.search-submit svg {
+  width: 18px;
+  height: 18px;
+  stroke: #da3e4b;
+  stroke-width: 1.8;
+  fill: none;
+}
+
+/* Hamburger button */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0;
+}
+
+.hamburger svg {
+  width: 24px;
+  height: 24px;
+  stroke: #da3e4b;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Mobile nav styles */
+@media (max-width: 767px) {
+  .hamburger {
+    display: block;
+  }
+
+  .mobile-nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    gap: 14px;
+    margin-top: 12px;
+  }
+
+  .mobile-nav.open {
+    display: flex;
+  }
+
+  .mobile-nav .nav-item {
+    font-size: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    color: #da3e4b;
+  }
+
+  .mobile-nav .nav-item.active::after {
+    display: none;
+  }
+
+  .icon-buttons {
+    margin-left: auto;
+  }
+}

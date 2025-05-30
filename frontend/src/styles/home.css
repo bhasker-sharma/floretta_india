@@ -1,0 +1,183 @@
+/* ===== Global Setup ===== */
+* { 
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* =====---------------------- Product Display (Coco Section) --------------------===== */
+.pdp-product-display-container {
+  display: flex;
+  padding: 40px 80px;
+  width: 100%;
+}
+
+.pdp-product-card {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.pdp-product-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.pdp-product-main-image {
+  width: 100%;
+  max-width: 450px;
+  height: 450px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+}
+
+.pdp-product-thumbnails {
+  display: flex;
+  gap: 25px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pdp-thumbnail {
+  width: 85px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.pdp-thumbnail.active,
+.pdp-thumbnail:hover {
+  border-color: #c14d4d;
+  opacity: 1;
+}
+
+.pdp-info-section {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 60px 50px;
+  height: 100%;
+}
+
+.pdp-product-brand {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.pdp-product-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #c14d4d;
+  margin-bottom: 16px;
+}
+
+.pdp-product-save {
+  background: #f5e9e9;
+  color: #c14d4d;
+  font-weight: 500;
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.pdp-product-prices {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.pdp-product-price {
+  color: #c14d4d;
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.pdp-product-old-price {
+  color: #999;
+  text-decoration: line-through;
+}
+
+.pdp-product-size label {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.pdp-size-box {
+  display: inline-block;
+  border: 1px solid #c14d4d;
+  padding: 4px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  color: #c14d4d;
+  margin-top: 4px;
+}
+
+.pdp-add-to-cart-btn,
+.pdp-shop-now-btn {
+  background-color: #c14d4d;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  margin-top: 16px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  width: 100%;
+  max-width: 400px;
+  align-self: center;
+}
+
+.pdp-shop-now-btn {
+  background-color: #d56b6b;
+}
+
+.pdp-add-to-cart-btn:hover,
+.pdp-shop-now-btn:hover {
+  background-color: #a13838;
+}
+
+/* -------------------------------------------- */
+.homep-section-title{
+  text-align: center;
+    font-size: 32px;
+  color: #da3e4b;
+  margin-bottom: 50px;
+  font-weight: 600;
+
+}
+
+
+.homep-view-all-button {
+  display: block;
+  margin: 2rem auto; /* centers horizontally and adds vertical space */
+  padding: 0.6rem 1.2rem;
+  background-color: #a13838;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.homep-view-all-button:hover {
+  background-color: #832d2d;
+}

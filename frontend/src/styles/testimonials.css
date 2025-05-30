@@ -1,0 +1,42 @@
+.testimonials-section {
+  text-align: center;
+  padding: 20px;
+}
+
+.testimonial-heading {
+  font-size: 28px;
+  color: #b5465c;
+  margin-bottom: 20px;
+}
+
+.testimonial-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.testimonial-card {
+  width: 30%;
+  min-width: 250px;
+  padding: 10px;
+  text-align: left;
+}
+
+.testimonial-name {
+  font-weight: bold;
+  color: #b5465c;
+}
+
+.testimonial-stars {
+  color: green;
+  font-size: 18px;
+}
+
+.testimonial-product {
+  color: #b5465c;
+  font-weight: 600;
+}
+
+.testimonial-review {
+  color: #b5465c;
+}
