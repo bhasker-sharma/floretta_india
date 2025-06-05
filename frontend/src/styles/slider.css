@@ -1,0 +1,46 @@
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    max-width: 100%;
+    margin: 1rem auto 0;
+  }
+  
+  .carousel-track {
+    display: flex;
+    transition: transform 0.7s;
+  }
+  
+  .carousel-slide {
+    min-width: 100vw;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .carousel-dots {
+    position: absolute;
+    bottom: 1rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .dot {
+    width: 12px;
+    height: 12px;
+    background-color: black;
+    border-radius: 9999px;
+  }
+  
+  .opacity-50 {
+    opacity: 0.5;
+  }
+  
