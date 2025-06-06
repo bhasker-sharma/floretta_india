@@ -1,0 +1,75 @@
+.bar-container {
+  padding: 3rem 1rem;
+  text-align: center;
+  background-color: #f4f4f4;
+}
+
+.bar-title {
+  color: #a23b45;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.bar-packages {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.bar-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 340px;
+}
+
+.bar-tier {
+  background-color: #d4454a;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.bar-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.bar-table th,
+.bar-table td {
+  border: 1px solid #d4454a;
+  padding: 0.5rem;
+  text-align: center;
+  color: #a23b45;
+}
+
+.bar-desc {
+  font-weight: bold;
+  color: #a23b45;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.bar-features {
+  list-style: none;
+  padding-left: 0;
+  margin: 0 0 1rem 0;
+  color: #a23b45;
+  text-align: left;
+}
+
+.bar-features li {
+  margin-bottom: 0.3rem;
+}
+
+.bar-note {
+  font-weight: bold;
+  color: #a23b45;
+}

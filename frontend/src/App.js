@@ -5,6 +5,7 @@ import Home from './pages/home';
 import Product from './pages/product';
 import LivePerfume from './pages/liveperfume';
 import ProductDetail from './pages/ProductDetail';
+import HotelAmenities from './pages/hotelamenities';
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/liveperfume" element={<LivePerfume />} />
+        <Route path="/hotel-amenities" element={<HotelAmenities />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/freshner-mist/:id" element={<ProductDetail />} /> {/* New route */}
       </Routes>

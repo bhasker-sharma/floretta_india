@@ -32,7 +32,7 @@
 
 .hiw-title {
   font-size: 2rem;
-  color: #a23b45;
+  color: #da3e4b;
   font-weight: bold;
   margin-bottom: 2.5rem;
   text-transform: uppercase;
@@ -54,7 +54,7 @@
 }
 
 .hiw-step-title {
-  color: #a23b45;
+  color: #da3e4b;
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 0.3rem;
@@ -80,7 +80,7 @@
 
 .hiw-step-image-container {
   flex: 1 1 30%;
-  max-width: 350px; /* ⬆️ Increased from 300px */
+  max-width: 350px;
   margin: 0 auto;
   display: flex;
   justify-content: center;
@@ -88,9 +88,198 @@
 
 .hiw-image {
   width: 100%;
-  max-width: 350px; /* ⬆️ Increased from 280px */
-  height: 400px;     /* ⬆️ Set a taller height */
+  max-width: 350px;
+  height: 400px;
   border-radius: 10px;
   object-fit: cover;
 }
 
+/*--------------------------------------- OUR PACKAGE FOR BARS Section */
+.packages {
+  padding: 4rem 2rem;
+  background-color: #fff5f5;
+  text-align: center;
+}
+
+.packages .title {
+  font-size: 2rem;
+  color: #da3e4b;
+  margin-bottom: 3rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  height: 400px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.03);
+}
+
+.card-header {
+  background-color: #a23b45;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 1rem;
+  text-transform: uppercase;
+}
+
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card table th,
+.card table td {
+  padding: 0.75rem;
+  border: 1px solid #f0dcdc;
+  font-size: 0.95rem;
+}
+
+.card table th {
+  background-color: #fce9e9;
+  color: #a23b45;
+  font-weight: 600;
+}
+
+.card table td {
+  color: #333;
+}
+
+.desc {
+  padding: 1rem;
+  text-align: left;
+}
+
+.desc p {
+  font-size: 0.95rem;
+  color: #a23b45;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.desc ul {
+  margin: 0.5rem 0 1rem 1.25rem;
+  padding: 0;
+}
+
+.desc ul li {
+  font-size: 0.9rem;
+  color: #333;
+  list-style-type: disc;
+  line-height: 1.4;
+}
+/* ------------------------------------------------------------------------------ */
+
+.product-container {
+  display: flex;
+  justify-content: center;
+  gap: 70px;              /* Space between product cards */
+  flex-wrap: wrap;
+  margin-bottom: 50px;    /* Space at the bottom of the section */
+}
+
+.product-card {
+  width: 350px;
+  height: 450px;
+  background-color: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Optional: add inner spacing between image and card edge */
+.product-card img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  padding: 10px; /* Add padding inside the card if desired */
+}
+
+h2 {
+  font-size: 2rem;
+  color: #da3e4b;
+  margin-bottom: 3rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+}
+/* ------------------------------------------------------ */
+.form-title {
+ font-size: 2rem;
+  color: #da3e4b;
+  margin-bottom: 3rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+
+}
+.form-wrapper {
+  max-width: 600px;       /* Adjust width as needed */
+  margin: 0 auto;         /* Center horizontally */
+  padding: 0 1rem;        /* Adds spacing on both left and right */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.booking-form {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  height: 450px;
+}
+
+.booking-form input,
+.booking-form select,
+.booking-form textarea {
+  padding: 14px;
+  font-size: 14px;
+  border: 1px solid #000;
+  outline: none;
+  background-color: #fff;
+  width: 100%;
+}
+
+.booking-form textarea {
+  height: 100px;
+  resize: none;
+}
+
+.booking-form button {
+  align-self: center;
+  padding: 9px 30px;
+  background-color: #e15050;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+}
+
+.booking-form button:hover {
+  background-color: #c63c3c;
+}
