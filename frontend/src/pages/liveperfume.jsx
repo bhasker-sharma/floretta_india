@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Footer from '../components/footer';
-import BarPackages from '../components/BarPackages';
 import '../styles/liveperfume.css';
 
 const LivePerfume = () => {
@@ -131,9 +130,7 @@ const LivePerfume = () => {
         </div>
       </div>
 
-      {/* OUR PACKAGE FOR BARS */}
-      <BarPackages />
-
+  
       {/* BOOKING FORM */}
       <h2 className="form-title">FOR BOOKING PERFUME BARS</h2>
       <div className="form-wrapper">
