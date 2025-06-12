@@ -6,6 +6,8 @@ import Product from './pages/product';
 import LivePerfume from './pages/liveperfume';
 import ProductDetail from './pages/ProductDetail';
 import HotelAmenities from './pages/hotelamenities';
+import AdminLogin from './pages/AdminLogin';
+
 
 const App = () => {
   return (
@@ -17,6 +19,7 @@ const App = () => {
         <Route path="/hotel-amenities" element={<HotelAmenities />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/freshner-mist/:id" element={<ProductDetail />} /> {/* New route */}
+        <Route path="/admin" element={<AdminLogin />} />
       </Routes>
     </Router>
   );
