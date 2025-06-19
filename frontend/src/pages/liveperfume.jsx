@@ -19,11 +19,19 @@ const LivePerfume = () => {
 
   const [formStatus, setFormStatus] = useState('');
 
+  // Static slider images (ensure they're in public/slider/)
+  const staticSliderImages = [
+    '/slider/slide6.png',
+    '/slider/slide7.png',
+    '/slider/slide8.png',
+    '/slider/slide9.png',
+    '/slider/slide10.png',
+  ];
+
   useEffect(() => {
     fetch('http://localhost:8000/api/liveperfume')
       .then((res) => res.json())
       .then((data) => {
-        // Add fallback to empty arrays in case keys don't exist
         setSteps(data.how_it_works || []);
         setBarPackages(data.bar_packages || []);
       })
@@ -84,9 +92,10 @@ const LivePerfume = () => {
   return (
     <>
       <Navbar />
-      <Slider />
 
-      {/* Description */}
+      {/* Static image slider */}
+      <Slider images={staticSliderImages} />
+
       <div className="live-bar-container">
         <h2 className="live-bar-heading">FLORETTA LIVE PERFUME BAR</h2>
         <p className="live-bar-description">
@@ -130,7 +139,6 @@ const LivePerfume = () => {
         </div>
       </div>
 
-  
       {/* BOOKING FORM */}
       <h2 className="form-title">FOR BOOKING PERFUME BARS</h2>
       <div className="form-wrapper">

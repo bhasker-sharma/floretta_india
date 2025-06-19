@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom'; // <-- Added useNavigate
 import "../styles/navbar.css";
 import logo from '../assets/logo.png';
 
@@ -7,6 +7,7 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef(null);
+  const navigate = useNavigate(); // <-- Initialize navigate
 
   // Close search bar on outside click
   useEffect(() => {
@@ -59,6 +60,9 @@ const Navbar = () => {
         <NavLink to="/hotel-amenities" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           Hotel Amenities
         </NavLink>
+        {/* <NavLink to="/addtocart" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          Add to Cart
+        </NavLink> */}
       </nav>
 
       {/* Right-side icons */}
@@ -90,12 +94,15 @@ const Navbar = () => {
           </button>
         )}
 
-        <button>
+        {/* Cart Icon with Navigation */}
+        <button onClick={() => navigate('/addtocart')}>
           <svg viewBox="0 0 24 24">
             <path d="M3 3h18l-1 13H4L3 3z" />
             <path d="M16 17a2 2 0 1 0 4 0M4 17a2 2 0 1 0 4 0" />
           </svg>
         </button>
+
+        {/* User Icon */}
         <button>
           <svg viewBox="0 0 24 24">
             <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4s-4 1.79-4 4 1.79 4 4 4z" />

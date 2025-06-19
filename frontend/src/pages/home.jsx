@@ -48,7 +48,8 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      <Slider />
+      <Slider fetchUrl="http://localhost:8000/api/homepage" interval={4000} />
+
 
       {/* === HOME PRODUCTS === */}
       <div className="homep-product-list">
