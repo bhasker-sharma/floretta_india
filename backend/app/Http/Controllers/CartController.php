@@ -30,7 +30,23 @@ class CartController extends Controller
             return response()->json(['message' => 'Product not found.'], 404);
         }
 
-        // Prepare cart data
+        // 🔁 Check if same product already in cart
+        $existingCartItem = Cart::where('product_id', $validated['product_id'])
+            ->where('flag', $validated['type'])
+            ->first();
+
+        if ($existingCartItem) {
+            // ✅ Increase quantity if already exists
+            $existingCartItem->quantity += $validated['quantity'];
+            $existingCartItem->save();
+
+            return response()->json([
+                'message' => 'Item quantity updated in cart.',
+                'cart'    => $existingCartItem
+            ]);
+        }
+
+        // 🆕 Create new cart item
         $cartData = array_merge($validated, [
             'name'               => $product->name,
             'scent'              => $product->scent ?? null,
@@ -47,13 +63,10 @@ class CartController extends Controller
             'flag'               => $product->flag ?? $validated['type'],
             'discription'        => $product->discription ?? null,
             'about_product'      => $product->about_product ?? null,
-
-            // 🛠 Fix array-to-string by encoding
             'extra_images'       => is_array($product->extra_images) ? json_encode($product->extra_images) : $product->extra_images,
             'ingridiance'        => is_array($product->ingridiance ?? $product->ingredients ?? null)
                                      ? json_encode($product->ingridiance ?? $product->ingredients)
                                      : ($product->ingridiance ?? $product->ingredients ?? null),
-
             'profit'             => $product->profit ?? null,
             'colour'             => $product->colour ?? null,
             'brand'              => $product->brand ?? null,
@@ -71,7 +84,7 @@ class CartController extends Controller
     }
 
     /**
-     * View all cart items.
+     * Get all cart items.
      */
     public function index()
     {
@@ -80,7 +93,7 @@ class CartController extends Controller
     }
 
     /**
-     * Remove an item from cart.
+     * Remove an item from the cart.
      */
     public function destroy($id)
     {
@@ -93,5 +106,29 @@ class CartController extends Controller
         $cartItem->delete();
 
         return response()->json(['message' => 'Item removed from cart successfully.']);
+    }
+
+    /**
+     * Update item quantity in the cart.
+     */
+    public function update(Request $request, $id)
+    {
+        $cartItem = Cart::find($id);
+
+        if (!$cartItem) {
+            return response()->json(['message' => 'Cart item not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $cartItem->quantity = $validated['quantity'];
+        $cartItem->save();
+
+        return response()->json([
+            'message' => 'Cart item quantity updated.',
+            'cart' => $cartItem
+        ]);
     }
 }

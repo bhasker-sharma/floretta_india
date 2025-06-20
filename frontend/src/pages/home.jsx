@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Testimonials from '../components/testimonials';
 import Uproducts from '../components/uproduct';
 import Footer from '../components/footer';
 import ProductCard from '../components/ProductCard';
+import axios from 'axios';
+
 import '../styles/home.css';
 
 const Home = () => {
-  const [cocoProduct, setCocoProduct] = useState(null);
-  const [selectedImage, setSelectedImage] = useState('');
   const [homeProducts, setHomeProducts] = useState([]);
   const [homeProductError, setHomeProductError] = useState(null);
+  const [featuredProduct, setFeaturedProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const navigate = useNavigate();
 
@@ -21,16 +25,16 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/homepage')
+    // Load home products
+    fetch('http://localhost:8000/api/products?note=all')
       .then((res) => res.json())
       .then((data) => {
-        const item = data.coco || data[0];
-        if (item) {
-          setCocoProduct(item);
-          setSelectedImage(item.main_image);
+        const perfumes = data.filter((p) => p.flag === 'perfume');
+        setHomeProducts(perfumes.slice(0, 4)); // best sellers
+        if (perfumes.length > 0) {
+          setFeaturedProduct(perfumes[0]);
+          setSelectedImage(perfumes[0].image);
         }
-
-        setHomeProducts(Array.isArray(data.homeproducts) ? data.homeproducts : []);
       })
       .catch((err) => {
         console.error('Fetch error:', err);
@@ -38,18 +42,27 @@ const Home = () => {
       });
   }, []);
 
-  const cocoThumbnails = [
-    cocoProduct?.main_image,
-    cocoProduct?.image_2,
-    cocoProduct?.image_3,
-    cocoProduct?.image_4,
-  ].filter(Boolean);
+  const thumbnails = [featuredProduct?.image, ...(featuredProduct?.extra_images || []).slice(0, 3)].filter(Boolean);
+
+  const handleAddToCart = async () => {
+    try {
+      await axios.post('http://localhost:8000/api/cart', {
+        product_id: featuredProduct.id,
+        quantity: 1,
+        type: featuredProduct.flag || 'perfume'
+      });
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 3000); // Optional: reset button text
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add to cart');
+    }
+  };
 
   return (
     <>
       <Navbar />
       <Slider fetchUrl="http://localhost:8000/api/homepage" interval={4000} />
-
 
       {/* === HOME PRODUCTS === */}
       <div className="homep-product-list">
@@ -57,13 +70,15 @@ const Home = () => {
         {homeProductError && <p className="homep-error">{homeProductError}</p>}
 
         <div className="product-grid">
-          {homeProducts
-            .filter((item) => item && (item.image || item.image_path))
-            .map((item) => (
-              <div key={item.id} onClick={() => navigate(`/product/${item.id}`)} style={{ cursor: 'pointer' }}>
-                <ProductCard item={item} />
-              </div>
-            ))}
+          {homeProducts.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => navigate(`/product/${item.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <ProductCard item={item} />
+            </div>
+          ))}
         </div>
 
         <button onClick={handleViewAllClick} className="homep-view-all-button">
@@ -71,44 +86,53 @@ const Home = () => {
         </button>
       </div>
 
-      {/* === COCO PRODUCT === */}
+      {/* === FEATURED PRODUCT === */}
       <div className="pdp-product-display-container">
-        {!cocoProduct ? (
-          <p className="loading-text">Loading Coco Fudge...</p>
+        {!featuredProduct ? (
+          <p className="loading-text">Loading Featured Product...</p>
         ) : (
           <div className="pdp-product-card">
             <div className="pdp-product-images">
               <img
                 className="pdp-product-main-image"
                 src={`http://localhost:8000/storage/${selectedImage}`}
-                alt="Main Product"
+                alt="Main"
               />
               <div className="pdp-product-thumbnails">
-                {cocoThumbnails.map((img, idx) => (
+                {thumbnails.map((img, idx) => (
                   <img
                     key={idx}
                     className={`pdp-thumbnail ${img === selectedImage ? 'active' : ''}`}
                     src={`http://localhost:8000/storage/${img}`}
-                    alt={`Thumbnail ${idx + 1}`}
+                    alt={`Thumb ${idx + 1}`}
                     onClick={() => setSelectedImage(img)}
+                    onError={(e) => (e.target.src = '/fallback.jpg')}
                   />
                 ))}
               </div>
             </div>
 
             <div className="pdp-info-section">
-              <p className="pdp-product-brand">{cocoProduct.brand}</p>
-              <h2 className="pdp-product-name">{cocoProduct.name}</h2>
-              <div className="pdp-product-save">SAVE RS. {cocoProduct.savings}</div>
+              <p className="pdp-product-brand">{featuredProduct.brand}</p>
+              <h2 className="pdp-product-name">{featuredProduct.name}</h2>
+              <div className="pdp-product-save">
+                SAVE RS. {(featuredProduct.original_price - featuredProduct.price).toFixed(2)}
+              </div>
               <div className="pdp-product-prices">
-                <span className="pdp-product-price">RS ₹{cocoProduct.price}</span>
-                <span className="pdp-product-old-price">₹{cocoProduct.old_price}</span>
+                <span className="pdp-product-price">RS ₹{featuredProduct.price}</span>
+                <span className="pdp-product-old-price">₹{featuredProduct.original_price}</span>
               </div>
               <div className="pdp-product-size">
                 <label>SIZE</label>
-                <div className="pdp-size-box">{cocoProduct.size}</div>
+                <div className="pdp-size-box">{featuredProduct.volume_ml}ml</div>
               </div>
-              <button className="pdp-add-to-cart-btn">ADD TO CART</button>
+              <button
+                className="pdp-add-to-cart-btn"
+                onClick={handleAddToCart}
+                disabled={addedToCart}
+              >
+                {addedToCart ? 'ADDED TO CART' : 'ADD TO CART'}
+              </button>
               <button className="pdp-shop-now-btn">SHOP NOW</button>
             </div>
           </div>

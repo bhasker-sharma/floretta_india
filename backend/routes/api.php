@@ -34,6 +34,8 @@ Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'store']);
 Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+Route::put('/cart/{id}', [CartController::class, 'update']);
+
 
 // Admin Auth Routes
 Route::prefix('admin')->group(function () {

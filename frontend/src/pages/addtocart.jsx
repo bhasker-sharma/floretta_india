@@ -25,12 +25,47 @@ const Cart = () => {
     fetchCart();
   }, []);
 
+  const handleUpdateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+
+    try {
+      await axios.put(`http://localhost:8000/api/cart/${itemId}`, {
+        quantity: newQuantity
+      });
+
+      setCartItems(prev =>
+        prev.map(item =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      alert('Failed to update quantity.');
+    }
+  };
+
+  const handleIncrement = (itemId, currentQuantity) => {
+    handleUpdateQuantity(itemId, currentQuantity + 1);
+  };
+
+  const handleDecrement = (itemId, currentQuantity) => {
+    if (currentQuantity > 1) {
+      handleUpdateQuantity(itemId, currentQuantity - 1);
+    }
+  };
+
+  const handleRemove = async (itemId) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/cart/${itemId}`);
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
+    } catch (error) {
+      console.error('Error removing item:', error);
+      alert('Failed to remove item from cart.');
+    }
+  };
+
   const totalPrice = cartItems.reduce(
     (acc, item) => acc + Number(item.price || 0) * Number(item.quantity || 1),
-    0
-  );
-  const totalOriginal = cartItems.reduce(
-    (acc, item) => acc + Number(item.original_price || 0) * Number(item.quantity || 1),
     0
   );
   const deliveryCharge = 0;
@@ -43,15 +78,6 @@ const Cart = () => {
       setDiscount(0);
     }
   };
-const handleRemove = async (itemId) => {
-  try {
-    await axios.delete(`http://localhost:8000/api/cart/${itemId}`);
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
-  } catch (error) {
-    console.error('Error removing item:', error);
-    alert('Failed to remove item from cart.');
-  }
-};
 
   return (
     <>
@@ -83,11 +109,10 @@ const handleRemove = async (itemId) => {
                       SAVE RS. {(Number(item.original_price) - Number(item.price)).toFixed(2)}
                     </p>
                     <div className="qty-row">
-                      <button className="qty-btn">-</button>
+                      <button className="qty-btn" onClick={() => handleDecrement(item.id, item.quantity)}>-</button>
                       <span>{item.quantity}</span>
-                      <button className="qty-btn">+</button>
+                      <button className="qty-btn" onClick={() => handleIncrement(item.id, item.quantity)}>+</button>
                       <button className="remove" onClick={() => handleRemove(item.id)}>Remove</button>
-
                     </div>
                   </div>
                 </div>
