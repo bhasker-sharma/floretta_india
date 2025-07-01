@@ -1,0 +1,30 @@
+/* src/styles/UserProfile.css */
+.user-profile {
+  max-width: 600px;
+  margin: 40px auto;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.profile-box {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fafafa;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.profile-box p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.user-profile h2 {
+  text-align: center;
+  color: #333;
+}
+
+.error {
+  color: red;
+  text-align: center;
+}

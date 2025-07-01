@@ -8,7 +8,7 @@ use App\Models\productpage\FreshnerMist;
 
 class ProductController extends Controller
 {
-    // List all products (optionally filter by note)
+    // List all perfumes (optionally filter by note)
     public function index(Request $request)
     {
         $note = strtolower($request->query('note', 'all'));
@@ -18,15 +18,18 @@ class ProductController extends Controller
             $query->where('note', $note);
         }
 
+        // Only fetch perfumes
+        $query->where('flag', 'perfume');
+
         $products = $query->orderBy('name')->get();
 
         return response()->json($products);
     }
 
-    // Get single product by ID
+    // Get single product by ID (perfume only)
     public function show($id)
     {
-        $product = Product::find($id);
+        $product = Product::where('id', $id)->where('flag', 'perfume')->first();
 
         if (!$product) {
             return response()->json(['error' => 'Product not found'], 404);
@@ -53,5 +56,12 @@ class ProductController extends Controller
         }
 
         return response()->json($freshner);
+    }
+
+    // List all perfumes
+    public function allPerfumes()
+    {
+        $perfumes = Product::where('flag', 'perfume')->get();
+        return response()->json($perfumes);
     }
 }

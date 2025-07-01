@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import "../styles/navbar.css";
 import logo from '../assets/logo.png';
 
@@ -7,6 +7,7 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef(null);
+  const navigate = useNavigate();
 
   // Close search bar on outside click
   useEffect(() => {
@@ -24,6 +25,25 @@ const Navbar = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSearchOpen]);
+
+  const handleProfileClick = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/check-user', {
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+
+      if (!data.user) {
+        navigate('/admin-login'); // Redirect to login if not logged in
+      } else {
+        navigate('/profile'); // ✅ Redirect to profile page
+      }
+    } catch (err) {
+      console.error('Error checking user:', err);
+      navigate('/admin-login'); // Fallback to login
+    }
+  };
 
   return (
     <header className="navbar">
@@ -90,13 +110,16 @@ const Navbar = () => {
           </button>
         )}
 
-        <button>
+        {/* Cart Icon */}
+        <button onClick={() => navigate('/addtocart')}>
           <svg viewBox="0 0 24 24">
             <path d="M3 3h18l-1 13H4L3 3z" />
             <path d="M16 17a2 2 0 1 0 4 0M4 17a2 2 0 1 0 4 0" />
           </svg>
         </button>
-        <button>
+
+        {/* Profile Icon */}
+        <button onClick={handleProfileClick}>
           <svg viewBox="0 0 24 24">
             <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4s-4 1.79-4 4 1.79 4 4 4z" />
             <path d="M4 20c0-4 8-4 8-4s8 0 8 4v1H4v-1z" />

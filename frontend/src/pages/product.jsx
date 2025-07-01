@@ -7,7 +7,15 @@ import Slider from '../components/slider';
 import Footer from '../components/footer';
 import Rfreshner from '../components/rfreshner';
 import axios from 'axios';
-// import '../styles/products.css';
+
+// Static slider images (make sure these exist in /public/slider/)
+const staticSliderImages = [
+  '/slider/slide1.png',
+  '/slider/slide2.png',
+  '/slider/slide3.png',
+  '/slider/slide4.png',
+  '/slider/slide5.png',
+];
 
 const notes = ['All', 'Sweet', 'Woody', 'Floral', 'Citrus'];
 
@@ -18,10 +26,14 @@ const Product = () => {
 
   // Fetch products from API based on note
   const fetchProducts = (note) => {
-    axios
-      .get(`http://localhost:8000/api/products?note=${note}`)
-      .then((res) => setProducts(res.data))
-      .catch((err) => console.error('Error fetching products:', err));
+   axios
+  .get(`http://localhost:8000/api/products?note=${note}`) // ✅ only from perfumes
+  .then((res) => {
+    const filtered = res.data.filter(p => p.flag === 'perfume');
+    setProducts(filtered);
+  })
+  .catch((err) => console.error('Error fetching products:', err));
+
   };
 
   // Initial fetch
@@ -44,7 +56,9 @@ const Product = () => {
   return (
     <>
       <Navbar />
-      <Slider />
+
+      {/* Static slider images passed here */}
+      <Slider images={staticSliderImages} />
 
       <div className="product-section">
         <h2 className="product-title">Shop By Perfume Notes</h2>
@@ -61,7 +75,7 @@ const Product = () => {
           ))}
         </div>
 
-        <div className="product-grid"> {/* corrected className */}
+        <div className="product-grid">
           {products.map((product, i) => (
             <ProductCard
               key={i}
@@ -80,7 +94,6 @@ const Product = () => {
       </div>
 
       <Rfreshner />
-
 
       <div className="why-floretta">
         <h2 className="why-heading">WHY FLORETTA PERFUMES ARE BETTER</h2>

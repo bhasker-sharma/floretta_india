@@ -2,34 +2,60 @@
 
 namespace App\Models\productpage;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
     use HasFactory;
 
+    protected $table = 'products'; // Ensure this matches your table name
+
     protected $fillable = [
         'name',
-        'description',
+        'scent',
+        'volume_ml',
         'price',
-        'main_image',
-        'extra_images',       // Can be stored as JSON
-        'features',           // Optional: Can be JSON array or stringified
+        'original_price',
+        'discount_amount',
+        'is_discount_active',
+        'delivery_charge',
+        'available_quantity',
+        'rating',
+        'reviews_count',
+        'image',
+        'image_path',
+        'flag',
+        'note',
+        'discription',
+        'about_product',
+        'extra_images',
         'ingredients',
+        'ingridiance',
         'profit',
+        'colour',
+        'brand',
+        'item_form',
+        'power_source',
+        'about',
+        'old_price',
         'launch_date',
     ];
 
+    // Automatically cast JSON columns to arrays
     protected $casts = [
-        'extra_images' => 'array', // Automatically casts JSON to array
-        'features'     => 'array',
-        'launch_date'  => 'date',
+        'extra_images' => 'array',
+        'is_discount_active' => 'boolean',
+        'launch_date' => 'date',
     ];
 
-    // Optional: Define relation to ProductDetails if needed
-    public function details()
+    // Accessor: image URL
+    public function getImageUrlAttribute()
     {
-        return $this->hasOne(ProductDetails::class, 'product_id');
+        return $this->image ? Storage::url($this->image) : null;
     }
+
+    // Appended attributes for JSON output
+    protected $appends = ['image_url'];
 }
