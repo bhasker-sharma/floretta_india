@@ -18,40 +18,21 @@ use App\Http\Controllers\UserController;
 |--------------------------------------------------------------------------
 */
 
-
-Route::get('/users', [UserController::class, 'index']);      // List all users
-Route::get('/users/{id}', [UserController::class, 'show']);  // Get user by ID
-Route::middleware('auth:sanctum')->get('/me', [UserController::class, 'profile']);
-
-
-
-// 🌐 User Auth
+// 🌐 User Registration & Login
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 
-// 🌐 Homepage
+// 🌐 Home & General Product Routes
 Route::get('/homepage', [HomeController::class, 'index']);
-
-// 🌐 Product Listing & Detail
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
-
-// 🌐 Freshners & Mist
 Route::get('/freshners-mist-all', [ProductController::class, 'allFreshnerAndMist']);
 Route::get('/freshners-mist-all/{id}', [ProductController::class, 'showFreshner']);
-
-// 🌐 Hotel Amenities
 Route::get('/room-freshners', [HotelAmenitiesController::class, 'index']);
-
-// 🌐 Contact Us
 Route::post('/contact', [HotelAmenitiesController::class, 'submitContactForm']);
-
-// 🌐 Live Perfumery
 Route::get('/liveperfume', [LivePerfumeController::class, 'index']);
 Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
 Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -60,17 +41,21 @@ Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 */
 Route::middleware('auth:sanctum')->group(function () {
 
+    // 👤 Authenticated user profile
+    Route::get('/me', [UserController::class, 'profile']);
+
+    // ✅ Session Check
+    Route::get('/check-user', function (Request $request) {
+        return response()->json(['user' => $request->user()]);
+    });
+
     // 🛒 Cart routes
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-    // Optional
-    Route::get('/me', function (Request $request) {
-        return response()->json($request->user());
-    });
-
+    // 🔐 Logout (User)
     Route::post('/logout', function (Request $request) {
         Auth::logout();
         $request->session()->invalidate();
@@ -78,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'User logged out']);
     });
 
-    // 🔐 Admin sub-routes
+    // 🔐 Admin Authenticated Sub-Routes
     Route::prefix('admin')->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout']);
         Route::get('/me', [AdminAuthController::class, 'me']);
@@ -87,9 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Admin Auth Routes (Public)
+| Admin Public Auth Routes (if needed)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->group(function () {
-    // Route::post('/login', [AdminAuthController::class, 'login']);
-});
+// Route::prefix('admin')->post('/login', [AdminAuthController::class, 'login']);

@@ -19,23 +19,20 @@ const ProductCard = ({ item, onClick }) => {
     setLoading(true);
 
     try {
-      // Step 1: Get CSRF token once per session (optional if already done)
+      // ✅ Step 1: Get user from localStorage
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+
+      if (!storedUser || !storedUser.name || !storedUser.email) {
+        alert('Please login or complete your profile first.');
+        return navigate('/login');
+      }
+
+      // ✅ Step 2: Get CSRF cookie (only needed once per session)
       await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
         withCredentials: true,
       });
 
-      // Step 2: Check login session
-      const userCheck = await axios.get('http://localhost:8000/api/check-user', {
-        withCredentials: true,
-      });
-
-      if (userCheck.data?.status !== 'ok' || !userCheck.data?.user) {
-        alert('Please login to continue.');
-        navigate('/admin-login');
-        return;
-      }
-
-      // Step 3: Add to cart
+      // ✅ Step 3: Add to cart
       await axios.post(
         'http://localhost:8000/api/cart',
         {
@@ -50,10 +47,11 @@ const ProductCard = ({ item, onClick }) => {
 
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Add to cart failed:', error);
-      alert('Please login first.');
-      navigate('/admin-login');
+      alert('You are not logged in . Please login first.');
+      navigate('/login');
     } finally {
       setLoading(false);
     }

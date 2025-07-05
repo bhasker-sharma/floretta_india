@@ -5,21 +5,22 @@ const Slider = ({ images = [], fetchUrl, interval = 3000 }) => {
   const [slides, setSlides] = useState(images);
   const [index, setIndex] = useState(0);
 
-  useEffect(() => {
-    if (fetchUrl) {
-      fetch(fetchUrl)
-        .then((res) => res.json())
-        .then((data) => {
-          const fetchedImages = data.sliders?.map(slider =>
-            `http://localhost:8000/storage/${slider.image}`
-          );
-          setSlides(fetchedImages || []);
-        })
-        .catch((err) => {
-          console.error('Failed to fetch slider images', err);
-        });
-    }
-  }, [fetchUrl]);
+useEffect(() => {
+  if (fetchUrl) {
+    fetch(fetchUrl)
+      .then((res) => res.json())
+      .then((data) => {
+        const fetchedImages = data.sliders?.map(slider => 
+          `http://localhost:8000${slider.image_url}`
+        );
+        setSlides(fetchedImages || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch slider images', err);
+      });
+  }
+}, [fetchUrl]);
+
 
   useEffect(() => {
     if (slides.length === 0) return;

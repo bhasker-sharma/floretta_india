@@ -1,10 +1,13 @@
+// src/components/LoginForm.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // ✅ Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/LoginForm.css';
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const navigate = useNavigate(); // ✅ For redirecting
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -12,43 +15,60 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      await fetch('http://localhost:8000/sanctum/csrf-cookie', {
-        credentials: 'include',
+      await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
+        withCredentials: true
       });
 
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
+      const response = await axios.post('http://localhost:8000/api/login', formData, {
+        withCredentials: true,
         headers: {
-          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      if (response.status === 200 && response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('isLoggedIn', 'true');
 
-      if (response.ok) {
         alert('Login successful!');
-        console.log('User:', data.user);
-
-        // ✅ Save user data to localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-
-        // ✅ Redirect to profile page
         navigate('/userprofile');
       } else {
-        alert('Login failed: ' + (data.message || 'Invalid credentials'));
+        alert(response.data.message || 'Login failed.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('An error occurred during login.');
+      alert(
+        error.response?.data?.message ||
+        'An error occurred while trying to log in.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="login-box">
+      {/* ✅ Back Button */}
+      <button
+        className="back-button"
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          padding: '6px 12px',
+          backgroundColor: '#eee',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        ← Back
+      </button>
+
       <h2>User Login</h2>
       <form onSubmit={handleSubmit}>
         <input
@@ -67,7 +87,7 @@ const LoginForm = () => {
           onChange={handleChange}
           required
         />
-        <input type="submit" value="Login" />
+        <input type="submit" value={loading ? 'Logging in...' : 'Login'} disabled={loading} />
       </form>
 
       <div className="or-separator"><span>OR</span></div>

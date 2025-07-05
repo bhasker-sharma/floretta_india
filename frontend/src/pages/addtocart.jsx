@@ -20,18 +20,22 @@ const Cart = () => {
           withCredentials: true
         });
 
-        if (checkResponse.status === 200) {
-          // Step 2: Fetch cart
-          const cartResponse = await axios.get('http://localhost:8000/api/cart', {
-            withCredentials: true
-          });
+        const user = checkResponse.data.user;
 
-          setCartItems(cartResponse.data.cart || cartResponse.data);
-        } else {
-          throw new Error('Not logged in');
+        // Step 2: Validate user profile
+        if (!user || !user.name || !user.email) {
+          alert('Please complete your profile to access the cart.');
+          return navigate('/profile'); // Redirect to profile page
         }
+
+        // Step 3: Fetch cart
+        const cartResponse = await axios.get('http://localhost:8000/api/cart', {
+          withCredentials: true
+        });
+
+        setCartItems(cartResponse.data.cart || cartResponse.data);
       } catch (error) {
-        console.error('User not authenticated:', error);
+        console.error('User not authenticated or error fetching cart:', error);
         navigate('/admin-login'); // Redirect to login
       } finally {
         setLoading(false);

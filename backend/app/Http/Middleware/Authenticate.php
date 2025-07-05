@@ -8,10 +8,14 @@ use Illuminate\Http\Request;
 class Authenticate extends Middleware
 {
     /**
-     * Disable redirect for API responses.
+     * Get the path the user should be redirected to when not authenticated.
      */
-    protected function redirectTo(Request $request): ?string
-    {
-        return null; // No redirect, just let Laravel return 401
+// ✅ REPLACE with this:
+protected function redirectTo($request)
+{
+    if (! $request->expectsJson()) {
+        return null; // <- disables redirect
     }
+}
+
 }

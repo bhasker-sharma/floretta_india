@@ -35,13 +35,13 @@ const Navbar = () => {
       const data = await res.json();
 
       if (!data.user) {
-        navigate('/admin-login'); // Redirect to login if not logged in
+        navigate('/login'); // Redirect to login if not logged in
       } else {
         navigate('/profile'); // ✅ Redirect to profile page
       }
     } catch (err) {
       console.error('Error checking user:', err);
-      navigate('/admin-login'); // Fallback to login
+      navigate('/login'); // Fallback to login
     }
   };
 

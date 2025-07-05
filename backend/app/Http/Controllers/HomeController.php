@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Homepage\Coco;
-use App\Models\Homepage\Homeproduct;
 use App\Models\Homepage\Slider;
 use App\Models\Homepage\Image;
 use App\Models\Homepage\Uproduct;
@@ -13,7 +12,7 @@ class HomeController extends Controller
 {
    public function index(Request $request)
 {
-    $hproducts = Homeproduct::all();
+    // $hproducts = Homeproduct::all();
     $sliders = Slider::where('id', '<=', 5)->get(); // ✅ only first 5 IDs
     $images = Image::all();
     $coco = Coco::find(1);
@@ -21,7 +20,7 @@ class HomeController extends Controller
     $testimonials = Testimonial::all();
 
     return response()->json([
-        'homeproducts' => $hproducts,
+        // 'homeproducts' => $hproducts,
         'sliders' => $sliders,
         'images' => $images,
         'coco' => $coco,
