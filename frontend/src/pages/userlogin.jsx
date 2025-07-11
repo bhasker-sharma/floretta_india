@@ -18,18 +18,15 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
-        withCredentials: true
-      });
-
       const response = await axios.post('http://localhost:8000/api/login', formData, {
-        withCredentials: true,
         headers: {
           Accept: 'application/json',
         },
       });
 
-      if (response.status === 200 && response.data.user) {
+      if (response.status === 200 && response.data.token && response.data.user) {
+        // Save token and user to localStorage
+        localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('isLoggedIn', 'true');
 
@@ -40,10 +37,7 @@ const LoginForm = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert(
-        error.response?.data?.message ||
-        'An error occurred while trying to log in.'
-      );
+      alert(error.response?.data?.message || 'An error occurred while trying to log in.');
     } finally {
       setLoading(false);
     }

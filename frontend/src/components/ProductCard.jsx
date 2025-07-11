@@ -19,20 +19,15 @@ const ProductCard = ({ item, onClick }) => {
     setLoading(true);
 
     try {
-      // ✅ Step 1: Get user from localStorage
-      const storedUser = JSON.parse(localStorage.getItem('user'));
+      // ✅ Step 1: Get token from localStorage
+      const token = localStorage.getItem('token');
 
-      if (!storedUser || !storedUser.name || !storedUser.email) {
-        alert('Please login or complete your profile first.');
+      if (!token) {
+        alert('Please login to add items to cart.');
         return navigate('/login');
       }
 
-      // ✅ Step 2: Get CSRF cookie (only needed once per session)
-      await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
-        withCredentials: true,
-      });
-
-      // ✅ Step 3: Add to cart
+      // ✅ Step 2: Send Add to Cart request with JWT token
       await axios.post(
         'http://localhost:8000/api/cart',
         {
@@ -41,17 +36,21 @@ const ProductCard = ({ item, onClick }) => {
           type: item.flag || 'perfume',
         },
         {
-          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
         }
       );
 
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
-    } 
-    catch (error) {
-      console.error('Add to cart failed:', error);
-      alert('You are not logged in . Please login first.');
-      navigate('/login');
+    } catch (error) {
+      console.error('Add to cart failed:', error.response?.data || error.message);
+      alert(error.response?.data?.message || 'Failed to add to cart. Try again.');
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }

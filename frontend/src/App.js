@@ -12,8 +12,7 @@ import Addtocart from './pages/addtocart';
 import Carrier from './pages/carrier';
 import Contact from './pages/contactus';
 import Profile from './pages/userprofile';
-
-
+import PrivateRoute from './components/PrivateRoute'; // ✅ import
 
 const App = () => {
   return (
@@ -24,15 +23,30 @@ const App = () => {
         <Route path="/liveperfume" element={<LivePerfume />} />
         <Route path="/hotel-amenities" element={<HotelAmenities />} />
         <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/freshner-mist/:id" element={<ProductDetail />} /> {/* New route */}
-        {/* <Route path="/admin-login" element={<Userlogin />} /> */}
+        <Route path="/freshner-mist/:id" element={<ProductDetail />} />
+
         <Route path="/register" element={<Register />} />
-        <Route path="/addtocart" element={<Addtocart />} />
         <Route path="/carrier" element={<Carrier />} />
         <Route path="/contactus" element={<Contact />} />
-        <Route path="/userprofile" element={<Profile />} />
-      <Route path="/login" element={<Userlogin />} />
+        <Route path="/login" element={<Userlogin />} />
 
+        {/* 🔒 Protected Routes */}
+        <Route
+          path="/addtocart"
+          element={
+            <PrivateRoute>
+              <Addtocart />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/userprofile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );

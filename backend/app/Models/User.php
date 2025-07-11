@@ -1,19 +1,39 @@
 <?php
-// app/Models/User.php
+
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class User extends Authenticatable
+// ✅ ADD THIS:
+use Tymon\JWTAuth\Contracts\JWTSubject;
+
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'mobile', 'address'
+        'name',
+        'email',
+        'password',
+        'mobile',
+        'address',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
+
+    // ✅ REQUIRED METHODS for JWT:
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 }

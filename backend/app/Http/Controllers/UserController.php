@@ -2,25 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
     /**
-     * 📩 Register a new user
+     * Register new user and return JWT token.
      */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'mobile'   => 'required|string|min:10',
-            'address'  => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6|confirmed',
+            'mobile' => 'required|string|min:10',
+            'address' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -37,17 +37,18 @@ class UserController extends Controller
             'address'  => $validated['address'] ?? null,
         ]);
 
-        // Auto-login after registration
-        Auth::login($user);
+        // Generate JWT token
+        $token = JWTAuth::fromUser($user);
 
         return response()->json([
             'message' => 'User registered successfully',
             'user'    => $user,
+            'token'   => $token,
         ], 201);
     }
 
     /**
-     * 🔐 Login a user via session (Sanctum-compatible)
+     * Login user and return JWT token.
      */
     public function login(Request $request)
     {
@@ -60,68 +61,59 @@ class UserController extends Controller
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
 
-        $credentials = $validator->validated();
+        $credentials = $request->only('email', 'password');
 
-        $user = User::where('email', $credentials['email'])->first();
-
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $token = JWTAuth::attempt($credentials)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        Auth::login($user); // Uses session driver with Sanctum
-
         return response()->json([
             'message' => 'Login successful',
-            'user'    => $user,
+            'user'    => JWTAuth::user(),
+            'token'   => $token,
         ]);
     }
 
     /**
-     * 🔐 Return the authenticated user's profile
+     * Get the authenticated user's profile.
      */
-    public function profile(Request $request)
+    public function profile()
     {
-        return response()->json([
-            'status' => 'ok',
-            'user'   => $request->user(),
-        ]);
+        $user = JWTAuth::parseToken()->authenticate();
+        return response()->json($user);
     }
 
     /**
-     * ✅ Public test API to get first user
+     * Logout the user (invalidate the token).
      */
-    public function profilePublic()
+    public function logout()
     {
-        $user = User::first();
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken());
 
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            return response()->json(['message' => 'Successfully logged out']);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json(['message' => 'Failed to logout, please try again.'], 500);
         }
-
-        return response()->json(['user' => $user]);
     }
 
     /**
-     * 📋 Get all registered users (for admin or reports)
+     * (Optional) List all users – for admin view or test
      */
     public function index()
     {
-        $users = User::select('id', 'name', 'email', 'mobile', 'address', 'created_at')->get();
-
-        return response()->json(['users' => $users]);
+        return response()->json(User::all());
     }
 
     /**
-     * 👤 Get user by ID
+     * (Optional) Show user by ID
      */
     public function show($id)
     {
         $user = User::find($id);
-
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-
-        return response()->json(['user' => $user]);
+        return response()->json($user);
     }
 }

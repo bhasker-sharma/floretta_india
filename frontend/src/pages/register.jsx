@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/LoginForm.css';
 
-
 function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    password_confirmation: '',
     mobile: ''
   });
 
@@ -21,21 +21,20 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
-        withCredentials: true
-      });
-
       const response = await axios.post('http://localhost:8000/api/register', formData, {
-        withCredentials: true,
         headers: {
           'Accept': 'application/json'
         }
       });
 
-      alert('Registration successful!');
-      console.log('User:', response.data.user);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const { token, user } = response.data;
+
+      // ✅ Save token to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('isLoggedIn', 'true');
+
+      alert('Registration successful!');
       navigate('/userprofile');
     } catch (error) {
       console.error('Error:', error.response?.data || error.message);
@@ -50,6 +49,7 @@ function Register() {
         <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
         <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
         <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+        <input type="password" name="password_confirmation" placeholder="Confirm Password" value={formData.password_confirmation} onChange={handleChange} required />
         <input type="text" name="mobile" placeholder="Mobile Number" value={formData.mobile} onChange={handleChange} required />
         <button type="submit">Register</button>
         <p>Already have an account? <a href="/login">Login here</a></p>

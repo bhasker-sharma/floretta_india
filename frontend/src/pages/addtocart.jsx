@@ -12,38 +12,51 @@ const Cart = () => {
   const [discount, setDiscount] = useState(0);
   const navigate = useNavigate();
 
+  const token = localStorage.getItem('token');
+
   useEffect(() => {
     const checkLoginAndFetchCart = async () => {
       try {
-        // Step 1: Check if user is logged in
+        if (!token) {
+          alert('Please login to access your cart.');
+          return navigate('/login');
+        }
+
+        // ✅ Verify user with JWT
         const checkResponse = await axios.get('http://localhost:8000/api/check-user', {
-          withCredentials: true
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          }
         });
 
         const user = checkResponse.data.user;
 
-        // Step 2: Validate user profile
         if (!user || !user.name || !user.email) {
           alert('Please complete your profile to access the cart.');
-          return navigate('/profile'); // Redirect to profile page
+          return navigate('/userprofile');
         }
 
-        // Step 3: Fetch cart
+        // ✅ Fetch cart
         const cartResponse = await axios.get('http://localhost:8000/api/cart', {
-          withCredentials: true
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          }
         });
 
         setCartItems(cartResponse.data.cart || cartResponse.data);
       } catch (error) {
         console.error('User not authenticated or error fetching cart:', error);
-        navigate('/admin-login'); // Redirect to login
+        localStorage.removeItem('token');
+        navigate('/login');
       } finally {
         setLoading(false);
       }
     };
 
     checkLoginAndFetchCart();
-  }, [navigate]);
+  }, [navigate, token]);
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -51,7 +64,12 @@ const Cart = () => {
     try {
       await axios.put(`http://localhost:8000/api/cart/${itemId}`, {
         quantity: newQuantity
-      }, { withCredentials: true });
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
+      });
 
       setCartItems(prev =>
         prev.map(item =>
@@ -77,7 +95,10 @@ const Cart = () => {
   const handleRemove = async (itemId) => {
     try {
       await axios.delete(`http://localhost:8000/api/cart/${itemId}`, {
-        withCredentials: true
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
       });
       setCartItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
