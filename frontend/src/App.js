@@ -12,6 +12,7 @@ import Addtocart from './pages/addtocart';
 import Carrier from './pages/carrier';
 import Contact from './pages/contactus';
 import Profile from './pages/userprofile';
+import Wishlist from './pages/Wishlist';
 import PrivateRoute from './components/PrivateRoute'; // ✅ import
 
 const App = () => {
@@ -47,6 +48,14 @@ const App = () => {
             </PrivateRoute>
           }
         />
+        <Route
+  path="/wishlist"
+  element={
+    <PrivateRoute>
+      <Wishlist />
+    </PrivateRoute>
+  }
+/>
       </Routes>
     </Router>
   );

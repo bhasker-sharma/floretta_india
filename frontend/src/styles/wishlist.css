@@ -1,0 +1,33 @@
+/* wishlist.css */
+
+.wishlist-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.wishlist-page h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* ✅ 4 columns */
+  gap: 20px;
+}
+
+/* Responsive: 2 columns for tablets */
+@media (max-width: 1024px) {
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Responsive: 1 column for mobile */
+@media (max-width: 600px) {
+  .wishlist-grid {
+    grid-template-columns: 1fr;
+  }
+}

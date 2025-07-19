@@ -95,6 +95,11 @@ return [
             'throttle' => 60,
         ],
     ],
+    'defaults' => [
+    'guard' => 'api',
+    'passwords' => 'users',
+],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -110,3 +115,4 @@ return [
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];
+

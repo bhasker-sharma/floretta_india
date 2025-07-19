@@ -13,13 +13,23 @@ class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'mobile',
-        'address',
-    ];
+protected $fillable = [
+    'name',
+    'email',
+    'password',
+    'mobile',
+    'address',
+    'address1',
+    'address2',
+    'address3',
+    'address4',
+    'address5',
+    'pin',
+    'city',
+    'image',
+];
+
+
 
     protected $hidden = [
         'password',
@@ -36,4 +46,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+    public function wishlists()
+{
+    return $this->hasMany(Wishlist::class);
+}
+
 }

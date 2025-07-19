@@ -11,6 +11,7 @@ const ProductCard = ({ item, onClick }) => {
 
   const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   const handleAddToCart = async (e) => {
     e.stopPropagation();
@@ -19,15 +20,11 @@ const ProductCard = ({ item, onClick }) => {
     setLoading(true);
 
     try {
-      // ✅ Step 1: Get token from localStorage
       const token = localStorage.getItem('token');
-
       if (!token) {
-        alert('Please login to add items to cart.');
         return navigate('/login');
       }
 
-      // ✅ Step 2: Send Add to Cart request with JWT token
       await axios.post(
         'http://localhost:8000/api/cart',
         {
@@ -47,7 +44,6 @@ const ProductCard = ({ item, onClick }) => {
       setTimeout(() => setAdded(false), 2000);
     } catch (error) {
       console.error('Add to cart failed:', error.response?.data || error.message);
-      alert(error.response?.data?.message || 'Failed to add to cart. Try again.');
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -55,6 +51,33 @@ const ProductCard = ({ item, onClick }) => {
       setLoading(false);
     }
   };
+
+const handleLikeProduct = async (e) => {
+  e.stopPropagation();
+  const token = localStorage.getItem('token');
+  if (!token) return navigate('/login');
+
+  try {
+    if (liked) {
+      // ❌ Remove from wishlist
+      await axios.delete(`http://localhost:8000/api/wishlist/${item.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLiked(false);
+    } else {
+      // ✅ Add to wishlist
+      await axios.post(
+        'http://localhost:8000/api/wishlist',
+        { product_id: item.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLiked(true);
+    }
+  } catch (error) {
+    console.error('Wishlist toggle failed:', error);
+  }
+};
+
 
   return (
     <div
@@ -94,13 +117,23 @@ const ProductCard = ({ item, onClick }) => {
         )}
       </p>
 
-      <button
-        className={`add-btn ${added ? 'added' : ''}`}
-        onClick={handleAddToCart}
-        disabled={added || loading}
-      >
-        {added ? '✔ ADDED TO CART' : loading ? 'ADDING...' : 'ADD TO CART'}
-      </button>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <button
+          className={`add-btn ${added ? 'added' : ''}`}
+          onClick={handleAddToCart}
+          disabled={added || loading}
+        >
+          {added ? '✔ ADDED TO CART' : loading ? 'ADDING...' : 'ADD TO CART'}
+        </button>
+
+        <button
+          className={`like-btn ${liked ? 'liked' : ''}`}
+          onClick={handleLikeProduct}
+          title="Add to Wishlist"
+        >
+          {liked ? '❤️' : '🤍'}
+        </button>
+      </div>
     </div>
   );
 };

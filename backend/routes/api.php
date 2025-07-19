@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
@@ -18,13 +17,13 @@ use App\Http\Controllers\UserController;
 |--------------------------------------------------------------------------
 */
 
-// 🧍‍♂️ Users (public listing)
-Route::get('/users', [UserController::class, 'index']);
-Route::get('/users/{id}', [UserController::class, 'show']);
-
 // 🌐 User Auth
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
+
+// 🧍‍♂️ Public User Access
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'show']);
 
 // 🌐 Homepage
 Route::get('/homepage', [HomeController::class, 'index']);
@@ -48,36 +47,45 @@ Route::get('/liveperfume', [LivePerfumeController::class, 'index']);
 Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
 Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 
+
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes (Protected by JWT)
+| Authenticated Routes (JWT Protected via `auth:api`)
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:api')->group(function () {
 
-    // 🧍‍♂️ Authenticated user profile
+    // ✅ Profile Routes
     Route::get('/me', [UserController::class, 'profile']);
+    Route::post('/update-profile', [UserController::class, 'update']);
 
-    // ✅ Token verification (used by frontend to verify session)
+    // ✅ Wishlist
+    Route::post('/wishlist', [UserController::class, 'addToWishlist']);
+    Route::delete('/wishlist/{product_id}', [UserController::class, 'removeFromWishlist']);
+   Route::get('/wishlist', [UserController::class, 'wishlist']);
+ // Add this if missing
+
+    // ✅ Token Verification
     Route::get('/check-user', function (Request $request) {
         return response()->json(['user' => $request->user()]);
     });
 
-    // 🛒 Cart routes
+    // 🛒 Cart Routes
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-    // 🔐 Logout (user)
+    // 🔐 Logout (User)
     Route::post('/logout', [UserController::class, 'logout']);
 
-    // 🔐 Admin sub-routes
+    // 🔐 Admin Protected Routes
     Route::prefix('admin')->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout']);
         Route::get('/me', [AdminAuthController::class, 'me']);
     });
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -85,6 +93,5 @@ Route::middleware('auth:api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
-    // Add JWT-based admin login route here when ready
     // Route::post('/login', [AdminAuthController::class, 'login']);
 });
