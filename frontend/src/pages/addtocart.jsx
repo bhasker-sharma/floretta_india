@@ -10,6 +10,7 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [showInvoice, setShowInvoice] = useState(false);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -22,7 +23,6 @@ const Cart = () => {
           return navigate('/login');
         }
 
-        // ✅ Verify user with JWT
         const checkResponse = await axios.get('http://localhost:8000/api/check-user', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -37,7 +37,6 @@ const Cart = () => {
           return navigate('/userprofile');
         }
 
-        // ✅ Fetch cart
         const cartResponse = await axios.get('http://localhost:8000/api/cart', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -122,6 +121,79 @@ const Cart = () => {
     }
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePlaceOrder = async () => {
+    const res = await loadRazorpayScript();
+    if (!res) {
+      alert("Razorpay SDK failed to load.");
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/razorpay/create-order', {
+        amount: totalAmount
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
+      });
+
+      const { order_id, razorpay_key, amount, currency } = response.data;
+
+      const options = {
+        key: razorpay_key,
+        amount,
+        currency,
+        name: "Floretta India",
+        description: "Order Payment",
+        order_id: order_id,
+        handler: async function (response) {
+          try {
+            await axios.post('http://localhost:8000/api/razorpay/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+              }
+            });
+
+            alert("Payment Successful!");
+            navigate('/thankyou');
+          } catch (err) {
+            alert("Payment verification failed.");
+          }
+        },
+        prefill: {
+          name: "Customer",
+          email: "", // You can prefill user email if you fetch it
+        },
+        theme: {
+          color: "#f37254",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -161,7 +233,7 @@ const Cart = () => {
                 </div>
               ))
             )}
-            <button className="place-order-wide">PLACE ORDER</button>
+            <button className="place-order-wide" onClick={() => setShowInvoice(true)}>PLACE ORDER</button>
           </div>
 
           <div className="cart-right">
@@ -202,10 +274,44 @@ const Cart = () => {
               )}
             </div>
 
-            <button className="place-order-btn">Place Order</button>
+            <button className="place-order-btn" onClick={() => setShowInvoice(true)}>Place Order</button>
           </div>
         </div>
       </div>
+
+      {showInvoice && (
+        <div className="invoice-backdrop">
+          <div className="invoice-modal">
+            <h2>Invoice Summary</h2>
+            <div className="invoice-content">
+              {cartItems.map((item) => (
+                <div key={item.id} className="invoice-item">
+                  <span>{item.name} × {item.quantity}</span>
+                  <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <hr />
+              <div className="invoice-row">
+                <strong>Subtotal</strong>
+                <span>₹{totalPrice.toFixed(2)}</span>
+              </div>
+              <div className="invoice-row">
+                <strong>Discount</strong>
+                <span>-₹{discount.toFixed(2)}</span>
+              </div>
+              <div className="invoice-row total">
+                <strong>Total</strong>
+                <strong>₹{totalAmount.toFixed(2)}</strong>
+              </div>
+            </div>
+            <div className="invoice-actions">
+              <button onClick={() => setShowInvoice(false)} className="cancel-btn">Cancel</button>
+              <button onClick={() => { setShowInvoice(false); handlePlaceOrder(); }} className="pay-btn">Pay Now</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

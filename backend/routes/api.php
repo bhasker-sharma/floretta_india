@@ -10,6 +10,7 @@ use App\Http\Controllers\LivePerfumeController;
 use App\Http\Controllers\HotelAmenitiesController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +76,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    //  ===payment ======
+    Route::post('/razorpay/create-order', [PaymentController::class, 'createOrder']);
+    Route::post('/razorpay/verify', [PaymentController::class, 'verifyPayment']);
+    // routes/api.php
+    Route::middleware('auth:api')->post('/create-order', [PaymentController::class, 'createOrder']);
+
 
     // 🔐 Logout (User)
     Route::post('/logout', [UserController::class, 'logout']);
