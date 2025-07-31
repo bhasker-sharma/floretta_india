@@ -5,6 +5,15 @@ import Home from './pages/home';
 import Product from './pages/product';
 import LivePerfume from './pages/liveperfume';
 import ProductDetail from './pages/ProductDetail';
+import HotelAmenities from './pages/hotelamenities';
+import Userlogin from './pages/userlogin';
+import Register from './pages/register';
+import Addtocart from './pages/addtocart';
+import Carrier from './pages/carrier';
+import Contact from './pages/contactus';
+import Profile from './pages/userprofile';
+import Wishlist from './pages/Wishlist';
+import PrivateRoute from './components/PrivateRoute'; // ✅ import
 
 const App = () => {
   return (
@@ -13,8 +22,40 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/liveperfume" element={<LivePerfume />} />
+        <Route path="/hotel-amenities" element={<HotelAmenities />} />
         <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/freshner-mist/:id" element={<ProductDetail />} /> {/* New route */}
+        <Route path="/freshner-mist/:id" element={<ProductDetail />} />
+
+        <Route path="/register" element={<Register />} />
+        <Route path="/carrier" element={<Carrier />} />
+        <Route path="/contactus" element={<Contact />} />
+        <Route path="/login" element={<Userlogin />} />
+
+        {/* 🔒 Protected Routes */}
+        <Route
+          path="/addtocart"
+          element={
+            <PrivateRoute>
+              <Addtocart />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/userprofile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+  path="/wishlist"
+  element={
+    <PrivateRoute>
+      <Wishlist />
+    </PrivateRoute>
+  }
+/>
       </Routes>
     </Router>
   );

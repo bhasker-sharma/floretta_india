@@ -1,0 +1,105 @@
+// src/components/LoginForm.jsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import '../styles/LoginForm.css';
+
+const LoginForm = () => {
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/login', formData, {
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.status === 200 && response.data.token && response.data.user) {
+        // Save token and user to localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('isLoggedIn', 'true');
+
+        alert('Login successful!');
+        navigate('/userprofile');
+      } else {
+        alert(response.data.message || 'Login failed.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert(error.response?.data?.message || 'An error occurred while trying to log in.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-box">
+      {/* ✅ Back Button */}
+      <button
+        className="back-button"
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          padding: '6px 12px',
+          backgroundColor: '#eee',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        ← Back
+      </button>
+
+      <h2>User Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        <input type="submit" value={loading ? 'Logging in...' : 'Login'} disabled={loading} />
+      </form>
+
+      <div className="or-separator"><span>OR</span></div>
+
+      <button className="social-btn google" onClick={() => alert("Google login not implemented yet")}>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google logo" />
+        Sign in with Google
+      </button>
+
+      <button className="social-btn email" onClick={() => alert("Custom Email Sign-In not implemented yet")}>
+        📧 Sign in with Email
+      </button>
+
+      <div className="register-link">
+        Don't have an account? <Link to="/register">Register</Link>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;

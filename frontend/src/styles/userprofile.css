@@ -1,0 +1,162 @@
+.profile-container {
+  display: flex;
+  gap: 20px;
+  padding: 30px;
+  font-family: 'Segoe UI', sans-serif;
+  align-items: left;
+}
+
+.left-panel {
+  flex: 1.5;
+  padding: 20px;
+  border: 1px solid #e6c4c4;
+  border-radius: 6px;
+  text-align: center;
+  color: #c06;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  background-color: #eee;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+}
+
+.left-panel h3 {
+  margin: 10px 0;
+  font-size: 20px;
+}
+
+.right-panel {
+  flex: 1;
+  border: 1px solid #e6c4c4;
+  padding: 20px;
+  border-radius: 6px;
+  color: #c06;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.action-grid button {
+  padding: 10px;
+  border: 1px solid #c06;
+  border-radius: 4px;
+  background: none;
+  color: #c06;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.settings-list {
+  margin-top: 15px;
+  list-style: none;
+  padding: 0;
+}
+
+.settings-list li {
+  border: 1px solid #c06;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* -------------------------------------------------------------------- */
+
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-form {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-form h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.modal-form input {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  width: 100%;
+}
+
+.submit-btn {
+  background-color: #16a34a;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.submit-btn:hover {
+  background-color: #15803d;
+}
+
+.cancel-btn {
+  background-color: #e11d48;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: 0.3s;
+}
+.cancel-btn:hover {
+  background-color: #be123c;
+}
+
+@keyframes fadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.45);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Two items per row */
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.wishlist-card {
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}

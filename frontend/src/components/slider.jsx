@@ -1,31 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/slider.css';
 
-const Carousel = () => {
-  const [images, setImages] = useState([]);
+const Slider = ({ images = [], fetchUrl, interval = 3000 }) => {
+  const [slides, setSlides] = useState(images);
   const [index, setIndex] = useState(0);
 
-  useEffect(() => {
-    fetch('http://localhost:8000/api/homepage')
+useEffect(() => {
+  if (fetchUrl) {
+    fetch(fetchUrl)
       .then((res) => res.json())
       .then((data) => {
-        // Laravel returns 'sliders' array with image paths
-        const sliderImages = data.sliders.map(slider =>
-          `http://localhost:8000/storage/${slider.image}`
+        const fetchedImages = data.sliders?.map(slider => 
+          `http://localhost:8000${slider.image_url}`
         );
-        setImages(sliderImages);
+        setSlides(fetchedImages || []);
       })
-      .catch((err) => console.error('Failed to fetch slider images', err));
-  }, []);
+      .catch((err) => {
+        console.error('Failed to fetch slider images', err);
+      });
+  }
+}, [fetchUrl]);
+
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex(prev => (prev + 1) % images.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [images]);
+    if (slides.length === 0) return;
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % slides.length);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [slides, interval]);
 
-  if (images.length === 0) return <p>Loading...</p>;
+  if (!slides.length) return <p>Loading carousel...</p>;
 
   return (
     <div className="carousel-container">
@@ -33,17 +38,17 @@ const Carousel = () => {
         className="carousel-track"
         style={{ transform: `translateX(-${index * 100}vw)` }}
       >
-        {images.map((src, i) => (
+        {slides.map((src, i) => (
           <div key={i} className="carousel-slide">
             <img src={src} alt={`Slide ${i + 1}`} className="carousel-image" />
           </div>
         ))}
       </div>
       <div className="carousel-dots">
-        {images.map((_, i) => (
+        {slides.map((_, i) => (
           <div
             key={i}
-            className={`dot ${i === index ? '' : 'opacity-50'}`}
+            className={`dot ${i === index ? 'active' : ''}`}
           ></div>
         ))}
       </div>
@@ -51,4 +56,4 @@ const Carousel = () => {
   );
 };
 
-export default Carousel;
+export default Slider;

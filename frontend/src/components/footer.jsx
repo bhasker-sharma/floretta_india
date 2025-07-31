@@ -1,4 +1,3 @@
-import React from 'react';
 import '../styles/footer.css';
 
 function Footer() {
@@ -9,10 +8,10 @@ function Footer() {
         <div className="footer-section">
           <h3>Quick Links</h3>
           <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">Career</a></li>
-            <li><a href="#">About us</a></li>
-            <li><a href="#">Contact Us</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/carrier">Career</a></li>
+            <li><a href="/aboutus">About us</a></li>
+            <li><a href="/contactus">Contact Us</a></li>
           </ul>
         </div>
 
@@ -29,15 +28,15 @@ function Footer() {
           <p className="newsletter-text">
             Floretta Stay connected for exclusive offers and latest updates, delivered straight to your inbox.
           </p>
-          <form className="newsletter-form">
+          <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
             <input type="email" placeholder="ENTER EMAIL ADDRESS" required />
             <button type="submit">SEND</button>
           </form>
           <p className="visit-us">VISIT US ON</p>
           <div className="social-icons">
-            <a href="#"><i className="fab fa-facebook"></i></a>
-            <a href="#"><i className="fab fa-instagram"></i></a>
-            <a href="#"><i className="fab fa-twitter"></i></a>
+            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-facebook"></i></a>
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-instagram"></i></a>
+            <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-twitter"></i></a>
           </div>
         </div>
 
@@ -45,10 +44,10 @@ function Footer() {
         <div className="footer-section">
           <h3>SUPPORT</h3>
           <ul>
-            <li><a href="#">Admin</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Refund & Return Policy</a></li>
-            <li><a href="#">Terms & Conditions</a></li>
+            <li><a href="/admin">Admin</a></li>
+            <li><a href="/privacy-policy">Privacy Policy</a></li>
+            <li><a href="/refund-policy">Refund & Return Policy</a></li>
+            <li><a href="/terms-and-conditions">Terms & Conditions</a></li>
           </ul>
         </div>
       </div>

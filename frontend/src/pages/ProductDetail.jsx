@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/navbar';
+import Footer from '../components/footer';
 import '../styles/products.css';
 
 const ProductDetail = () => {
@@ -194,9 +195,15 @@ const ProductDetail = () => {
           <p className="small-text"><a href="#">Secure transaction</a></p>
 
           <label htmlFor="quantity-select" className="small-text">Quantity:</label>
-          <select id="quantity-select" className="qty-select">
-            {[1, 2, 3, 4].map(q => <option key={q} value={q}>{q}</option>)}
-          </select>
+         <input
+            type="number"
+            id="quantity-select"
+            className="qty-select"
+            min={1}
+            max={4}
+            defaultValue={1}
+          />
+
 
           <button className="buy-btn">Add to Cart</button>
           <button className="buy-btn">Buy Now</button>
@@ -223,6 +230,7 @@ const ProductDetail = () => {
           </div>
         </div>
       )}
+      <Footer />
     </>
   );
 };

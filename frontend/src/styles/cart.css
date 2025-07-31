@@ -1,0 +1,243 @@
+.cart-page {
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #fff;
+  color: #8c2c3a;
+}
+
+.cart-heading {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #8c2c3a;
+}
+
+.cart-wrapper {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.cart-left {
+  flex: 2;
+}
+
+.cart-right {
+  flex: 1;
+  background-color: #a84353;
+  padding: 1.5rem;
+  color: #fff;
+  border-radius: 8px;
+  min-width: 300px;
+}
+
+.cart-item {
+  display: flex;
+  gap: 1rem;
+  background-color: #fef6f6;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.cart-item img {
+  width: 220px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.price {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.original {
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.save {
+  background-color: #a84353;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  width: fit-content;
+  border-radius: 3px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.qty-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.qty-btn {
+  background-color: #a84353;
+  color: white;
+  border: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.remove {
+  background-color: #a84353;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.place-order-wide {
+  margin-top: 1rem;
+  background-color: #a84353;
+  color: white;
+  padding: 0.6rem 2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  float: right;
+}
+
+.promo-code {
+  margin-bottom: 1rem;
+}
+
+.promo-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.promo-input input {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: none;
+}
+
+.promo-input button {
+  background-color: #fff;
+  color: #a84353;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.price-box h3 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.3rem 0;
+}
+
+.price-row.total {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+.saved-note {
+  font-size: 0.9rem;
+  color: #fbd9d9;
+  margin-top: 0.5rem;
+}
+
+.place-order-btn {
+  margin-top: 1.5rem;
+  background-color: #fff;
+  color: #a84353;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+}
+
+
+.invoice-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.invoice-modal {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.invoice-content {
+  margin-top: 15px;
+}
+
+.invoice-item,
+.invoice-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.invoice-row.total {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.invoice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-btn,
+.pay-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #ccc;
+}
+
+.pay-btn {
+  background: #4caf50;
+  color: white;
+}
