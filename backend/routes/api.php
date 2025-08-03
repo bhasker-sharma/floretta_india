@@ -100,5 +100,10 @@ Route::middleware('auth:api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
-    // Route::post('/login', [AdminAuthController::class, 'login']);
+    Route::post('/login', [AdminAuthController::class, 'login']);
 });
+
+Route::prefix('admin')->group(function () {
+    Route::post('/logout', [AdminAuthController::class, 'logout']);
+});
+

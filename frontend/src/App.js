@@ -13,7 +13,8 @@ import Carrier from './pages/carrier';
 import Contact from './pages/contactus';
 import Profile from './pages/userprofile';
 import Wishlist from './pages/Wishlist';
-import PrivateRoute from './components/PrivateRoute'; // ✅ import
+import PrivateRoute from './components/PrivateRoute';
+import AdminLogin from './pages/adminlogin';
 
 const App = () => {
   return (
@@ -30,6 +31,8 @@ const App = () => {
         <Route path="/carrier" element={<Carrier />} />
         <Route path="/contactus" element={<Contact />} />
         <Route path="/login" element={<Userlogin />} />
+
+        <Route path="/admin" element={<AdminLogin />} />
 
         {/* 🔒 Protected Routes */}
         <Route
@@ -49,13 +52,13 @@ const App = () => {
           }
         />
         <Route
-  path="/wishlist"
-  element={
-    <PrivateRoute>
-      <Wishlist />
-    </PrivateRoute>
-  }
-/>
+          path="/wishlist"
+          element={
+            <PrivateRoute>
+              <Wishlist />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );

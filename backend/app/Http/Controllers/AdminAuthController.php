@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\AdminAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +21,7 @@ class AdminAuthController extends Controller
             'password' => 'required',
         ]);
 
-        $admin = Admin::where('email', $request->email)->first();
+        $admin = AdminAuth::where('email', $request->email)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
             throw ValidationException::withMessages([
@@ -50,38 +51,4 @@ class AdminAuthController extends Controller
             'message' => 'Logout successful'
         ]);
     }
-
-    /**
-     * Get authenticated admin details
-     */
-    public function me(Request $request)
-    {
-        // For now, we'll implement a simple token verification
-        $token = $request->bearerToken();
-        
-        if (!$token) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        try {
-            $decoded = base64_decode($token);
-            $parts = explode(':', $decoded);
-            $adminId = $parts[0];
-            
-            $admin = Admin::find($adminId);
-            
-            if (!$admin) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
-
-            return response()->json([
-                'admin' => [
-                    'id' => $admin->id,
-                    'email' => $admin->email,
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-    }
-}
+ }
