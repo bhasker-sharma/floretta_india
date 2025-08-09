@@ -48,7 +48,6 @@ Route::get('/liveperfume', [LivePerfumeController::class, 'index']);
 Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
 Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes (JWT Protected via `auth:api`)

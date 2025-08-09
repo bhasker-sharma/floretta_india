@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Order;
 
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Log;
+
 
 class PaymentController extends Controller
 {
@@ -30,14 +32,52 @@ class PaymentController extends Controller
 
     public function verifyPayment(Request $request)
     {
-        $data = $request->only('razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature');
+        $data = $request->validate([
+            'razorpay_order_id' => 'required|string',
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_signature' => 'required|string',
+            'user_id' => 'required|integer|exists:users,id',
+            'customer_name' => 'nullable|string',
+            'customer_email' => 'nullable|email',
+            'customer_phone' => 'nullable|string',
+            'customer_address' => 'nullable|string',
+            'order_value' => 'nullable|numeric',
+            'order_quantity' => 'nullable|integer',
+            'order_items' => 'nullable|array',
+        ]);
+        $generatedSignature = hash_hmac(
+            'sha256',
+            $data['razorpay_order_id'].'|'.$data['razorpay_payment_id'],
+            env('RAZORPAY_SECRET')
+        );
 
-        $generatedSignature = hash_hmac('sha256', $data['razorpay_order_id'] . "|" . $data['razorpay_payment_id'], env('RAZORPAY_SECRET'));
-
-        if ($generatedSignature === $data['razorpay_signature']) {
-            return response()->json(['status' => 'success', 'message' => 'Payment verified']);
-        } else {
+        if (!hash_equals($generatedSignature, $data['razorpay_signature'])) {
             return response()->json(['status' => 'error', 'message' => 'Signature mismatch'], 400);
+        }
+            
+            try{
+            // Save order to DB
+            $order = Order::create([
+                'user_id' => $data['user_id'],
+                'razorpay_order_id' => $data['razorpay_order_id'],
+                'razorpay_payment_id' => $data['razorpay_payment_id'],
+                'status' => 'Paid',
+                'customer_name' => $data['customer_name'] ?? null,
+                'customer_email' => $data['customer_email'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_address' => $data['customer_address'] ?? null,
+                'order_value' => $data['order_value'] ?? null,
+                'order_quantity' => $data['order_quantity'] ?? null,
+                'order_items' => $data['order_items'] ?? null,
+            ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Payment verified',
+                'order_id' => $order->id
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Order insert failed', ['error' => $e->getMessage()]);
+            return response()->json(['status' => 'error', 'message' => 'Failed to save order'], 500);
         }
     }
 }

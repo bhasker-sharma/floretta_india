@@ -1,0 +1,90 @@
+.admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: #f4f6f8;
+}
+
+.admin-sidebar {
+    width: 220px;
+    background: #232946;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+}
+
+.admin-logo {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+}
+
+.admin-sidebar nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.admin-sidebar nav ul li {
+    padding: 16px 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.admin-sidebar nav ul li i {
+    margin-right: 12px;
+}
+
+.admin-sidebar nav ul li.active,
+.admin-sidebar nav ul li:hover {
+    background: #121629;
+}
+
+.admin-main {
+    flex: 1;
+    padding: 32px;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.admin-user {
+    margin-right: 16px;
+    font-weight: 500;
+}
+
+.admin-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.admin-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.orders-placeholder {
+    text-align: center;
+    color: #888;
+    margin-top: 32px;
+}
+
+.orders-illustration {
+    margin-top: 16px;
+    color: #232946;
+}

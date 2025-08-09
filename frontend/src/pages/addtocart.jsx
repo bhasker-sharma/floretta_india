@@ -11,6 +11,8 @@ const Cart = () => {
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -30,9 +32,10 @@ const Cart = () => {
           }
         });
 
-        const user = checkResponse.data.user;
+        const userData = checkResponse.data.user;
+        setUser(userData);// Store user data
 
-        if (!user || !user.name || !user.email) {
+        if (!userData || !userData.name || !userData.email) {
           alert('Please complete your profile to access the cart.');
           return navigate('/userprofile');
         }
@@ -148,30 +151,50 @@ const Cart = () => {
         }
       });
 
-      const { order_id, razorpay_key, amount, currency } = response.data;
+      const { order_id, key, amount, currency } = response.data;
 
       const options = {
-        key: razorpay_key,
+        key: key,
         amount,
         currency,
         name: "Floretta India",
         description: "Order Payment",
         order_id: order_id,
         handler: async function (response) {
-          try {
+              try {
+                if (!user) {
+                  alert('User information not available');
+                  return;
+                }
             await axios.post('http://localhost:8000/api/razorpay/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              user_id: user.id, 
+              customer_name: user.name,
+              customer_email: user.email,
+              customer_phone: user.mobile,
+              customer_address: user.address,
+              order_value: totalAmount,
+              order_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+              order_items: cartItems
             }, {
               headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',
               }
             });
-
-            alert("Payment Successful!");
+            
+          // Show success popup
+          setShowSuccessPopup(true);
+          // Clear cart after successful order
+          setCartItems([]);
+          // Automatically close popup and redirect after 3 seconds
+          setTimeout(() => {
+            setShowSuccessPopup(false);
             navigate('/thankyou');
+          },3000);
+
           } catch (err) {
             alert("Payment verification failed.");
           }
@@ -308,6 +331,17 @@ const Cart = () => {
               <button onClick={() => setShowInvoice(false)} className="cancel-btn">Cancel</button>
               <button onClick={() => { setShowInvoice(false); handlePlaceOrder(); }} className="pay-btn">Pay Now</button>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {showSuccessPopup && (
+        <div className="success-popup-backdrop">
+          <div className="success-popup">
+            <div className="success-icon">✓</div>
+            <h2>Order Placed Successfully!</h2>
+            <p>Thank you for shopping with us.</p>
+            <p>Your order has been confirmed.</p>
           </div>
         </div>
       )}

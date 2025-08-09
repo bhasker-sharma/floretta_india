@@ -14,7 +14,8 @@ import Contact from './pages/contactus';
 import Profile from './pages/userprofile';
 import Wishlist from './pages/Wishlist';
 import PrivateRoute from './components/PrivateRoute';
-import AdminLogin from './pages/adminlogin';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
         <Route path="/login" element={<Userlogin />} />
 
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* 🔒 Protected Routes */}
         <Route
