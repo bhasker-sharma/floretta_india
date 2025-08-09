@@ -161,39 +161,51 @@ const Cart = () => {
         description: "Order Payment",
         order_id: order_id,
         handler: async function (response) {
-              try {
-                if (!user) {
-                  alert('User information not available');
-                  return;
-                }
+          try {
+            if (!user) {
+              alert('User information not available');
+              return;
+            }
+            const minimalOrderItems = cartItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            }));
+
             await axios.post('http://localhost:8000/api/razorpay/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              user_id: user.id, 
+              user_id: user.id,
               customer_name: user.name,
               customer_email: user.email,
               customer_phone: user.mobile,
               customer_address: user.address,
               order_value: totalAmount,
               order_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-              order_items: cartItems
+              order_items: minimalOrderItems
             }, {
               headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',
               }
             });
-            
-          // Show success popup
-          setShowSuccessPopup(true);
-          // Clear cart after successful order
-          setCartItems([]);
-          // Automatically close popup and redirect after 3 seconds
-          setTimeout(() => {
-            setShowSuccessPopup(false);
-            navigate('/thankyou');
-          },3000);
+            // Clear cart in backend
+            await axios.delete('http://localhost:8000/api/cart/clear', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+              }
+            });
+            // Show success popup
+            setShowSuccessPopup(true);
+            // Clear cart after successful order
+            setCartItems([]);
+            // Automatically close popup and redirect after 3 seconds
+            setTimeout(() => {
+              setShowSuccessPopup(false);
+            }, 3000);
 
           } catch (err) {
             alert("Payment verification failed.");
@@ -334,7 +346,7 @@ const Cart = () => {
           </div>
         </div>
       )}
-      
+
       {showSuccessPopup && (
         <div className="success-popup-backdrop">
           <div className="success-popup">

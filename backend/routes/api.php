@@ -74,7 +74,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/clear', [CartController::class, 'clearCart']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
     //  ===payment ======
     Route::post('/razorpay/create-order', [PaymentController::class, 'createOrder']);
     Route::post('/razorpay/verify', [PaymentController::class, 'verifyPayment']);

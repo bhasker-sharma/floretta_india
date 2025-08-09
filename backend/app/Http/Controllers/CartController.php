@@ -94,7 +94,17 @@ class CartController extends Controller
 
         return response()->json(['cart' => $cartItems]);
     }
+    public function clearCart(Request $request)
+    {
+        $userId = auth()->id();
+        if (!$userId) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
+        \App\Models\Cart::where('user_id', $userId)->delete();
+
+        return response()->json(['message' => 'Cart cleared']);
+    }
     /**
      * Remove an item from the cart.
      */

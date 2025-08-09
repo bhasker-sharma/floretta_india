@@ -3,7 +3,7 @@
 return [
 
     // ... your existing config (no change required above) ...
-
+    'timezone' => 'Asia/Kolkata',
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
