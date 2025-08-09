@@ -287,3 +287,39 @@
     opacity: 1;
   }
 }
+
+.address-popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.address-popup {
+  background: #fff;
+  padding: 32px 24px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+}
+
+.address-popup h2 {
+  margin-bottom: 12px;
+  color: #f37254;
+}
+.address-popup .close-btn {
+  margin-top: 16px;
+  background: #f37254;
+  color: #fff;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 5px;
+  cursor: pointer;
+}

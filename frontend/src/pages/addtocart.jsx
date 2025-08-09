@@ -13,6 +13,7 @@ const Cart = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [user, setUser] = useState(null);
+  const [showAddressPopup, setShowAddressPopup] = useState(false);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -140,7 +141,14 @@ const Cart = () => {
       alert("Razorpay SDK failed to load.");
       return;
     }
-
+    if (!user?.address || user.address.trim().length < 5) {
+      setShowAddressPopup(true);
+      return;
+    }
+    if (!user?.mobile || user.mobile.trim().length < 10) {
+      alert("Please enter a valid mobile number in your profile before placing an order.");
+      return;
+    }
     try {
       const response = await axios.post('http://localhost:8000/api/razorpay/create-order', {
         amount: totalAmount
@@ -357,7 +365,18 @@ const Cart = () => {
           </div>
         </div>
       )}
-
+      
+    {showAddressPopup && (
+      <div className="address-popup-backdrop">
+        <div className="address-popup">
+          <h2>Address Required</h2>
+          <p>Please add your address in your profile before placing an order.</p>
+          <button className="close-btn" onClick={() => setShowAddressPopup(false)}>
+            Close
+          </button>
+        </div>
+      </div>
+    )}
       <Footer />
     </>
   );

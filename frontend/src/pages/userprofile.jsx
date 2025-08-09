@@ -15,6 +15,7 @@ function UserProfile() {
   const [newAddress, setNewAddress] = useState({ address: '', city: '', pin: '' });
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState('');
+  const [showNoAddressPopup, setShowNoAddressPopup] = useState(!selectedAddress);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -24,7 +25,6 @@ function UserProfile() {
       navigate('/login');
       return;
     }
-
     axios
       .get('http://localhost:8000/api/me', {
         headers: { Authorization: `Bearer ${token}` },
@@ -51,6 +51,11 @@ function UserProfile() {
       });
   }, [navigate, token]);
 
+  useEffect(() => {
+    setShowNoAddressPopup(!selectedAddress);
+  }, [selectedAddress]);
+
+
   // Optional: persist selected address to localStorage
   // useEffect(() => {
   //   if (selectedAddress) {
@@ -72,6 +77,10 @@ function UserProfile() {
     setNewAddress((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
   const handleAddNewAddress = () => {
     for (let i = 1; i <= 5; i++) {
       const key = `address${i}`;
@@ -113,6 +122,10 @@ function UserProfile() {
       setUser(updatedUser);
       setFormData(updatedUser);
       setEditMode(false);
+      // Set selectedAddress to the updated main address
+      if (updatedUser.address) {
+        setSelectedAddress(updatedUser.address);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile.');
     } finally {
@@ -141,7 +154,19 @@ function UserProfile() {
             <p>📞 {user.mobile}</p>
             {/* <p>🧾 {user.pin}</p>
             <p>🏙️ {user.city}</p> */}
-            <p>📍 {selectedAddress || 'No address selected'}</p>
+            {selectedAddress ? (
+              <p>📍 {selectedAddress}</p>
+            ) : (
+              showNoAddressPopup && (
+                <div className="no-address-popup-backdrop">
+                  <div className="no-address-popup">
+                    <h3>No Address Selected</h3>
+                    <p>Please add or select an address to proceed with your orders.</p>
+                    <button onClick={() => setShowNoAddressPopup(false)} className="submit-btn">Close</button>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </div>
 
@@ -157,6 +182,7 @@ function UserProfile() {
           <ul className="settings-list">
             <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
             <li onClick={() => setShowSavedAddresses(true)}>📍 Saved Addresses</li>
+            <li onClick={handleLogout} className="logout-btn">🚪 Logout</li>
           </ul>
         </div>
       </div>
@@ -209,6 +235,20 @@ function UserProfile() {
         <div className="modal-backdrop">
           <div className="modal-form">
             <h2>Saved Addresses</h2>
+            {user.address && (
+              <div className="saved-address-box">
+                <p><strong>Primary Address:</strong> {user.address}</p>
+                <button
+                  onClick={() => {
+                    setSelectedAddress(user.address);
+                    setShowSavedAddresses(false);
+                  }}
+                  className="submit-btn"
+                >
+                  Use this Address
+                </button>
+              </div>
+            )}
             {[1, 2, 3, 4, 5].map((i) => {
               const addr = user[`address${i}`];
               return addr ? (
