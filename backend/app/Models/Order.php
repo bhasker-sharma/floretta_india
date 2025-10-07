@@ -8,6 +8,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id',
+        'order_number',
         'razorpay_order_id',
         'razorpay_payment_id',
         'status',

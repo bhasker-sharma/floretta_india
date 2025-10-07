@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Order;
-
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Log;
@@ -16,9 +16,9 @@ class PaymentController extends Controller
 
         $receipt = 'rcpt_' . uniqid();
         $order = $api->order->create([
-            'receipt'         => $receipt,
-            'amount'          => $request->amount * 100, // INR to paise
-            'currency'        => 'INR',
+            'receipt' => $receipt,
+            'amount' => $request->amount * 100, // INR to paise
+            'currency' => 'INR',
             'payment_capture' => 1
         ]);
 
@@ -56,9 +56,13 @@ class PaymentController extends Controller
         }
             
             try{
-            // Save order to DB
+                $today = Carbon::now()->format('Ymd');
+                $countToday = Order::whereDate('created_at', Carbon::today())->count() + 1;
+                $orderNumber = 'ORD' . $today . str_pad($countToday, 5, '0', STR_PAD_LEFT);
+             // Save order to DB
             $order = Order::create([
                 'user_id' => $data['user_id'],
+                'order_number' => $orderNumber,
                 'razorpay_order_id' => $data['razorpay_order_id'],
                 'razorpay_payment_id' => $data['razorpay_payment_id'],
                 'status' => 'Paid',
@@ -73,11 +77,20 @@ class PaymentController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Payment verified',
-                'order_id' => $order->id
+                'order_id' => $order->id,
+                'order_number' => $orderNumber
             ]);
         } catch (\Throwable $e) {
             Log::error('Order insert failed', ['error' => $e->getMessage()]);
             return response()->json(['status' => 'error', 'message' => 'Failed to save order'], 500);
         }
+    }
+    public function myOrders(Request $request)
+    {
+        $userId = auth()->id();
+        $orders = Order::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return response()->json($orders);
     }
 }

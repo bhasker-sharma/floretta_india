@@ -65,6 +65,7 @@
   margin-bottom: 10px;
   cursor: pointer;
 }
+
 /* -------------------------------------------------------------------- */
 
 
@@ -111,6 +112,7 @@
   font-weight: 500;
   transition: 0.3s;
 }
+
 .submit-btn:hover {
   background-color: #15803d;
 }
@@ -123,6 +125,7 @@
   font-weight: 500;
   transition: 0.3s;
 }
+
 .cancel-btn:hover {
   background-color: #be123c;
 }
@@ -131,6 +134,7 @@
   from {
     background: rgba(0, 0, 0, 0);
   }
+
   to {
     background: rgba(0, 0, 0, 0.45);
   }
@@ -141,6 +145,7 @@
     transform: translateY(30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -149,7 +154,8 @@
 
 .wishlist-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Two items per row */
+  grid-template-columns: repeat(2, 1fr);
+  /* Two items per row */
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -159,4 +165,78 @@
   padding: 1rem;
   border-radius: 8px;
   text-align: center;
+}
+
+.orders-modal {
+  max-width: 800px;
+  width: 95%;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin-bottom: 8px;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #555;
+}
+
+.order-products {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.order-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f8f8;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.order-product-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.product-name {
+  font-weight: 500;
+}
+
+.order-info {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.order-total {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f37254;
+  text-align: right;
+}
+
+.order-id {
+  color: #f37254;
 }

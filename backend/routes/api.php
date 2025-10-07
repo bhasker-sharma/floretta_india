@@ -11,6 +11,7 @@ use App\Http\Controllers\HotelAmenitiesController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
+use Faker\Provider\ar_EG\Payment;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,7 @@ Route::middleware('auth:api')->group(function () {
     //  ===payment ======
     Route::post('/razorpay/create-order', [PaymentController::class, 'createOrder']);
     Route::post('/razorpay/verify', [PaymentController::class, 'verifyPayment']);
+    Route::get('/my-orders', [PaymentController::class, 'myOrders']);
     // routes/api.php
     Route::middleware('auth:api')->post('/create-order', [PaymentController::class, 'createOrder']);
 

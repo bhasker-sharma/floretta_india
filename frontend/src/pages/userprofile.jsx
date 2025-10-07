@@ -16,6 +16,9 @@ function UserProfile() {
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState('');
   const [showNoAddressPopup, setShowNoAddressPopup] = useState(!selectedAddress);
+  const [orders, setOrders] = useState([]);
+  const [showOrders, setShowOrders] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -36,10 +39,6 @@ function UserProfile() {
         // Default to address1 if available
         const defaultAddr = res.data.address1 || res.data.address || '';
         setSelectedAddress(defaultAddr);
-
-        // Optional: restore from localStorage
-        // const storedAddr = localStorage.getItem('selectedAddress');
-        // if (storedAddr) setSelectedAddress(storedAddr);
       })
       .catch((err) => {
         if (err.response?.status === 401) {
@@ -55,6 +54,17 @@ function UserProfile() {
     setShowNoAddressPopup(!selectedAddress);
   }, [selectedAddress]);
 
+  useEffect(() => {
+    if (showOrders) {
+      setOrdersLoading(true);
+      axios.get('http://localhost:8000/api/my-orders', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => setOrders(res.data))
+      .catch(() => setOrders([]))
+      .finally(() => setOrdersLoading(false));
+    }
+  }, [showOrders, token]);
 
   // Optional: persist selected address to localStorage
   // useEffect(() => {
@@ -172,7 +182,7 @@ function UserProfile() {
 
         <div className="right-panel">
           <div className="action-grid">
-            <button>🛍️ Orders</button>
+            <button onClick={() => setShowOrders(true)}>🛍️ Orders</button>
             <button onClick={() => navigate('/wishlist')}>❤️ Wishlist</button>
             <button>🏷️ Coupons</button>
             <button>🆘 Help Centre</button>
@@ -272,6 +282,61 @@ function UserProfile() {
           </div>
         </div>
       )}
+
+    {/* Orders Modal */}
+    {showOrders && (
+      <div className="modal-backdrop">
+        <div className="modal-form orders-modal">
+          <h2>My Orders</h2>
+          {ordersLoading ? (
+            <p>Loading orders...</p>
+          ) : orders.length === 0 ? (
+            <p>No orders found.</p>
+          ) : (
+            <div className="orders-list">
+              {orders.map(order => (
+                <div key={order.id} className="order-card">
+                  <div className="order-header">
+                    <span className="order-id">Order ID: <b>{order.order_number}</b></span>
+                    <span className="order-date">{new Date(order.created_at).toLocaleString()}</span>
+                  </div>
+                  <div className="order-products">
+                    {order.order_items && order.order_items.map((item, idx) => (
+                      <div key={idx} className="order-product">
+                        <img
+                          src={
+                            item.image
+                              ? `http://localhost:8000/storage/${item.image}`
+                              : '/fallback.jpg'
+                          }
+                          alt={item.name}
+                          className="order-product-img"
+                          onError={e => (e.target.src = '/fallback.jpg')}
+                        />
+                        <div>
+                          <div className="product-name">{item.name}</div>
+                          <div>Qty: {item.quantity}</div>
+                          <div>Price: ₹{item.price}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="order-info">
+                    <div><b>Name:</b> {order.customer_name}</div>
+                    <div><b>Phone:</b> {order.customer_phone}</div>
+                    <div><b>Address:</b> {order.customer_address}</div>
+                  </div>
+                  <div className="order-total">
+                    <b>Total:</b> ₹{order.order_value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={() => setShowOrders(false)} className="cancel-btn" style={{marginTop: 16}}>Close</button>
+        </div>
+      </div>
+    )}
     </>
   );
 }
