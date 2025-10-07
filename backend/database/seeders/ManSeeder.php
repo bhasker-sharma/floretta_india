@@ -8,7 +8,13 @@ class ManSeeder extends Seeder
 {
     public function run(): void
     {
-        Man::create(['name' => 'John Doe', 'email' => 'john@example.com']);
-        Man::create(['name' => 'Jane Smith', 'email' => 'jane@example.com']);
+        Man::firstOrCreate(
+            ['email' => 'john@example.com'],
+            ['name' => 'John Doe']
+        );
+        Man::firstOrCreate(
+            ['email' => 'jane@example.com'],
+            ['name' => 'Jane Smith']
+        );
     }
 }
