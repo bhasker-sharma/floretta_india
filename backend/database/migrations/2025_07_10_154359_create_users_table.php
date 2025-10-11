@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id(); // Auto-increment ID
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('google_id')->nullable(); // Google OAuth ID
             $table->string('password');
             $table->string('mobile')->nullable();
             $table->text('address')->nullable();

@@ -16,6 +16,7 @@ import Wishlist from './pages/Wishlist';
 import PrivateRoute from './components/PrivateRoute';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AuthCallback from './pages/AuthCallback';
 
 const App = () => {
   return (
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/carrier" element={<Carrier />} />
         <Route path="/contactus" element={<Contact />} />
         <Route path="/login" element={<Userlogin />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />

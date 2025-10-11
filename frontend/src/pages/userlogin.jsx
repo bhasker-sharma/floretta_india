@@ -86,7 +86,7 @@ const LoginForm = () => {
 
       <div className="or-separator"><span>OR</span></div>
 
-      <button className="social-btn google" onClick={() => alert("Google login not implemented yet")}>
+      <button className="social-btn google" onClick={() => window.location.href = 'http://localhost:8000/api/auth/google/redirect'}>
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google logo" />
         Sign in with Google
       </button>

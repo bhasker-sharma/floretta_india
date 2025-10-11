@@ -11,6 +11,7 @@ use App\Http\Controllers\HotelAmenitiesController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Auth\GoogleController;
 use Faker\Provider\ar_EG\Payment;
 
 /*
@@ -22,6 +23,10 @@ use Faker\Provider\ar_EG\Payment;
 // 🌐 User Auth
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
+
+// 🌐 Google OAuth
+Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
+Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
 
 // 🧍‍♂️ Public User Access
 Route::get('/users', [UserController::class, 'index']);

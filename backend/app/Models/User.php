@@ -27,6 +27,7 @@ protected $fillable = [
     'pin',
     'city',
     'image',
+    'google_id',
 ];
 
 
