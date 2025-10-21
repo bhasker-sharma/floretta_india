@@ -113,5 +113,6 @@ Route::prefix('admin')->group(function () {
 
 Route::prefix('admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
+    Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
 });
 

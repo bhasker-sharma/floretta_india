@@ -85,12 +85,31 @@ class PaymentController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Failed to save order'], 500);
         }
     }
-    public function myOrders(Request $request)
+    public function myOrders()
     {
-        $userId = auth()->id();
+        $userId = auth('api')->id();
         $orders = Order::where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Enrich order items with product images
+        $orders->each(function ($order) {
+            if ($order->order_items && is_array($order->order_items)) {
+                $enrichedItems = [];
+                foreach ($order->order_items as $item) {
+                    if (isset($item['id'])) {
+                        $product = \App\Models\productpage\Product::find($item['id']);
+                        if ($product) {
+                            // Use the image field (not image_path)
+                            $item['image'] = $product->image ?? null;
+                        }
+                    }
+                    $enrichedItems[] = $item;
+                }
+                $order->order_items = $enrichedItems;
+            }
+        });
+
         return response()->json($orders);
     }
 }

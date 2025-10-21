@@ -19,6 +19,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+}
+
+.logo-container > div {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  pointer-events: none;
 }
 
 .logo {
@@ -32,6 +40,7 @@
   color: #da3e4b;
   line-height: 1;
   margin-bottom: 2px;
+  user-select: none;
 }
 
 .subtext {
@@ -39,6 +48,7 @@
   color: #da3e4b;
   letter-spacing: 1px;
   text-transform: uppercase;
+  user-select: none;
 }
 
 /* Default nav - hidden for small screens */

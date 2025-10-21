@@ -52,7 +52,7 @@ function HotelAmenities() {
   return (
     <>
       <Navbar />
-      <Slider />
+      <Slider fetchUrl="http://localhost:8000/api/homepage" interval={4000} />
 
       {/* Room Freshener Section */}
       <div className="rfv-container">

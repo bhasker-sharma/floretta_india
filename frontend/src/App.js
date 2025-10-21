@@ -36,6 +36,7 @@ const App = () => {
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* 🔒 Protected Routes */}

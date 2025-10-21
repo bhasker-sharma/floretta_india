@@ -24,4 +24,9 @@ class Order extends Model
         'order_items' => 'array',
         'order_value' => 'decimal:2',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 }

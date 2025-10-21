@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
     const navigate = useNavigate();
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch all orders
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                if (!token) {
+                    navigate('/admin/login');
+                    return;
+                }
+
+                const response = await axios.get('http://localhost:8000/api/admin/orders', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                setOrders(response.data.orders || []);
+                setLoading(false);
+            } catch (err) {
+                console.error('Error fetching orders:', err);
+                setLoading(false);
+                setError('Failed to load orders. Please try again.');
+            }
+        };
+
+        fetchOrders();
+    }, [navigate]);
 
     // Define the logout function
     const handleLogout = async () => {
@@ -61,13 +92,83 @@ function AdminDashboard() {
 
                 {/* Orders Section */}
                 <section className="admin-section">
-                    <h2>Orders</h2>
-                    <div className="orders-placeholder">
-                        <p>Order management and details will appear here.</p>
-                        <div className="orders-illustration">
-                            <i className="fas fa-box-open fa-3x"></i>
+                    <h2>All Orders ({orders.length})</h2>
+
+                    {loading ? (
+                        <div className="loading-spinner">
+                            <p>Loading orders...</p>
                         </div>
-                    </div>
+                    ) : error ? (
+                        <div className="error-message">
+                            <p>{error}</p>
+                        </div>
+                    ) : orders.length === 0 ? (
+                        <div className="orders-placeholder">
+                            <p>No orders found.</p>
+                            <div className="orders-illustration">
+                                <i className="fas fa-box-open fa-3x"></i>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="orders-table-container">
+                            <table className="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order Number</th>
+                                        <th>Customer Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Address</th>
+                                        <th>Items</th>
+                                        <th>Quantity</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {orders.map((order) => (
+                                        <tr key={order.id}>
+                                            <td className="order-number">{order.order_number}</td>
+                                            <td>{order.customer_name || 'N/A'}</td>
+                                            <td>{order.customer_email || 'N/A'}</td>
+                                            <td>{order.customer_phone || 'N/A'}</td>
+                                            <td className="order-address">{order.customer_address || 'N/A'}</td>
+                                            <td>
+                                                <div className="order-items-list">
+                                                    {order.order_items && order.order_items.map((item, idx) => (
+                                                        <div key={idx} className="order-item-with-image">
+                                                            {item.image && (
+                                                                <img
+                                                                    src={`http://localhost:8000/storage/${item.image}`}
+                                                                    alt={item.name || item.product_name}
+                                                                    className="order-item-image"
+                                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                                />
+                                                            )}
+                                                            <div className="order-item-details">
+                                                                <span className="item-name">{item.name || item.product_name}</span>
+                                                                <span className="item-quantity">Qty: {item.quantity}</span>
+                                                                <span className="item-price">₹{parseFloat(item.price || 0).toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td>{order.order_quantity || 0}</td>
+                                            <td className="order-total">₹{parseFloat(order.order_value || 0).toFixed(2)}</td>
+                                            <td>
+                                                <span className={`status-badge status-${order.status?.toLowerCase()}`}>
+                                                    {order.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                            <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </section>
             </main>
         </div>

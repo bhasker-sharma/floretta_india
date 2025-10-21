@@ -45,19 +45,44 @@ const Home = () => {
   const thumbnails = [featuredProduct?.image, ...(featuredProduct?.extra_images || []).slice(0, 3)].filter(Boolean);
 
   const handleAddToCart = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
     try {
       await axios.post('http://localhost:8000/api/cart', {
         product_id: featuredProduct.id,
         quantity: 1,
         type: featuredProduct.flag || 'perfume'
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
       });
       setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 3000); // Optional: reset button text
+      setTimeout(() => setAddedToCart(false), 3000);
     } catch (err) {
       console.error(err);
-      alert('Failed to add to cart');
+      if (err.response?.status === 401) {
+        alert('Please login to add items to cart');
+        navigate('/login');
+      } else {
+        alert('Failed to add to cart');
+      }
     }
   };
+
+  const handleShopNow = () => {
+    if (featuredProduct) {
+      navigate(`/product/${featuredProduct.id}`);
+    }
+  };
+  
 
   return (
     <>
@@ -133,7 +158,9 @@ const Home = () => {
               >
                 {addedToCart ? 'ADDED TO CART' : 'ADD TO CART'}
               </button>
-              <button className="pdp-shop-now-btn">SHOP NOW</button>
+              <button className="pdp-shop-now-btn" onClick={handleShopNow}>
+                SHOP NOW
+              </button>
             </div>
           </div>
         )}

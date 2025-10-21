@@ -175,7 +175,7 @@ const Cart = () => {
               return;
             }
             const minimalOrderItems = cartItems.map(item => ({
-              id: item.id,
+              id: item.product_id,  // Use product_id instead of cart id
               name: item.name,
               price: item.price,
               quantity: item.quantity

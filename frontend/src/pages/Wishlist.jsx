@@ -32,6 +32,20 @@ const Wishlist = () => {
     navigate(`/product/${product.id}`);
   };
 
+  const handleRemoveFromWishlist = async (productId) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/wishlist/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update the UI by removing the item from the list
+      setWishlistItems(wishlistItems.filter(item => item.product_id !== productId));
+    } catch (err) {
+      console.error('Error removing from wishlist:', err.response?.data || err.message);
+      alert('Could not remove item from wishlist.');
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -46,11 +60,22 @@ const Wishlist = () => {
               if (!product) return null;
 
               return (
-                <ProductCard
-                  key={product.id}
-                  item={product}
-                  onClick={() => handleProductClick(product)}
-                />
+                <div key={product.id} style={{ position: 'relative' }}>
+                  <ProductCard
+                    item={product}
+                    onClick={() => handleProductClick(product)}
+                  />
+                  <button
+                    className="wishlist-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFromWishlist(item.product_id);
+                    }}
+                    title="Remove from wishlist"
+                  >
+                    ✕
+                  </button>
+                </div>
               );
             })
           )}
