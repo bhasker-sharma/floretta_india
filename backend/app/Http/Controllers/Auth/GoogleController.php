@@ -20,7 +20,11 @@ class GoogleController extends Controller
     public function callback(Request $request)
     {
         try {
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            // For local development - disable SSL verification
+            $googleUser = Socialite::driver('google')
+                ->stateless()
+                ->setHttpClient(new \GuzzleHttp\Client(['verify' => false]))
+                ->user();
 
             // Find user by email or google_id
             $user = User::where('email', $googleUser->getEmail())
@@ -52,8 +56,13 @@ class GoogleController extends Controller
             return redirect($frontendUrl . '/auth/callback?token=' . $token . '&user=' . urlencode(json_encode($user)));
 
         } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Google OAuth Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-            return redirect($frontendUrl . '/userlogin?error=google_login_failed');
+            $errorMessage = urlencode($e->getMessage());
+            return redirect($frontendUrl . '/userlogin?error=google_login_failed&message=' . $errorMessage);
         }
     }
 }

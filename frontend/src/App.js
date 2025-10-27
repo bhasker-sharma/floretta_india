@@ -33,6 +33,7 @@ const App = () => {
         <Route path="/carrier" element={<Carrier />} />
         <Route path="/contactus" element={<Contact />} />
         <Route path="/login" element={<Userlogin />} />
+        <Route path="/userlogin" element={<Userlogin />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route path="/admin" element={<AdminLogin />} />

@@ -9,9 +9,12 @@ const AuthCallback = () => {
     const token = searchParams.get('token');
     const userString = searchParams.get('user');
     const error = searchParams.get('error');
+    const message = searchParams.get('message');
 
     if (error) {
-      alert('Google login failed. Please try again.');
+      const errorMsg = message ? decodeURIComponent(message) : 'Google login failed. Please try again.';
+      console.error('Google OAuth Error:', errorMsg);
+      alert('Google login failed: ' + errorMsg);
       navigate('/userlogin');
       return;
     }
