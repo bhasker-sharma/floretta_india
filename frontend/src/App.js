@@ -17,6 +17,9 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyOTP from './pages/VerifyOTP';
+import ResetPassword from './pages/ResetPassword';
 
 const App = () => {
   return (
@@ -35,6 +38,11 @@ const App = () => {
         <Route path="/login" element={<Userlogin />} />
         <Route path="/userlogin" element={<Userlogin />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+
+        {/* Password Reset Routes */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />

@@ -276,9 +276,9 @@ function UserProfile() {
             <body>
                 <div class="invoice-header">
                     <h1>FLORETTA INDIA</h1>
-                    <p>ADDRESS</p>
                     <p>Premium Fragrances & Amenities</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Invoice</p>
+                    <p style="font-size: 11px; margin-top: 10px;"><strong>GST No:</strong> 05ANWPK8158L1Z4</p>
+                    <p style="font-size: 14px; margin-top: 15px; font-weight: bold;">INVOICE</p>
                 </div>
 
                 <div class="invoice-details">
@@ -369,9 +369,14 @@ function UserProfile() {
                 </div>
 
                 <div class="invoice-footer">
-                    <p>Thank you for your business!</p>
-                    <p>For any queries, please contact us at support@floretta.com</p>
-                    <p style="margin-top: 20px;">This is a computer-generated invoice and does not require a signature.</p>
+                    <p><strong>Floretta India</strong></p>
+                    <p>Your Trusted Fragrance Partner</p>
+                    <p style="margin-top: 10px;"><strong>Address:</strong> Sarswati Puram Colony, Near Dikhshalya Institute</p>
+                    <p>Khankhal, Haridwar, Uttarakhand - 249408</p>
+                    <p style="margin-top: 10px;">Phone: +91 9639970148 | Email: florettaindia@gmail.com</p>
+                    <p>Website: www.florettaindia.com</p>
+                    <p style="margin-top: 15px;">Thank you for your business!</p>
+                    <p style="margin-top: 10px;">This is a computer-generated invoice and does not require a signature.</p>
                 </div>
 
                 <div class="no-print" style="text-align: center; margin-top: 30px;">

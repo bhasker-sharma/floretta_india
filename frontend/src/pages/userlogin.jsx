@@ -99,6 +99,10 @@ const LoginForm = () => {
         />
       </form>
 
+      <div className="forgot-password-link">
+        <Link to="/forgot-password">Forgot Password?</Link>
+      </div>
+
       <div className="or-separator">
         <span>OR</span>
       </div>

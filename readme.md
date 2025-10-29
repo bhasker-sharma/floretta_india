@@ -51,27 +51,85 @@ floretta_india/
    composer install
    ```
 
-3. Copy the example environment file and configure your environment variables:
+3. Install additional required packages:
+
+   ```bash
+   # Install Laravel Socialite (for Google OAuth authentication)
+   composer require laravel/socialite
+
+   # Install Laravel DomPDF (for PDF invoice generation)
+   composer require barryvdh/laravel-dompdf --ignore-platform-reqs
+   ```
+
+   **Note:** The `--ignore-platform-reqs` flag is used for DomPDF to bypass platform version checks if needed.
+
+4. Publish DomPDF configuration (optional):
+
+   ```bash
+   php artisan vendor:publish --provider="Barryvdh\DomPDF\ServiceProvider"
+   ```
+
+5. Copy the example environment file and configure your environment variables:
 
    ```bash
    cp .env.example .env
    ```
 
-4. Update the `.env` file with your database credentials and other settings.
+6. Update the `.env` file with your database credentials and other settings:
 
-5. Generate the application key:
+   Required environment variables:
+   ```env
+   # Database
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=floretta
+   DB_USERNAME=root
+   DB_PASSWORD=
+
+   # Mail Configuration (Hostinger SMTP)
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.hostinger.com
+   MAIL_PORT=587
+   MAIL_USERNAME=your-email@yourdomain.com
+   MAIL_PASSWORD=your-password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=your-email@yourdomain.com
+   MAIL_FROM_NAME="Floretta India"
+
+   # Google OAuth (for social login)
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   GOOGLE_CLIENT_REDIRECT=http://localhost:8000/api/auth/google/callback
+
+   # Razorpay Payment Gateway
+   RAZORPAY_KEY=your-razorpay-key
+   RAZORPAY_SECRET=your-razorpay-secret
+
+   # JWT Secret (for authentication)
+   JWT_SECRET=your-jwt-secret
+   ```
+
+7. Generate the application key:
 
    ```bash
    php artisan key:generate
    ```
 
-6. Run database migrations and seeders:
+8. Run database migrations and seeders:
 
    ```bash
    php artisan migrate --seed
    ```
 
-7. Start the Laravel development server:
+9. Clear configuration and cache:
+
+   ```bash
+   php artisan config:clear
+   php artisan cache:clear
+   ```
+
+10. Start the Laravel development server:
 
    ```bash
    php artisan serve
@@ -100,6 +158,45 @@ floretta_india/
    ```
 
    The frontend app will be available at `http://localhost:3000`.
+
+## Key Features
+
+### User Features
+- **Product Catalog:** Browse perfumes, fresheners, and hotel amenities
+- **User Authentication:** Register, login, and Google OAuth integration
+- **Profile Management:** Update profile with GST number support
+- **Shopping Cart:** Add/remove items, update quantities
+- **Wishlist:** Save favorite products
+- **Checkout:** Secure payment via Razorpay
+- **Order History:** View past orders and download invoices
+- **Forget Password:** OTP-based password reset via email
+
+### Business Features
+- **GST Support:** Optional GST invoice generation for B2B customers
+- **Automated Invoicing:** Email invoices with PDF attachments on order completion
+- **Admin Dashboard:** Manage orders, view analytics, add admin users
+- **Role-Based Access:** Superadmin and admin roles with different permissions
+
+### Technical Features
+- **RESTful API:** Laravel backend with JWT authentication
+- **Email System:** SMTP integration with Hostinger
+- **PDF Generation:** DomPDF for professional invoice PDFs
+- **Social Login:** Google OAuth via Laravel Socialite
+- **Payment Gateway:** Razorpay integration
+- **Responsive Design:** Mobile-friendly frontend
+
+## Package Dependencies
+
+### Backend (Laravel)
+- **laravel/socialite** - Google OAuth authentication
+- **barryvdh/laravel-dompdf** - PDF invoice generation
+- **tymon/jwt-auth** - JWT authentication
+- **razorpay/razorpay** - Payment gateway integration
+
+### Frontend (React)
+- **react-router-dom** - Client-side routing
+- **axios** - HTTP client for API calls
+- **react** - UI framework
 
 ## Additional Notes
 

@@ -57,6 +57,24 @@ body {
   font-weight: bold;
 }
 
+.forgot-password-link {
+  text-align: right;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.forgot-password-link a {
+  color: #c06;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.forgot-password-link a:hover {
+  color: #a05;
+  text-decoration: underline;
+}
+
 .login-box input[type="email"],
 .login-box input[type="password"],
 .login-box input[type="submit"] {
