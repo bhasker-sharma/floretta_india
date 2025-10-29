@@ -86,18 +86,19 @@ class UserController extends Controller
         $user = JWTAuth::parseToken()->authenticate();
 
         $validator = Validator::make($request->all(), [
-            'name'      => 'sometimes|string|max:255',
-            'email'     => 'sometimes|email|unique:users,email,' . $user->id,
-            'mobile'    => 'sometimes|string|min:10',
-            'address'   => 'sometimes|string|max:255',
-            'address1'  => 'sometimes|string|max:255',
-            'address2'  => 'sometimes|string|max:255',
-            'address3'  => 'sometimes|string|max:255',
-            'address4'  => 'sometimes|string|max:255',
-            'address5'  => 'sometimes|string|max:255',
-            'pin'       => 'sometimes|string|max:10',
-            'city'      => 'sometimes|string|max:50',
-            'image'     => 'nullable|image|max:2048',
+            'name'       => 'sometimes|string|max:255',
+            'email'      => 'sometimes|email|unique:users,email,' . $user->id,
+            'mobile'     => 'sometimes|string|min:10',
+            'address'    => 'sometimes|string|max:255',
+            'address1'   => 'sometimes|string|max:255',
+            'address2'   => 'sometimes|string|max:255',
+            'address3'   => 'sometimes|string|max:255',
+            'address4'   => 'sometimes|string|max:255',
+            'address5'   => 'sometimes|string|max:255',
+            'pin'        => 'sometimes|string|max:10',
+            'city'       => 'sometimes|string|max:50',
+            'gst_number' => 'nullable|string|max:15',
+            'image'      => 'nullable|image|max:2048',
         ]);
 
         if ($validator->fails()) {

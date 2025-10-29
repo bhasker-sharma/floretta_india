@@ -44,6 +44,7 @@ class PaymentController extends Controller
             'order_value' => 'nullable|numeric',
             'order_quantity' => 'nullable|integer',
             'order_items' => 'nullable|array',
+            'include_gst' => 'nullable|boolean',
         ]);
         $generatedSignature = hash_hmac(
             'sha256',
@@ -73,6 +74,7 @@ class PaymentController extends Controller
                 'order_value' => $data['order_value'] ?? null,
                 'order_quantity' => $data['order_quantity'] ?? null,
                 'order_items' => $data['order_items'] ?? null,
+                'include_gst' => $data['include_gst'] ?? false,
             ]);
             return response()->json([
                 'status' => 'success',

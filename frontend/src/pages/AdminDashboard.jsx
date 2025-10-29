@@ -19,6 +19,24 @@ function AdminDashboard() {
     const tableRef = React.useRef(null);
     const containerRef = React.useRef(null);
 
+    // Admin info state
+    const [adminInfo, setAdminInfo] = useState(null);
+
+    // Add Admin form state
+    const [newAdminEmail, setNewAdminEmail] = useState('');
+    const [newAdminPassword, setNewAdminPassword] = useState('');
+    const [adminFormLoading, setAdminFormLoading] = useState(false);
+    const [adminFormMessage, setAdminFormMessage] = useState('');
+    const [allAdmins, setAllAdmins] = useState([]);
+
+    // Load admin info from localStorage
+    useEffect(() => {
+        const storedAdminInfo = localStorage.getItem('adminInfo');
+        if (storedAdminInfo) {
+            setAdminInfo(JSON.parse(storedAdminInfo));
+        }
+    }, []);
+
     // Fetch all orders
     useEffect(() => {
         const fetchOrders = async () => {
@@ -48,6 +66,30 @@ function AdminDashboard() {
 
         fetchOrders();
     }, [navigate]);
+
+    // Fetch all admins for superadmin
+    useEffect(() => {
+        const fetchAdmins = async () => {
+            if (adminInfo?.role !== 'superadmin') return;
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await axios.get('http://localhost:8000/api/admin/all-admins', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.data.success) {
+                    setAllAdmins(response.data.admins);
+                }
+            } catch (err) {
+                console.error('Error fetching admins:', err);
+            }
+        };
+
+        fetchAdmins();
+    }, [adminInfo]);
 
     // Calculate minimum zoom to fit table in container
     useEffect(() => {
@@ -196,7 +238,7 @@ function AdminDashboard() {
                                 <td>${order.customer_name || 'N/A'}</td>
                                 <td>${order.customer_email || 'N/A'}</td>
                                 <td>${order.customer_phone || 'N/A'}</td>
-                                <td class="items">${order.order_items?.map(item => item.name || item.product_name).join(', ') || 'N/A'}</td>
+                                <td class="items">${order.order_items?.map((item, idx) => `${idx + 1}. ${item.name || item.product_name}`).join('<br>') || 'N/A'}</td>
                                 <td>${order.order_quantity || 0}</td>
                                 <td class="total">₹${parseFloat(order.order_value || 0).toFixed(2)}</td>
                                 <td>${order.status || 'Pending'}</td>
@@ -218,6 +260,255 @@ function AdminDashboard() {
             printWindow.close();
         }, 250);
         setShowExportMenu(false);
+    };
+
+    // Generate Invoice for individual order
+    const generateInvoice = (order) => {
+        const invoiceWindow = window.open('', '', 'height=800,width=600');
+
+        const invoiceHTML = `
+            <html>
+            <head>
+                <title>Invoice - ${order.order_number}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        padding: 40px;
+                        color: #333;
+                    }
+                    .invoice-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 3px solid #232946;
+                        padding-bottom: 20px;
+                    }
+                    .invoice-header h1 {
+                        color: #232946;
+                        margin: 0;
+                        font-size: 32px;
+                    }
+                    .invoice-header p {
+                        margin: 5px 0;
+                        color: #666;
+                    }
+                    .invoice-details {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .invoice-details div {
+                        flex: 1;
+                    }
+                    .invoice-details h3 {
+                        color: #232946;
+                        margin-bottom: 10px;
+                        font-size: 14px;
+                        text-transform: uppercase;
+                        border-bottom: 2px solid #eee;
+                        padding-bottom: 5px;
+                    }
+                    .invoice-details p {
+                        margin: 5px 0;
+                        font-size: 13px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    th {
+                        background-color: #232946;
+                        color: white;
+                        padding: 12px;
+                        text-align: left;
+                        font-size: 13px;
+                    }
+                    td {
+                        padding: 10px 12px;
+                        border-bottom: 1px solid #ddd;
+                        font-size: 13px;
+                    }
+                    tr:hover {
+                        background-color: #f9f9f9;
+                    }
+                    .total-section {
+                        text-align: right;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 2px solid #232946;
+                    }
+                    .total-section p {
+                        margin: 8px 0;
+                        font-size: 14px;
+                    }
+                    .total-section .grand-total {
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: #232946;
+                        margin-top: 15px;
+                    }
+                    .invoice-footer {
+                        text-align: center;
+                        margin-top: 50px;
+                        padding-top: 20px;
+                        border-top: 1px solid #ddd;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 4px 12px;
+                        border-radius: 12px;
+                        font-size: 11px;
+                        font-weight: bold;
+                    }
+                    .status-pending {
+                        background-color: #fff3cd;
+                        color: #856404;
+                    }
+                    .status-processing {
+                        background-color: #cfe2ff;
+                        color: #084298;
+                    }
+                    .status-completed {
+                        background-color: #d1e7dd;
+                        color: #0f5132;
+                    }
+                    .status-cancelled {
+                        background-color: #f8d7da;
+                        color: #842029;
+                    }
+                    @media print {
+                        body { padding: 20px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="invoice-header">
+                    <h1>FLORETTA INDIA</h1>
+                    <p>Premium Fragrances & Amenities</p>
+                    <p style="font-size: 12px; margin-top: 10px;">Invoice</p>
+                </div>
+
+                <div class="invoice-details">
+                    <div>
+                        <h3>Invoice Details</h3>
+                        <p><strong>Invoice #:</strong> ${order.order_number}</p>
+                        <p><strong>Order Date:</strong>
+                         ${new Date(order.created_at).toLocaleDateString()}<br />
+                         </p>
+                         <P>
+                         <strong>Order Time:</strong>
+                         ${new Date(order.created_at).toLocaleTimeString()}
+                         </P>
+                        <p><strong>Status:</strong> <span class="status-badge status-${order.status?.toLowerCase()}">${order.status || 'Pending'}</span></p>
+                    </div>
+                    <div>
+                        <h3>Customer Details</h3>
+                        <p><strong>Name:</strong> ${order.customer_name || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${order.customer_email || 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</p>
+                        <p><strong>Address:</strong> ${order.customer_address || 'N/A'}</p>
+                        ${order.include_gst && order.user?.gst_number ? `<p><strong>GST Number:</strong> ${order.user.gst_number}</p>` : ''}
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 60px; text-align: center;">S.No</th>
+                            <th>Item</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.order_items && order.order_items.map((item, idx) => `
+                            <tr>
+                                <td style="text-align: center;">${idx + 1}</td>
+                                <td>${item.name || item.product_name}</td>
+                                <td style="text-align: center;">${item.quantity}</td>
+                                <td style="text-align: right;">₹${parseFloat(item.price || 0).toFixed(2)}</td>
+                                <td style="text-align: right;">₹${(parseFloat(item.price || 0) * parseInt(item.quantity || 0)).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="total-section">
+                    <p><strong>Subtotal:</strong> ₹${parseFloat(order.order_value || 0).toFixed(2)}</p>
+                    <p><strong>Tax (0%):</strong> ₹0.00</p>
+                    <p><strong>Shipping:</strong> ₹0.00</p>
+                    <p class="grand-total">Grand Total: ₹${parseFloat(order.order_value || 0).toFixed(2)}</p>
+                </div>
+
+                <div class="invoice-footer">
+                    <p>Thank you for your business!</p>
+                    <p>For any queries, please contact us at support@floretta.com</p>
+                    <p style="margin-top: 20px;">This is a computer-generated invoice and does not require a signature.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 30px;">
+                    <button onclick="window.print()" style="padding: 10px 30px; background-color: #232946; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        Print Invoice
+                    </button>
+                    <button onclick="window.close()" style="padding: 10px 30px; background-color: #666; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px;">
+                        Close
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        invoiceWindow.document.write(invoiceHTML);
+        invoiceWindow.document.close();
+        invoiceWindow.focus();
+    };
+
+    // Handle creating a new admin
+    const handleCreateAdmin = async (e) => {
+        e.preventDefault();
+        setAdminFormLoading(true);
+        setAdminFormMessage('');
+
+        try {
+            const token = localStorage.getItem('adminToken');
+            const response = await axios.post('http://localhost:8000/api/admin/create-admin', {
+                email: newAdminEmail,
+                password: newAdminPassword,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                },
+            });
+
+            if (response.data.success) {
+                setAdminFormMessage('✓ Admin created successfully!');
+                setNewAdminEmail('');
+                setNewAdminPassword('');
+
+                // Refresh admin list
+                const adminsResponse = await axios.get('http://localhost:8000/api/admin/all-admins', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (adminsResponse.data.success) {
+                    setAllAdmins(adminsResponse.data.admins);
+                }
+
+                setTimeout(() => setAdminFormMessage(''), 5000);
+            }
+        } catch (error) {
+            console.error('Error creating admin:', error);
+            const errorMsg = error.response?.data?.message || 'Failed to create admin';
+            setAdminFormMessage('✗ ' + errorMsg);
+        } finally {
+            setAdminFormLoading(false);
+        }
     };
 
     // Define the logout function
@@ -297,6 +588,18 @@ function AdminDashboard() {
                             <i className="fas fa-chart-line"></i>
                             <span>Analytics</span>
                         </li>
+                        {adminInfo?.role === 'superadmin' && (
+                        <li
+                            className={activeSection === 'addUser' ? 'active' : ''}
+                            onClick={() => {
+                                setActiveSection('addUser');
+                                setSidebarOpen(false);
+                            }}
+                        >
+                            <i className="fas fa-user-plus"></i>
+                            <span>Add User</span>
+                        </li>
+                        )}
                         <li
                             className={activeSection === 'settings' ? 'active' : ''}
                             onClick={() => {
@@ -348,6 +651,7 @@ function AdminDashboard() {
                 </header>
 
                 {/* Orders Section */}
+                {activeSection === 'orders' && (
                 <section className="admin-section">
                     <h2 className="mobile-only">All Orders ({filteredOrders.length})</h2>
                     {/* Date Filter */}
@@ -452,8 +756,8 @@ function AdminDashboard() {
                                         <th>Quantity</th>
                                         <th>Total Amount</th>
                                         <th>Status</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
+                                        <th>Date & Time</th>
+                                        <th>Invoice</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -468,14 +772,14 @@ function AdminDashboard() {
                                                 <div className="order-items-list">
                                                     {order.order_items && order.order_items.map((item, idx) => (
                                                         <div key={idx} className="order-item-with-image">
-                                                            {item.image && (
+                                                            {/* {item.image && (
                                                                 <img
                                                                     src={`http://localhost:8000/storage/${item.image}`}
                                                                     alt={item.name || item.product_name}
                                                                     className="order-item-image"
                                                                     onError={(e) => { e.target.style.display = 'none'; }}
                                                                 />
-                                                            )}
+                                                            )} */}
                                                             <div className="order-item-details">
                                                                 <span className="item-name">{item.name || item.product_name}</span>
                                                                 <span className="item-quantity">Qty: {item.quantity}</span>
@@ -492,8 +796,19 @@ function AdminDashboard() {
                                                     {order.status || 'Pending'}
                                                 </span>
                                             </td>
-                                            <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                                            <td className="order-time">{new Date(order.created_at).toLocaleTimeString()}</td>
+                                            <td className="order-datetime">
+                                                {new Date(order.created_at).toLocaleDateString()}<br />
+                                                {new Date(order.created_at).toLocaleTimeString()}
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="invoice-btn"
+                                                    onClick={() => generateInvoice(order)}
+                                                    title="Generate Invoice"
+                                                >
+                                                    📄 Invoice
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -533,6 +848,111 @@ function AdminDashboard() {
                         </>
                     )}
                 </section>
+                )}
+
+                {/* Add User Section - Only for Superadmin */}
+                {activeSection === 'addUser' && adminInfo?.role === 'superadmin' && (
+                <section className="admin-section settings-section">
+                    <h2>Add User</h2>
+
+                    <div className="add-user-container">
+                        <div className="settings-card add-user-form">
+                            <h3>Add New Admin</h3>
+                            <p className="settings-description">Create a new admin account with email and password. The password will be securely hashed.</p>
+
+                            <form className="admin-form" onSubmit={handleCreateAdmin}>
+                                <div className="form-group">
+                                    <label htmlFor="admin-email">Admin Email</label>
+                                    <input
+                                        type="email"
+                                        id="admin-email"
+                                        value={newAdminEmail}
+                                        onChange={(e) => setNewAdminEmail(e.target.value)}
+                                        placeholder="Enter admin email"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="admin-password">Password</label>
+                                    <input
+                                        type="password"
+                                        id="admin-password"
+                                        value={newAdminPassword}
+                                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                                        placeholder="Enter password (min 6 characters)"
+                                        required
+                                        minLength="6"
+                                    />
+                                </div>
+
+                                {adminFormMessage && (
+                                    <div className={`form-message ${adminFormMessage.startsWith('✓') ? 'success' : 'error'}`}>
+                                        {adminFormMessage}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="btn-create-admin"
+                                    disabled={adminFormLoading}
+                                >
+                                    {adminFormLoading ? 'Creating...' : 'Create Admin'}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div className="settings-card admin-list">
+                            <h3>All Admins ({allAdmins.length})</h3>
+                            <p className="settings-description">List of all admin accounts in the system.</p>
+
+                            <div className="admin-list-container add-user-list-container">
+                                {allAdmins.length === 0 ? (
+                                    <p className="no-admins">Loading admins...</p>
+                                ) : (
+                                    <ul className="admin-items">
+                                        {allAdmins.map((admin) => (
+                                            <li key={admin.id} className="admin-item">
+                                                <div className="admin-item-header">
+                                                    <span className="admin-email">{admin.email}</span>
+                                                    {admin.role === 'superadmin' && (
+                                                        <span className="admin-badge superadmin">Super Admin</span>
+                                                    )}
+                                                    {admin.role === 'admin' && (
+                                                        <span className="admin-badge admin">Admin</span>
+                                                    )}
+                                                </div>
+                                                <span className="admin-date">
+                                                    Created: {new Date(admin.created_at).toLocaleDateString()}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                )}
+
+                {/* Settings Section - Available for All Admins */}
+                {activeSection === 'settings' && (
+                <section className="admin-section settings-section">
+                    <h2>Settings</h2>
+
+                    <div className="settings-container">
+                        <div className="settings-card">
+                            <h3>General Settings</h3>
+                            <p className="settings-description">Configure your admin dashboard preferences and account settings.</p>
+
+                            <div className="settings-info">
+                                <p><strong>Logged in as:</strong> {adminInfo?.email || 'N/A'}</p>
+                                <p><strong>Role:</strong> {adminInfo?.role === 'superadmin' ? 'Super Admin' : 'Admin'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                )}
             </main>
         </div>
     );

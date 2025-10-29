@@ -19,6 +19,7 @@ function AdminLogin() {
                 password,
             });
             localStorage.setItem('adminToken', res.data.token);
+            localStorage.setItem('adminInfo', JSON.stringify(res.data.admin));
             // Redirect to admin dashboard or protected page
             window.location.href = '/admin/dashboard'; // Change as needed
         } catch (err) {

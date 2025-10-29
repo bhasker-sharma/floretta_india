@@ -1,11 +1,11 @@
 // src/components/LoginForm.jsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import '../styles/LoginForm.css';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "../styles/LoginForm.css";
 
 const LoginForm = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,26 +18,37 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/login', formData, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
+      const response = await axios.post(
+        "http://localhost:8000/api/login",
+        formData,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
 
-      if (response.status === 200 && response.data.token && response.data.user) {
+      if (
+        response.status === 200 &&
+        response.data.token &&
+        response.data.user
+      ) {
         // Save token and user to localStorage
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("isLoggedIn", "true");
 
-        alert('Login successful!');
-        navigate('/userprofile');
+        alert("Login successful!");
+        navigate("/userprofile");
       } else {
-        alert(response.data.message || 'Login failed.');
+        alert(response.data.message || "Login failed.");
       }
     } catch (error) {
-      console.error('Login error:', error);
-      alert(error.response?.data?.message || 'An error occurred while trying to log in.');
+      console.error("Login error:", error);
+      alert(
+        error.response?.data?.message ||
+          "An error occurred while trying to log in."
+      );
     } finally {
       setLoading(false);
     }
@@ -48,16 +59,16 @@ const LoginForm = () => {
       {/* ✅ Back Button */}
       <button
         className="back-button"
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          padding: '6px 12px',
-          backgroundColor: '#eee',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'pointer',
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          padding: "6px 12px",
+          backgroundColor: "#eee",
+          border: "1px solid #ccc",
+          borderRadius: "4px",
+          cursor: "pointer",
         }}
       >
         ← Back
@@ -81,17 +92,35 @@ const LoginForm = () => {
           onChange={handleChange}
           required
         />
-        <input type="submit" value={loading ? 'Logging in...' : 'Login'} disabled={loading} />
+        <input
+          type="submit"
+          value={loading ? "Logging in..." : "Login"}
+          disabled={loading}
+        />
       </form>
 
-      <div className="or-separator"><span>OR</span></div>
+      <div className="or-separator">
+        <span>OR</span>
+      </div>
 
-      <button className="social-btn google" onClick={() => window.location.href = 'http://localhost:8000/api/auth/google/redirect'}>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google logo" />
-        Sign in with Google
+      <button
+        className="social-btn google"
+        onClick={() =>
+          (window.location.href =
+            "http://localhost:8000/api/auth/google/redirect")
+        }
+      >
+        <img
+          src="https://developers.google.com/static/identity/images/g-logo.png"
+          alt="Sign in with Google"
+        />
+        <p> Sign in with Google</p>
       </button>
 
-      <button className="social-btn email" onClick={() => alert("Custom Email Sign-In not implemented yet")}>
+      <button
+        className="social-btn email"
+        onClick={() => alert("Custom Email Sign-In not implemented yet")}
+      >
         📧 Sign in with Email
       </button>
 
