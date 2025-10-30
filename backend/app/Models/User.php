@@ -28,6 +28,7 @@ protected $fillable = [
     'city',
     'image',
     'google_id',
+    'gst_number',
 ];
 
 

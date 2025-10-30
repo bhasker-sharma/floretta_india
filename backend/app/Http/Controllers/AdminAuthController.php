@@ -9,13 +9,8 @@ use Illuminate\Validation\ValidationException;
 
 class AdminAuthController extends Controller
 {
-    // Hardcoded Super Admin Credentials
-    private const SUPER_ADMIN_EMAIL = 'superadmin@floretta.com';
-    private const SUPER_ADMIN_PASSWORD = 'Super@Admin123!';
-    private const SUPER_ADMIN_ID = 0; // Special ID for super admin
-
     /**
-     * Handle admin login (supports both hardcoded super admin and database admins)
+     * Handle admin login (all admins are stored in database with hashed passwords)
      */
     public function login(Request $request)
     {
@@ -24,23 +19,7 @@ class AdminAuthController extends Controller
             'password' => 'required',
         ]);
 
-        // Check if it's the super admin (hardcoded)
-        if ($request->email === self::SUPER_ADMIN_EMAIL && $request->password === self::SUPER_ADMIN_PASSWORD) {
-            // Super admin login
-            $token = base64_encode(self::SUPER_ADMIN_ID . ':' . time());
-
-            return response()->json([
-                'message' => 'Login successful',
-                'admin' => [
-                    'id' => self::SUPER_ADMIN_ID,
-                    'email' => self::SUPER_ADMIN_EMAIL,
-                    'type' => 'super_admin'
-                ],
-                'token' => $token,
-            ]);
-        }
-
-        // Check database for other admins
+        // Check database for admin
         $admin = AdminAuth::where('email', $request->email)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
@@ -57,7 +36,8 @@ class AdminAuthController extends Controller
             'admin' => [
                 'id' => $admin->id,
                 'email' => $admin->email,
-                'type' => 'admin'
+                'type' => 'admin',
+                'role' => $admin->role ?? 'admin'
             ],
             'token' => $token,
         ]);
@@ -70,6 +50,89 @@ class AdminAuthController extends Controller
     {
         return response()->json([
             'message' => 'Logout successful'
+        ]);
+    }
+
+    /**
+     * Create a new admin account
+     */
+    public function createAdmin(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'email' => 'required|email|unique:admin_auth,email',
+            'password' => 'required|min:6',
+        ]);
+
+        try {
+            // Create new admin with hashed password
+            $admin = AdminAuth::create([
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin created successfully',
+                'admin' => [
+                    'id' => $admin->id,
+                    'email' => $admin->email,
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create admin',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all admins (superadmin only)
+     */
+    public function getAllAdmins(Request $request)
+    {
+        // Verify admin token
+        $token = $request->header('Authorization');
+
+        if (!$token || !str_starts_with($token, 'Bearer ')) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Extract and decode token
+        $tokenValue = substr($token, 7);
+        $decoded = base64_decode($tokenValue);
+
+        if (!$decoded || !str_contains($decoded, ':')) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid Token'
+            ], 401);
+        }
+
+        // Extract admin ID from token
+        list($adminId) = explode(':', $decoded, 2);
+
+        // Verify admin exists and is superadmin
+        $admin = AdminAuth::find($adminId);
+
+        if (!$admin || $admin->role !== 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized - Superadmin access required'
+            ], 403);
+        }
+
+        // Fetch all admins
+        $admins = AdminAuth::select('id', 'email', 'role', 'created_at')->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'admins' => $admins
         ]);
     }
 
@@ -104,28 +167,19 @@ class AdminAuthController extends Controller
         // Extract admin ID from token
         list($adminId) = explode(':', $decoded, 2);
 
-        // Check if it's super admin (ID = 0)
-        if ($adminId == self::SUPER_ADMIN_ID) {
-            // Super admin is always authorized
-            $admin = (object)[
-                'id' => self::SUPER_ADMIN_ID,
-                'email' => self::SUPER_ADMIN_EMAIL
-            ];
-        } else {
-            // Verify admin exists in admin_auth table
-            $admin = AdminAuth::find($adminId);
+        // Verify admin exists in admin_auth table
+        $admin = AdminAuth::find($adminId);
 
-            if (!$admin) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Unauthorized',
-                    'message' => 'Admin not found'
-                ], 401);
-            }
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized',
+                'message' => 'Admin not found'
+            ], 401);
         }
 
-        // Fetch all orders with user relationship
-        $orders = \App\Models\Order::with('user:id,name,email')
+        // Fetch all orders with user relationship including gst_number
+        $orders = \App\Models\Order::with('user:id,name,email,gst_number')
             ->orderBy('created_at', 'desc')
             ->get();
 

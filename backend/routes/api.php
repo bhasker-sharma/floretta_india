@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\PasswordResetController;
 use Faker\Provider\ar_EG\Payment;
 
 /*
@@ -27,6 +28,11 @@ Route::post('/login', [UserController::class, 'login']);
 // 🌐 Google OAuth
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
 Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+
+// 🔑 Password Reset Routes
+Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);
+Route::post('/verify-otp', [PasswordResetController::class, 'verifyOTP']);
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
 // 🧍‍♂️ Public User Access
 Route::get('/users', [UserController::class, 'index']);
@@ -114,5 +120,7 @@ Route::prefix('admin')->group(function () {
 Route::prefix('admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
     Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
+    Route::post('/create-admin', [AdminAuthController::class, 'createAdmin']);
+    Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);
 });
 

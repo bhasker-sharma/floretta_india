@@ -14,6 +14,7 @@ const Cart = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [user, setUser] = useState(null);
   const [showAddressPopup, setShowAddressPopup] = useState(false);
+  const [includeGST, setIncludeGST] = useState(false);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -192,7 +193,8 @@ const Cart = () => {
               customer_address: user.address,
               order_value: totalAmount,
               order_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-              order_items: minimalOrderItems
+              order_items: minimalOrderItems,
+              include_gst: includeGST
             }, {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -346,6 +348,19 @@ const Cart = () => {
                 <strong>Total</strong>
                 <strong>₹{totalAmount.toFixed(2)}</strong>
               </div>
+            </div>
+            <div className="gst-checkbox-container">
+              <label className="gst-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={includeGST}
+                  onChange={(e) => setIncludeGST(e.target.checked)}
+                />
+                <span>Include GST details in invoice</span>
+              </label>
+              {includeGST && user?.gst_number && (
+                <p className="gst-number-display">GST Number: {user.gst_number}</p>
+              )}
             </div>
             <div className="invoice-actions">
               <button onClick={() => setShowInvoice(false)} className="cancel-btn">Cancel</button>

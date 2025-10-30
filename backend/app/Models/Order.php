@@ -19,10 +19,12 @@ class Order extends Model
         'order_value',
         'order_quantity',
         'order_items',
+        'include_gst',
     ];
     protected $casts = [
         'order_items' => 'array',
         'order_value' => 'decimal:2',
+        'include_gst' => 'boolean',
     ];
 
     public function user()
