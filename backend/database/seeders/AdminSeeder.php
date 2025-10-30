@@ -18,9 +18,9 @@ class AdminSeeder extends Seeder
     {
         // Super Admin - Main admin account with full access
         AdminAuth::firstOrCreate(
-            ['email' => 'sukumaran@gmail.com'],
+            ['email' => 'admin@gmail.com'],
             [
-                'password' => Hash::make('sukumaran@gmail.com'),
+                'password' => Hash::make('admin@123'),
                 'role' => 'superadmin'
             ]
         );
