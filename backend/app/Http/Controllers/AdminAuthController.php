@@ -82,14 +82,33 @@ class AdminAuthController extends Controller
     }
 
     /**
-     * Create a new admin account
+     * Create a new admin account (superadmin only)
+     * SECURITY: Only superadmins can create new admin accounts
      */
     public function createAdmin(Request $request)
     {
+        // SECURITY: Verify authenticated admin is superadmin
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        if ($currentAdmin->role !== 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Forbidden - Superadmin access required'
+            ], 403);
+        }
+
         // Validate the request
         $request->validate([
             'email' => 'required|email|unique:admin_auth,email',
             'password' => 'required|min:6',
+            'role' => 'nullable|in:admin,superadmin', // Optional role field
         ]);
 
         try {
@@ -97,6 +116,7 @@ class AdminAuthController extends Controller
             $admin = AdminAuth::create([
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'role' => $request->role ?? 'admin', // Default to 'admin' role
             ]);
 
             return response()->json([
@@ -105,6 +125,7 @@ class AdminAuthController extends Controller
                 'admin' => [
                     'id' => $admin->id,
                     'email' => $admin->email,
+                    'role' => $admin->role,
                 ]
             ], 201);
         } catch (\Exception $e) {

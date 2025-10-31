@@ -25,9 +25,12 @@ use Faker\Provider\ar_EG\Payment;
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 
-// 🌐 Google OAuth
-Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
-Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+// 🌐 Google OAuth (with rate limiting to prevent abuse)
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+    Route::post('/auth/google/exchange-code', [GoogleController::class, 'exchangeCode']);
+});
 
 // 🔑 Password Reset Routes
 Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);

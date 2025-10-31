@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const userString = searchParams.get('user');
+    const code = searchParams.get('code');
     const error = searchParams.get('error');
     const message = searchParams.get('message');
 
@@ -19,27 +19,45 @@ const AuthCallback = () => {
       return;
     }
 
-    if (token && userString) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userString));
+    // SECURITY: Exchange one-time code for JWT token via POST
+    // Prevents token exposure in URLs, browser history, and server logs
+    if (code) {
+      exchangeCodeForToken(code);
+    } else {
+      alert('Login failed. Missing authentication code.');
+      navigate('/userlogin');
+    }
+  }, [searchParams, navigate]);
+
+  const exchangeCodeForToken = async (code) => {
+    try {
+      // Exchange code for token via secure POST request
+      const response = await axios.post('http://localhost:8000/api/auth/google/exchange-code', {
+        code: code
+      });
+
+      if (response.data.success) {
+        const { token, user } = response.data;
 
         // Save token and user to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('isLoggedIn', 'true');
 
-        // alert('Login successful!');
+        // Clear code from URL (security best practice)
+        window.history.replaceState({}, document.title, '/auth/callback');
+
         navigate('/userprofile');
-      } catch (e) {
-        console.error('Error parsing user data:', e);
+      } else {
         alert('Login failed. Please try again.');
         navigate('/userlogin');
       }
-    } else {
-      alert('Login failed. Missing authentication data.');
+    } catch (error) {
+      console.error('Error exchanging code for token:', error);
+      alert('Login failed. Please try again.');
       navigate('/userlogin');
     }
-  }, [searchParams, navigate]);
+  };
 
   return (
     <div style={{
