@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdminAuth;
+use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -107,7 +108,7 @@ class AdminAuthController extends Controller
         // Validate the request
         $request->validate([
             'email' => 'required|email|unique:admin_auth,email',
-            'password' => 'required|min:6',
+            'password' => ['required', new StrongPassword()],
             'role' => 'nullable|in:admin,superadmin', // Optional role field
         ]);
 

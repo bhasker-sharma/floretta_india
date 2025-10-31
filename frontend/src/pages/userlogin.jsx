@@ -101,7 +101,12 @@ const LoginForm = () => {
       </form>
 
       <div className="forgot-password-link">
-        <Link to="/forgot-password">Forgot Password?</Link>
+        <Link
+          to="/forgot-password"
+          state={{ email: formData.email }}
+        >
+          Forgot Password?
+        </Link>
       </div>
 
       <div className="or-separator">

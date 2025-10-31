@@ -21,9 +21,11 @@ use Faker\Provider\ar_EG\Payment;
 |--------------------------------------------------------------------------
 */
 
-// 🌐 User Auth
-Route::post('/register', [UserController::class, 'register']);
-Route::post('/login', [UserController::class, 'login']);
+// 🌐 User Auth (with rate limiting to prevent brute force attacks)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/register', [UserController::class, 'register']);
+    Route::post('/login', [UserController::class, 'login']);
+});
 
 // 🌐 Google OAuth (with rate limiting to prevent abuse)
 Route::middleware('throttle:10,1')->group(function () {
@@ -32,10 +34,12 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/auth/google/exchange-code', [GoogleController::class, 'exchangeCode']);
 });
 
-// 🔑 Password Reset Routes
-Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);
-Route::post('/verify-otp', [PasswordResetController::class, 'verifyOTP']);
-Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+// 🔑 Password Reset Routes (with rate limiting to prevent abuse)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);
+    Route::post('/verify-otp', [PasswordResetController::class, 'verifyOTP']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+});
 
 // 🧍‍♂️ Public User Access
 Route::get('/users', [UserController::class, 'index']);
@@ -55,13 +59,15 @@ Route::get('/freshners-mist-all/{id}', [ProductController::class, 'showFreshner'
 // 🌐 Hotel Amenities
 Route::get('/room-freshners', [HotelAmenitiesController::class, 'index']);
 
-// 🌐 Contact Us
-Route::post('/contact', [HotelAmenitiesController::class, 'submitContactForm']);
+// 🌐 Contact Us (with rate limiting to prevent form spam)
+Route::middleware('throttle:3,1')->post('/contact', [HotelAmenitiesController::class, 'submitContactForm']);
 
 // 🌐 Live Perfumery
 Route::get('/liveperfume', [LivePerfumeController::class, 'index']);
 Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
-Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
+
+// 🌐 Bookings (with rate limiting to prevent form spam)
+Route::middleware('throttle:3,1')->post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 
 /*
 |--------------------------------------------------------------------------
@@ -116,7 +122,7 @@ Route::middleware('auth:api')->group(function () {
 | Admin Auth Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login']);
 });
 
