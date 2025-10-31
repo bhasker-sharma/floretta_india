@@ -117,8 +117,10 @@ Route::prefix('admin')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login']);
 });
 
-Route::prefix('admin')->group(function () {
+// 🔐 Admin Protected Routes (JWT auth:admin middleware)
+Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
+    Route::get('/me', [AdminAuthController::class, 'me']);
     Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
     Route::post('/create-admin', [AdminAuthController::class, 'createAdmin']);
     Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);

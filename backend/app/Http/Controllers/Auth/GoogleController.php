@@ -20,10 +20,18 @@ class GoogleController extends Controller
     public function callback(Request $request)
     {
         try {
-            // For local development - disable SSL verification
+            // Get SSL verification setting from environment (default: true for security)
+            $sslVerify = env('GOOGLE_OAUTH_SSL_VERIFY', true);
+
+            // SECURITY WARNING: Only disable SSL verification in local development
+            // Production should ALWAYS have SSL verification enabled
+            $httpClient = $sslVerify
+                ? new \GuzzleHttp\Client()
+                : new \GuzzleHttp\Client(['verify' => false]);
+
             $googleUser = Socialite::driver('google')
                 ->stateless()
-                ->setHttpClient(new \GuzzleHttp\Client(['verify' => false]))
+                ->setHttpClient($httpClient)
                 ->user();
 
             // Find user by email or google_id

@@ -6,6 +6,7 @@ use App\Models\AdminAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdminAuthController extends Controller
 {
@@ -28,8 +29,8 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        // Create a simple token
-        $token = base64_encode($admin->id . ':' . time());
+        // Generate JWT token using the admin guard
+        $token = auth('admin')->login($admin);
 
         return response()->json([
             'message' => 'Login successful',
@@ -48,8 +49,35 @@ class AdminAuthController extends Controller
      */
     public function logout()
     {
+        auth('admin')->logout();
+
         return response()->json([
             'message' => 'Logout successful'
+        ]);
+    }
+
+    /**
+     * Get authenticated admin details
+     */
+    public function me()
+    {
+        $admin = auth('admin')->user();
+
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'admin' => [
+                'id' => $admin->id,
+                'email' => $admin->email,
+                'type' => 'admin',
+                'role' => $admin->role ?? 'admin'
+            ]
         ]);
     }
 
@@ -89,38 +117,22 @@ class AdminAuthController extends Controller
     }
 
     /**
-     * Get all admins (superadmin only)
+     * Get all admins (superadmin only, JWT protected)
      */
-    public function getAllAdmins(Request $request)
+    public function getAllAdmins()
     {
-        // Verify admin token
-        $token = $request->header('Authorization');
+        // Get authenticated admin from JWT
+        $admin = auth('admin')->user();
 
-        if (!$token || !str_starts_with($token, 'Bearer ')) {
+        if (!$admin) {
             return response()->json([
                 'success' => false,
                 'error' => 'Unauthorized'
             ], 401);
         }
 
-        // Extract and decode token
-        $tokenValue = substr($token, 7);
-        $decoded = base64_decode($tokenValue);
-
-        if (!$decoded || !str_contains($decoded, ':')) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Invalid Token'
-            ], 401);
-        }
-
-        // Extract admin ID from token
-        list($adminId) = explode(':', $decoded, 2);
-
-        // Verify admin exists and is superadmin
-        $admin = AdminAuth::find($adminId);
-
-        if (!$admin || $admin->role !== 'superadmin') {
+        // Verify admin is superadmin
+        if ($admin->role !== 'superadmin') {
             return response()->json([
                 'success' => false,
                 'error' => 'Unauthorized - Superadmin access required'
@@ -137,44 +149,18 @@ class AdminAuthController extends Controller
     }
 
     /**
-     * Get all orders for admin
+     * Get all orders for admin (JWT protected)
      */
-    public function getAllOrders(Request $request)
+    public function getAllOrders()
     {
-        // Verify admin token
-        $token = $request->header('Authorization');
-
-        if (!$token || !str_starts_with($token, 'Bearer ')) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Unauthorized',
-                'message' => 'Admin authentication required'
-            ], 401);
-        }
-
-        // Extract and decode token
-        $tokenValue = substr($token, 7); // Remove "Bearer " prefix
-        $decoded = base64_decode($tokenValue);
-
-        if (!$decoded || !str_contains($decoded, ':')) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Invalid Token',
-                'message' => 'Invalid admin token format'
-            ], 401);
-        }
-
-        // Extract admin ID from token
-        list($adminId) = explode(':', $decoded, 2);
-
-        // Verify admin exists in admin_auth table
-        $admin = AdminAuth::find($adminId);
+        // Get authenticated admin from JWT
+        $admin = auth('admin')->user();
 
         if (!$admin) {
             return response()->json([
                 'success' => false,
                 'error' => 'Unauthorized',
-                'message' => 'Admin not found'
+                'message' => 'Admin authentication required'
             ], 401);
         }
 
