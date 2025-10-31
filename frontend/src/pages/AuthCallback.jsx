@@ -1,12 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hasExchangedCode = useRef(false); // Prevent duplicate calls in React Strict Mode
 
   useEffect(() => {
+    // Prevent duplicate API calls in React 18 Strict Mode (development)
+    if (hasExchangedCode.current) {
+      console.log('Code exchange already initiated, skipping duplicate call');
+      return;
+    }
+
     const code = searchParams.get('code');
     const error = searchParams.get('error');
     const message = searchParams.get('message');
@@ -22,6 +30,7 @@ const AuthCallback = () => {
     // SECURITY: Exchange one-time code for JWT token via POST
     // Prevents token exposure in URLs, browser history, and server logs
     if (code) {
+      hasExchangedCode.current = true; // Mark as initiated
       exchangeCodeForToken(code);
     } else {
       alert('Login failed. Missing authentication code.');
@@ -31,8 +40,10 @@ const AuthCallback = () => {
 
   const exchangeCodeForToken = async (code) => {
     try {
+      console.log('Exchanging code for token. Code length:', code?.length);
+
       // Exchange code for token via secure POST request
-      const response = await axios.post('http://localhost:8000/api/auth/google/exchange-code', {
+      const response = await axios.post(API_ENDPOINTS.GOOGLE_EXCHANGE_CODE, {
         code: code
       });
 
@@ -49,12 +60,17 @@ const AuthCallback = () => {
 
         navigate('/userprofile');
       } else {
-        alert('Login failed. Please try again.');
+        const errorMsg = response.data.message || 'Login failed. Please try again.';
+        console.error('Login failed:', errorMsg);
+        alert('Login failed: ' + errorMsg);
         navigate('/userlogin');
       }
     } catch (error) {
       console.error('Error exchanging code for token:', error);
-      alert('Login failed. Please try again.');
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed. Please try again.';
+      console.error('Backend error message:', errorMsg);
+      console.error('Full error response:', error.response?.data);
+      alert('Login failed: ' + errorMsg);
       navigate('/userlogin');
     }
   };

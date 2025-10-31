@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/VerifyOTP.css';
 
 function VerifyOTP() {
@@ -29,7 +30,7 @@ function VerifyOTP() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/verify-otp', {
+      const response = await axios.post(API_ENDPOINTS.VERIFY_OTP, {
         email: email,
         otp: otp,
       });
@@ -58,7 +59,7 @@ function VerifyOTP() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/forgot-password', {
+      const response = await axios.post(API_ENDPOINTS.FORGOT_PASSWORD, {
         email: email,
       });
 

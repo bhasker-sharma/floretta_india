@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/testimonials.css';
 
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
 useEffect(() => {
-  fetch('http://localhost:8000/api/homepage')
+  fetch(API_ENDPOINTS.HOMEPAGE)
     .then(response => response.json())
     .then(data => {
       console.log('API Response:', data);

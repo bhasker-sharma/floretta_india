@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 import '../styles/rfreshner.css';
 
 const ProductCard = ({ item, onClick }) => {
@@ -26,7 +27,7 @@ const ProductCard = ({ item, onClick }) => {
       }
 
       await axios.post(
-        'http://localhost:8000/api/cart',
+        API_ENDPOINTS.CART,
         {
           product_id: item.id,
           quantity: 1,
@@ -60,14 +61,14 @@ const handleLikeProduct = async (e) => {
   try {
     if (liked) {
       // ❌ Remove from wishlist
-      await axios.delete(`http://localhost:8000/api/wishlist/${item.id}`, {
+      await axios.delete(API_ENDPOINTS.WISHLIST_REMOVE(item.id), {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLiked(false);
     } else {
       // ✅ Add to wishlist
       await axios.post(
-        'http://localhost:8000/api/wishlist',
+        API_ENDPOINTS.WISHLIST_ADD,
         { product_id: item.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -88,16 +89,16 @@ const handleLikeProduct = async (e) => {
       <img
         loading="lazy"
         className="hover-fade-img"
-        src={`http://localhost:8000/storage/${mainImage}`}
+        src={getImageUrl(mainImage)}
         alt={item.name}
         onError={(e) => {
           e.target.src = 'fallback.jpg';
         }}
         onMouseOver={(e) => {
-          e.currentTarget.src = `http://localhost:8000/storage/${hoverImage}`;
+          e.currentTarget.src = getImageUrl(hoverImage);
         }}
         onMouseOut={(e) => {
-          e.currentTarget.src = `http://localhost:8000/storage/${mainImage}`;
+          e.currentTarget.src = getImageUrl(mainImage);
         }}
       />
 

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import Navbar from "../components/navbar";
 import "../styles/userprofile.css";
 
@@ -35,7 +36,7 @@ function UserProfile() {
       return;
     }
     axios
-      .get("http://localhost:8000/api/me", {
+      .get(API_ENDPOINTS.USER_PROFILE, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -64,7 +65,7 @@ function UserProfile() {
     if (showOrders) {
       setOrdersLoading(true);
       axios
-        .get("http://localhost:8000/api/my-orders", {
+        .get(API_ENDPOINTS.MY_ORDERS, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => setOrders(res.data))
@@ -123,7 +124,7 @@ function UserProfile() {
       });
 
       const res = await axios.post(
-        "http://localhost:8000/api/update-profile",
+        API_ENDPOINTS.UPDATE_PROFILE,
         cleanedData,
         {
           headers: {
@@ -404,7 +405,7 @@ function UserProfile() {
           <div className="avatar">
             {user.image ? (
               <img
-                src={`http://localhost:8000/storage/${user.image}`}
+                src={getImageUrl(user.image)}
                 alt="User"
               />
             ) : (
@@ -670,11 +671,7 @@ function UserProfile() {
                         order.order_items.map((item, idx) => (
                           <div key={idx} className="order-product">
                             <img
-                              src={
-                                item.image
-                                  ? `http://localhost:8000/storage/${item.image}`
-                                  : "/fallback.jpg"
-                              }
+                              src={getImageUrl(item.image)}
                               alt={item.name}
                               className="order-product-img"
                               onError={(e) => (e.target.src = "/fallback.jpg")}

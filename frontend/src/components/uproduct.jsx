@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 import '../styles/uproducts.css';
 
 const UProductGallery = () => {
   const [products, setProducts] = useState([]);
 
 useEffect(() => {
-  fetch('http://localhost:8000/api/homepage')
+  fetch(API_ENDPOINTS.HOMEPAGE)
     .then(res => res.json())
     .then(data => {
       console.log("API:", data);
@@ -23,13 +24,13 @@ useEffect(() => {
           <div className="uproduct-card" key={product.id}>
             <div className="uproduct-image-wrapper">
               <img
-                src={`http://localhost:8000/storage/${product.image_path}`}
+                src={getImageUrl(product.image_path)}
                 alt="Main"
                 className="main-img"
               />
               {product.hover_image_path && (
                 <img
-                  src={`http://localhost:8000/storage/${product.hover_image_path}`}
+                  src={getImageUrl(product.hover_image_path)}
                   alt="Hover"
                   className="hover-img"
                 />

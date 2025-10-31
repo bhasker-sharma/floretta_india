@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS, STORAGE_URL } from '../config/api';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import '../styles/products.css';
@@ -19,16 +20,14 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showZoom, setShowZoom] = useState(false);
 
-  const baseURL = 'http://localhost:8000/storage/';
+  const baseURL = `${STORAGE_URL}/`;
   const isFreshner = location.pathname.startsWith('/freshner-mist');
 
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    const apiURL = isFreshner
-      ? `http://localhost:8000/api/freshners-mist-all/${id}`
-      : `http://localhost:8000/api/products/${id}`;
+    const apiURL = API_ENDPOINTS.PRODUCT_DETAIL(id);
 
     axios.get(apiURL)
       .then(res => {
@@ -75,7 +74,7 @@ const ProductDetail = () => {
   };
 
   const fetchRelatedProducts = (category, currentId) => {
-    axios.get(`http://localhost:8000/api/products?category=${encodeURIComponent(category)}`)
+    axios.get(`${API_ENDPOINTS.PRODUCTS}?category=${encodeURIComponent(category)}`)
       .then(res => {
         const related = res.data.filter(p => p.id !== currentId);
         setRelatedProducts(related);

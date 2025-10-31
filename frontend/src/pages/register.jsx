@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/LoginForm.css';
 
 function Register() {
@@ -21,7 +22,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/api/register', formData, {
+      const response = await axios.post(API_ENDPOINTS.REGISTER, formData, {
         headers: {
           'Accept': 'application/json'
         }

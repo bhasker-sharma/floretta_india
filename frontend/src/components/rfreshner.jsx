@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config/api';
 import ProductCard from './ProductCard';
 import '../styles/rfreshner.css';
 
@@ -10,7 +11,7 @@ const FreshnerAndFaceMistProducts = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/freshners-mist-all')
+    fetch(API_ENDPOINTS.FRESHNERS_MIST_ALL)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch products');
         return res.json();

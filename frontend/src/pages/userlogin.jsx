@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ENDPOINTS } from "../config/api";
 import "../styles/LoginForm.css";
 
 const LoginForm = () => {
@@ -19,7 +20,7 @@ const LoginForm = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/login",
+        API_ENDPOINTS.LOGIN,
         formData,
         {
           headers: {
@@ -110,8 +111,7 @@ const LoginForm = () => {
       <button
         className="social-btn google"
         onClick={() =>
-          (window.location.href =
-            "http://localhost:8000/api/auth/google/redirect")
+          (window.location.href = API_ENDPOINTS.GOOGLE_REDIRECT)
         }
       >
         <img

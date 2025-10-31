@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
@@ -20,7 +21,7 @@ function HotelAmenities() {
   });
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/room-freshners')
+    axios.get(API_ENDPOINTS.ROOM_FRESHNERS)
       .then(response => setFreshners(response.data))
       .catch(error => console.error('Failed to fetch room freshners:', error));
   }, []);
@@ -32,7 +33,7 @@ function HotelAmenities() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8000/api/contact', formData);
+      await axios.post(API_ENDPOINTS.CONTACT, formData);
       alert('Form submitted successfully!');
       setFormData({
         hotel_name: '',
@@ -52,7 +53,7 @@ function HotelAmenities() {
   return (
     <>
       <Navbar />
-      <Slider fetchUrl="http://localhost:8000/api/homepage" interval={4000} />
+      <Slider fetchUrl={API_ENDPOINTS.HOMEPAGE} interval={4000} />
 
       {/* Room Freshener Section */}
       <div className="rfv-container">
@@ -61,7 +62,7 @@ function HotelAmenities() {
           {freshners.map((item, idx) => (
             <div className="rfv-card" key={idx}>
               <img
-                src={`http://localhost:8000/storage/${item.image}`}
+                src={getImageUrl(item.image)}
                 alt={item.name}
                 className="rfv-img"
               />

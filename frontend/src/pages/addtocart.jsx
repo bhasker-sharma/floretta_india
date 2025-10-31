@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 import Footer from '../components/footer';
 import Navbar from '../components/navbar';
 import '../styles/cart.css';
@@ -27,7 +28,7 @@ const Cart = () => {
           return navigate('/login');
         }
 
-        const checkResponse = await axios.get('http://localhost:8000/api/check-user', {
+        const checkResponse = await axios.get(API_ENDPOINTS.CHECK_USER, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
@@ -42,7 +43,7 @@ const Cart = () => {
           return navigate('/userprofile');
         }
 
-        const cartResponse = await axios.get('http://localhost:8000/api/cart', {
+        const cartResponse = await axios.get(API_ENDPOINTS.CART, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
@@ -66,7 +67,7 @@ const Cart = () => {
     if (newQuantity < 1) return;
 
     try {
-      await axios.put(`http://localhost:8000/api/cart/${itemId}`, {
+      await axios.put(API_ENDPOINTS.CART_UPDATE(itemId), {
         quantity: newQuantity
       }, {
         headers: {
@@ -98,7 +99,7 @@ const Cart = () => {
 
   const handleRemove = async (itemId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/cart/${itemId}`, {
+      await axios.delete(API_ENDPOINTS.CART_DELETE(itemId), {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -151,7 +152,7 @@ const Cart = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:8000/api/razorpay/create-order', {
+      const response = await axios.post(API_ENDPOINTS.RAZORPAY_CREATE_ORDER, {
         amount: totalAmount
       }, {
         headers: {
@@ -182,7 +183,7 @@ const Cart = () => {
               quantity: item.quantity
             }));
 
-            await axios.post('http://localhost:8000/api/razorpay/verify', {
+            await axios.post(API_ENDPOINTS.RAZORPAY_VERIFY, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
@@ -202,7 +203,7 @@ const Cart = () => {
               }
             });
             // Clear cart in backend
-            await axios.delete('http://localhost:8000/api/cart/clear', {
+            await axios.delete(API_ENDPOINTS.CART_CLEAR, {
               headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: 'application/json',
@@ -254,7 +255,7 @@ const Cart = () => {
               cartItems.map((item, index) => (
                 <div className="cart-item" key={index}>
                   <img
-                    src={`http://localhost:8000/storage/${item.image_path || item.image}`}
+                    src={getImageUrl(item.image_path || item.image)}
                     alt={item.name}
                     onError={(e) => (e.target.src = '/fallback.jpg')}
                   />

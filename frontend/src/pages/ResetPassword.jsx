@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/ResetPassword.css';
 
 function ResetPassword() {
@@ -58,7 +59,7 @@ function ResetPassword() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/reset-password', {
+      const response = await axios.post(API_ENDPOINTS.RESET_PASSWORD, {
         email: email,
         otp: otp,
         password: formData.newPassword,
