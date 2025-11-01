@@ -1561,3 +1561,359 @@
     font-size: 0.85rem;
   }
 }
+
+/* User Detail Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.user-detail-section {
+  margin-bottom: 28px;
+}
+
+.user-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.user-detail-section h3 {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-detail-section h3 i {
+  color: #c06;
+}
+
+.detail-row {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #333;
+  word-break: break-word;
+}
+
+.no-data {
+  color: #999;
+  font-style: italic;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-secondary {
+  padding: 10px 24px;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #555;
+}
+
+.customer-item.clickable:hover {
+  background: #f8f8f8;
+  transform: translateX(4px);
+}
+
+.view-details-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #c06;
+  font-style: italic;
+}
+
+.view-details-hint i {
+  margin-right: 4px;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-label {
+    min-width: auto;
+    font-size: 0.9rem;
+  }
+
+  .detail-value {
+    font-size: 0.95rem;
+  }
+}
+
+/* Improved Customer List Styles */
+.customer-item {
+  padding: 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: white !important;
+  border-left: 4px solid #c06 !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+}
+
+.customer-item::after {
+  content: '';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: rgba(204, 0, 102, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.customer-item:hover::after {
+  background: rgba(204, 0, 102, 0.2);
+  transform: translateY(-50%) scale(1.2);
+}
+
+.customer-item .admin-item-header {
+  margin-bottom: 4px;
+}
+
+.customer-item .admin-email {
+  font-size: 1rem;
+  color: #333;
+  word-break: break-word;
+}
+
+.customer-item .admin-badge.customer {
+  background: linear-gradient(135deg, #c06 0%, #d63384 100%);
+  color: white;
+  padding: 5px 14px;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+}
+
+.customer-name,
+.customer-phone,
+.customer-gst {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #555;
+  padding: 6px 0;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.customer-name:last-of-type,
+.customer-phone:last-of-type,
+.customer-gst:last-of-type {
+  border-bottom: none;
+}
+
+.customer-name i,
+.customer-phone i,
+.customer-gst i {
+  color: #c06;
+  width: 18px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.customer-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.customer-item .admin-date {
+  font-size: 0.8rem;
+  color: #999;
+  font-style: italic;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.view-details-hint {
+  font-size: 0.8rem;
+  color: #c06;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  margin-top: 4px;
+}
+
+.customer-item:hover .view-details-hint {
+  opacity: 1;
+}
+
+.customer-item.clickable:hover {
+  background: #fafafa !important;
+  transform: translateX(8px);
+  box-shadow: 0 4px 12px rgba(204, 0, 102, 0.15);
+  border-left-width: 5px !important;
+}
+
+/* Customer List Container */
+.customers-section .admin-list-container {
+  padding: 0;
+}
+
+.customers-section .admin-items {
+  gap: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .customer-item {
+    padding: 16px !important;
+  }
+
+  .customer-item::after {
+    display: none;
+  }
+
+  .customer-name,
+  .customer-phone,
+  .customer-gst {
+    font-size: 0.85rem;
+  }
+
+  .view-details-hint {
+    opacity: 1;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .customer-item .admin-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .customer-item .admin-email {
+    font-size: 0.9rem;
+  }
+}

@@ -213,4 +213,109 @@ class AdminAuthController extends Controller
             'orders' => $orders
         ]);
     }
+
+    /**
+     * Delete an admin account (superadmin only, JWT protected)
+     */
+    public function deleteAdmin($id)
+    {
+        // Get authenticated admin from JWT
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Verify current admin is superadmin
+        if ($currentAdmin->role !== 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Forbidden - Superadmin access required'
+            ], 403);
+        }
+
+        // Find the admin to delete
+        $adminToDelete = AdminAuth::find($id);
+
+        if (!$adminToDelete) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Admin not found'
+            ], 404);
+        }
+
+        // Prevent deleting yourself
+        if ($adminToDelete->id === $currentAdmin->id) {
+            return response()->json([
+                'success' => false,
+                'error' => 'You cannot delete your own account'
+            ], 400);
+        }
+
+        // Prevent deleting the last superadmin
+        if ($adminToDelete->role === 'superadmin') {
+            $superadminCount = AdminAuth::where('role', 'superadmin')->count();
+            if ($superadminCount <= 1) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Cannot delete the last superadmin account'
+                ], 400);
+            }
+        }
+
+        try {
+            $adminToDelete->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to delete admin',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all users/customers (admin only, JWT protected)
+     */
+    public function getAllUsers()
+    {
+        // Get authenticated admin from JWT
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        try {
+            $users = \App\Models\User::select(
+                'id', 'name', 'email', 'mobile', 'gst_number',
+                'address', 'address1', 'address2', 'address3', 'address4', 'address5',
+                'city', 'pin', 'created_at'
+            )
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'users' => $users
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch users',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
  }

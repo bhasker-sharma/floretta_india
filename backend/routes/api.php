@@ -133,5 +133,7 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
     Route::post('/create-admin', [AdminAuthController::class, 'createAdmin']);
     Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);
+    Route::delete('/delete-admin/{id}', [AdminAuthController::class, 'deleteAdmin']);
+    Route::get('/all-users', [AdminAuthController::class, 'getAllUsers']);
 });
 

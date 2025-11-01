@@ -4,6 +4,12 @@ import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
 
+import { PrimeReactProvider, PrimeReactContext } from 'primereact/api';
+        
+
+import { Button } from 'primereact/button';
+        
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -29,6 +35,12 @@ function AdminDashboard() {
   const [adminFormLoading, setAdminFormLoading] = useState(false);
   const [adminFormMessage, setAdminFormMessage] = useState("");
   const [allAdmins, setAllAdmins] = useState([]);
+
+  // Customers state
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
 
   // Load admin info from localStorage
   useEffect(() => {
@@ -91,6 +103,33 @@ function AdminDashboard() {
 
     fetchAdmins();
   }, [adminInfo]);
+
+  // Fetch all users when customers section is active
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (activeSection !== "customers") return;
+
+      setUsersLoading(true);
+      try {
+        const token = localStorage.getItem("adminToken");
+        const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          setAllUsers(response.data.users);
+        }
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [activeSection]);
 
   // Calculate minimum zoom to fit table in container
   useEffect(() => {
@@ -601,6 +640,61 @@ function AdminDashboard() {
     }
   };
 
+  // Handle deleting an admin
+  const handleDeleteAdmin = async (adminId, adminEmail) => {
+    // Confirm deletion
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete admin account: ${adminEmail}?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_DELETE(adminId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setAdminFormMessage("✓ Admin deleted successfully!");
+
+        // Refresh admin list
+        const adminsResponse = await axios.get(API_ENDPOINTS.ADMIN_ALL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (adminsResponse.data.success) {
+          setAllAdmins(adminsResponse.data.admins);
+        }
+
+        setTimeout(() => setAdminFormMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      const errorMsg =
+        error.response?.data?.error || error.response?.data?.message || "Failed to delete admin";
+      setAdminFormMessage("✗ " + errorMsg);
+      setTimeout(() => setAdminFormMessage(""), 5000);
+    }
+  };
+
+  // Handle viewing user details
+  const handleViewUser = (user) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+
+  const closeUserModal = () => {
+    setShowUserModal(false);
+    setSelectedUser(null);
+  };
+
   // Define the logout function
   const handleLogout = async () => {
     try {
@@ -988,6 +1082,65 @@ function AdminDashboard() {
           </section>
         )}
 
+        {/* Customers Section */}
+        {activeSection === "customers" && (
+          <section className="admin-section settings-section customers-section">
+            <h2>Customers</h2>
+
+            <div className="settings-card">
+              <h3>All Customers ({allUsers.length})</h3>
+              <p className="settings-description">
+                List of all registered customers in the system.
+              </p>
+
+              <div className="admin-list-container">
+                {usersLoading ? (
+                  <p className="no-admins">Loading customers...</p>
+                ) : allUsers.length === 0 ? (
+                  <p className="no-admins">No customers found</p>
+                ) : (
+                  <ul className="admin-items">
+                    {allUsers.map((user) => (
+                      <li
+                        key={user.id}
+                        className="admin-item customer-item clickable"
+                        onClick={() => handleViewUser(user)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="admin-item-header">
+                          <span className="admin-email">{user.email}</span>
+                          <span className="admin-badge customer">Customer</span>
+                        </div>
+                        {user.name && (
+                          <span className="customer-name">
+                            <i className="fas fa-user"></i> {user.name}
+                          </span>
+                        )}
+                        {user.mobile && (
+                          <span className="customer-phone">
+                            <i className="fas fa-phone"></i> {user.mobile}
+                          </span>
+                        )}
+                        {user.gst_number && (
+                          <span className="customer-gst">
+                            <i className="fas fa-receipt"></i> GST: {user.gst_number}
+                          </span>
+                        )}
+                        <span className="admin-date">
+                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        </span>
+                        <span className="view-details-hint">
+                          <i className="fas fa-eye"></i> Click to view details
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Add User Section - Only for Superadmin */}
         {activeSection === "addUser" && adminInfo?.role === "superadmin" && (
           <section className="admin-section settings-section">
@@ -1071,6 +1224,15 @@ function AdminDashboard() {
                               <span className="admin-badge admin">Admin</span>
                             )}
                           </div>
+                        
+                          <button
+                            className="delete-admin-btn"
+                            onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                            title="Delete admin"
+                          >
+                            <i className="fas fa-trash"></i> Delete
+                          </button>
+                            
                           <span className="admin-date">
                             Created:{" "}
                             {new Date(admin.created_at).toLocaleDateString()}
@@ -1110,6 +1272,121 @@ function AdminDashboard() {
               </div>
             </div>
           </section>
+        )}
+
+        {/* User Detail Modal */}
+        {showUserModal && selectedUser && (
+          <div className="modal-overlay" onClick={closeUserModal}>
+            <div className="modal-content user-detail-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Customer Details</h2>
+                <button className="modal-close" onClick={closeUserModal}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="user-detail-section">
+                  <h3><i className="fas fa-user"></i> Personal Information</h3>
+                  <div className="detail-row">
+                    <span className="detail-label">Name:</span>
+                    <span className="detail-value">{selectedUser.name || 'N/A'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">{selectedUser.email}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Mobile:</span>
+                    <span className="detail-value">{selectedUser.mobile || 'N/A'}</span>
+                  </div>
+                  {selectedUser.gst_number && (
+                    <div className="detail-row">
+                      <span className="detail-label">GST Number:</span>
+                      <span className="detail-value">{selectedUser.gst_number}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="user-detail-section">
+                  <h3><i className="fas fa-map-marker-alt"></i> Address Information</h3>
+                  {selectedUser.address && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address:</span>
+                      <span className="detail-value">{selectedUser.address}</span>
+                    </div>
+                  )}
+                  {selectedUser.address1 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address Line 1:</span>
+                      <span className="detail-value">{selectedUser.address1}</span>
+                    </div>
+                  )}
+                  {selectedUser.address2 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address Line 2:</span>
+                      <span className="detail-value">{selectedUser.address2}</span>
+                    </div>
+                  )}
+                  {selectedUser.address3 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address Line 3:</span>
+                      <span className="detail-value">{selectedUser.address3}</span>
+                    </div>
+                  )}
+                  {selectedUser.address4 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address Line 4:</span>
+                      <span className="detail-value">{selectedUser.address4}</span>
+                    </div>
+                  )}
+                  {selectedUser.address5 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Address Line 5:</span>
+                      <span className="detail-value">{selectedUser.address5}</span>
+                    </div>
+                  )}
+                  {selectedUser.city && (
+                    <div className="detail-row">
+                      <span className="detail-label">City:</span>
+                      <span className="detail-value">{selectedUser.city}</span>
+                    </div>
+                  )}
+                  {selectedUser.pin && (
+                    <div className="detail-row">
+                      <span className="detail-label">PIN Code:</span>
+                      <span className="detail-value">{selectedUser.pin}</span>
+                    </div>
+                  )}
+                  {!selectedUser.address && !selectedUser.address1 && !selectedUser.city && !selectedUser.pin && (
+                    <p className="no-data">No address information available</p>
+                  )}
+                </div>
+
+                <div className="user-detail-section">
+                  <h3><i className="fas fa-calendar"></i> Account Information</h3>
+                  <div className="detail-row">
+                    <span className="detail-label">Customer ID:</span>
+                    <span className="detail-value">#{selectedUser.id}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Joined Date:</span>
+                    <span className="detail-value">
+                      {new Date(selectedUser.created_at).toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={closeUserModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>
