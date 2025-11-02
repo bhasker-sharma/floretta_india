@@ -42,6 +42,34 @@ function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
 
+  // Products state
+  const [allProducts, setAllProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productFormData, setProductFormData] = useState({
+    name: '',
+    flag: 'perfume',
+    price: '',
+    volume_ml: '',
+    scent: '',
+    note: '',
+    Discription: '',
+    about_product: '',
+    original_price: '',
+    discount_amount: '',
+    is_discount_active: false,
+    delivery_charge: '',
+    available_quantity: '',
+    image: '',
+    ingredients: '',
+    brand: '',
+    colour: '',
+    item_form: '',
+    power_source: '',
+    launch_date: ''
+  });
+  const [productFormLoading, setProductFormLoading] = useState(false);
+  const [productFormMessage, setProductFormMessage] = useState('');
+
   // Load admin info from localStorage
   useEffect(() => {
     const storedAdminInfo = localStorage.getItem("adminInfo");
@@ -129,6 +157,33 @@ function AdminDashboard() {
     };
 
     fetchUsers();
+  }, [activeSection]);
+
+  // Fetch all products when products section is active
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (activeSection !== "products") return;
+
+      setProductsLoading(true);
+      try {
+        const token = localStorage.getItem("adminToken");
+        const response = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          setAllProducts(response.data.products);
+        }
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, [activeSection]);
 
   // Calculate minimum zoom to fit table in container
@@ -695,6 +750,132 @@ function AdminDashboard() {
     setSelectedUser(null);
   };
 
+  // Handle product form input changes
+  const handleProductFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProductFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  // Handle creating a new product
+  const handleCreateProduct = async (e) => {
+    e.preventDefault();
+    setProductFormLoading(true);
+    setProductFormMessage('');
+
+    try {
+      const token = localStorage.getItem('adminToken');
+
+      // Filter out empty string values
+      const productData = Object.fromEntries(
+        Object.entries(productFormData).filter(([key, value]) => {
+          if (typeof value === 'string') return value.trim() !== '';
+          return true;
+        })
+      );
+
+      const response = await axios.post(
+        API_ENDPOINTS.ADMIN_PRODUCTS,
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setProductFormMessage('✓ Product created successfully!');
+
+        // Reset form
+        setProductFormData({
+          name: '',
+          flag: 'perfume',
+          price: '',
+          volume_ml: '',
+          scent: '',
+          note: '',
+          Discription: '',
+          about_product: '',
+          original_price: '',
+          discount_amount: '',
+          is_discount_active: false,
+          delivery_charge: '',
+          available_quantity: '',
+          image: '',
+          ingredients: '',
+          brand: '',
+          colour: '',
+          item_form: '',
+          power_source: '',
+          launch_date: ''
+        });
+
+        // Refresh products list
+        const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (productsResponse.data.success) {
+          setAllProducts(productsResponse.data.products);
+        }
+
+        setTimeout(() => setProductFormMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to create product';
+      setProductFormMessage('✗ ' + errorMsg);
+    } finally {
+      setProductFormLoading(false);
+    }
+  };
+
+  // Handle deleting a product
+  const handleDeleteProduct = async (productId, productName) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete product: ${productName}?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_PRODUCT_DELETE(productId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setProductFormMessage('✓ Product deleted successfully!');
+
+        // Refresh products list
+        const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (productsResponse.data.success) {
+          setAllProducts(productsResponse.data.products);
+        }
+
+        setTimeout(() => setProductFormMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to delete product';
+      setProductFormMessage('✗ ' + errorMsg);
+    }
+  };
+
   // Define the logout function
   const handleLogout = async () => {
     try {
@@ -1136,6 +1317,382 @@ function AdminDashboard() {
                     ))}
                   </ul>
                 )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Products Section */}
+        {activeSection === "products" && (
+          <section className="admin-section settings-section products-section">
+            <h2>Products</h2>
+
+            <div className="add-user-container">
+              {/* Add Product Form */}
+              <div className="settings-card add-user-form">
+                <h3>Add New Product</h3>
+                <p className="settings-description">
+                  Create a new product for your store. Fill in the required fields marked with *.
+                </p>
+
+                <form className="admin-form product-form" onSubmit={handleCreateProduct}>
+                  {/* Required Fields */}
+                  <div className="form-group">
+                    <label htmlFor="product-name">Product Name *</label>
+                    <input
+                      type="text"
+                      id="product-name"
+                      name="name"
+                      value={productFormData.name}
+                      onChange={handleProductFormChange}
+                      placeholder="Enter product name"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-flag">Product Type *</label>
+                    <select
+                      id="product-flag"
+                      name="flag"
+                      value={productFormData.flag}
+                      onChange={handleProductFormChange}
+                      required
+                    >
+                      <option value="perfume">Perfume</option>
+                      <option value="freshner">Freshner</option>
+                      <option value="face_mist">Face Mist</option>
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-price">Price *</label>
+                      <input
+                        type="number"
+                        id="product-price"
+                        name="price"
+                        value={productFormData.price}
+                        onChange={handleProductFormChange}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-volume">Volume (ml)</label>
+                      <input
+                        type="text"
+                        id="product-volume"
+                        name="volume_ml"
+                        value={productFormData.volume_ml}
+                        onChange={handleProductFormChange}
+                        placeholder="e.g., 50ml, 100ml"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Optional Fields */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-scent">Scent</label>
+                      <input
+                        type="text"
+                        id="product-scent"
+                        name="scent"
+                        value={productFormData.scent}
+                        onChange={handleProductFormChange}
+                        placeholder="e.g., Floral, Woody"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-note">Note</label>
+                      <select
+                        id="product-note"
+                        name="note"
+                        value={productFormData.note}
+                        onChange={handleProductFormChange}
+                      >
+                        <option value="">Select Note</option>
+                        <option value="sweet">Sweet</option>
+                        <option value="woody">Woody</option>
+                        <option value="floral">Floral</option>
+                        <option value="citrus">Citrus</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-description">Description</label>
+                    <textarea
+                      id="product-description"
+                      name="Discription"
+                      value={productFormData.Discription}
+                      onChange={handleProductFormChange}
+                      placeholder="Enter product description"
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-about">About Product</label>
+                    <textarea
+                      id="product-about"
+                      name="about_product"
+                      value={productFormData.about_product}
+                      onChange={handleProductFormChange}
+                      placeholder="Additional information about the product"
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-original-price">Original Price</label>
+                      <input
+                        type="number"
+                        id="product-original-price"
+                        name="original_price"
+                        value={productFormData.original_price}
+                        onChange={handleProductFormChange}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-discount">Discount Amount</label>
+                      <input
+                        type="number"
+                        id="product-discount"
+                        name="discount_amount"
+                        value={productFormData.discount_amount}
+                        onChange={handleProductFormChange}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-delivery">Delivery Charge</label>
+                      <input
+                        type="number"
+                        id="product-delivery"
+                        name="delivery_charge"
+                        value={productFormData.delivery_charge}
+                        onChange={handleProductFormChange}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-quantity">Available Quantity</label>
+                      <input
+                        type="number"
+                        id="product-quantity"
+                        name="available_quantity"
+                        value={productFormData.available_quantity}
+                        onChange={handleProductFormChange}
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group checkbox-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="is_discount_active"
+                        checked={productFormData.is_discount_active}
+                        onChange={handleProductFormChange}
+                      />
+                      <span>Discount Active</span>
+                    </label>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-brand">Brand</label>
+                      <input
+                        type="text"
+                        id="product-brand"
+                        name="brand"
+                        value={productFormData.brand}
+                        onChange={handleProductFormChange}
+                        placeholder="Enter brand name"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-colour">Colour</label>
+                      <input
+                        type="text"
+                        id="product-colour"
+                        name="colour"
+                        value={productFormData.colour}
+                        onChange={handleProductFormChange}
+                        placeholder="Enter colour"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-image">Image Path</label>
+                    <input
+                      type="text"
+                      id="product-image"
+                      name="image"
+                      value={productFormData.image}
+                      onChange={handleProductFormChange}
+                      placeholder="e.g., products/perfume.jpg (max 255 chars)"
+                      maxLength="255"
+                    />
+                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
+                      Enter relative path or URL. Do not paste base64 image data.
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-ingredients">Ingredients</label>
+                    <textarea
+                      id="product-ingredients"
+                      name="ingredients"
+                      value={productFormData.ingredients}
+                      onChange={handleProductFormChange}
+                      placeholder="List ingredients"
+                      rows="2"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="product-item-form">Item Form</label>
+                      <input
+                        type="text"
+                        id="product-item-form"
+                        name="item_form"
+                        value={productFormData.item_form}
+                        onChange={handleProductFormChange}
+                        placeholder="e.g., Spray, Roll-on, Stick"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-power-source">Power Source</label>
+                      <input
+                        type="text"
+                        id="product-power-source"
+                        name="power_source"
+                        value={productFormData.power_source}
+                        onChange={handleProductFormChange}
+                        placeholder="e.g., Manual, Battery"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-launch-date">Launch Date</label>
+                    <input
+                      type="date"
+                      id="product-launch-date"
+                      name="launch_date"
+                      value={productFormData.launch_date}
+                      onChange={handleProductFormChange}
+                    />
+                  </div>
+
+                  {productFormMessage && (
+                    <div
+                      className={`form-message ${
+                        productFormMessage.startsWith('✓') ? 'success' : 'error'
+                      }`}
+                    >
+                      {productFormMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-create-admin"
+                    disabled={productFormLoading}
+                  >
+                    {productFormLoading ? 'Creating...' : 'Create Product'}
+                  </button>
+                </form>
+              </div>
+
+              {/* Products List */}
+              <div className="settings-card admin-list">
+                <h3>All Products ({allProducts.length})</h3>
+                <p className="settings-description">
+                  List of all products in the system.
+                </p>
+
+                <div className="admin-list-container add-user-list-container">
+                  {productsLoading ? (
+                    <p className="no-admins">Loading products...</p>
+                  ) : allProducts.length === 0 ? (
+                    <p className="no-admins">No products found</p>
+                  ) : (
+                    <ul className="admin-items">
+                      {allProducts.map((product) => (
+                        <li key={product.id} className="admin-item product-item">
+                          <div className="admin-item-header">
+                            <span className="admin-email product-name">{product.name}</span>
+                            <span className={`admin-badge ${product.flag}`}>
+                              {product.flag === 'perfume' ? 'Perfume' :
+                               product.flag === 'freshner' ? 'Freshner' : 'Face Mist'}
+                            </span>
+                          </div>
+
+                          <div className="product-details">
+                            <span className="product-info">
+                              <i className="fas fa-tag"></i> Price: ₹{product.price}
+                            </span>
+                            {product.volume_ml && (
+                              <span className="product-info">
+                                <i className="fas fa-flask"></i> {product.volume_ml}
+                              </span>
+                            )}
+                            {product.available_quantity !== null && (
+                              <span className="product-info">
+                                <i className="fas fa-boxes"></i> Stock: {product.available_quantity}
+                              </span>
+                            )}
+                          </div>
+
+                          {product.scent && (
+                            <span className="product-scent">
+                              <i className="fas fa-leaf"></i> {product.scent}
+                            </span>
+                          )}
+
+                          <button
+                            className="delete-admin-btn"
+                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            title="Delete product"
+                          >
+                            <i className="fas fa-trash"></i> Delete
+                          </button>
+
+                          <span className="admin-date">
+                            Created: {new Date(product.created_at).toLocaleDateString()}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
           </section>

@@ -16,6 +16,15 @@ const Cart = () => {
   const [user, setUser] = useState(null);
   const [showAddressPopup, setShowAddressPopup] = useState(false);
   const [includeGST, setIncludeGST] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    name: '',
+    address: '',
+    city: '',
+    pin: '',
+    mobile: '',
+    gst_number: ''
+  });
+  const [addressLoading, setAddressLoading] = useState(false);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -135,6 +144,78 @@ const Cart = () => {
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
+  };
+
+  const handleAddressFormChange = (e) => {
+    const { name, value } = e.target;
+    setAddressForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveAddress = async () => {
+    // Validate form
+    if (!addressForm.name || addressForm.name.trim().length < 2) {
+      alert('Please enter a valid name (minimum 2 characters)');
+      return;
+    }
+    if (!addressForm.address || addressForm.address.trim().length < 5) {
+      alert('Please enter a valid address (minimum 5 characters)');
+      return;
+    }
+    if (!addressForm.mobile || addressForm.mobile.trim().length < 10) {
+      alert('Please enter a valid mobile number (minimum 10 digits)');
+      return;
+    }
+
+    setAddressLoading(true);
+    try {
+      const response = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
+        name: addressForm.name,
+        address: addressForm.address,
+        city: addressForm.city,
+        pin: addressForm.pin,
+        mobile: addressForm.mobile,
+        gst_number: addressForm.gst_number
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
+      });
+
+      if (response.data.success) {
+        // Update local user state
+        setUser(prev => ({
+          ...prev,
+          name: addressForm.name,
+          address: addressForm.address,
+          city: addressForm.city,
+          pin: addressForm.pin,
+          mobile: addressForm.mobile,
+          gst_number: addressForm.gst_number
+        }));
+
+        setShowAddressPopup(false);
+        alert('Address saved successfully! You can now place your order.');
+
+        // Reset form
+        setAddressForm({
+          name: '',
+          address: '',
+          city: '',
+          pin: '',
+          mobile: '',
+          gst_number: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error saving address:', error);
+      alert('Failed to save address. Please try again.');
+    } finally {
+      setAddressLoading(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -385,11 +466,118 @@ const Cart = () => {
     {showAddressPopup && (
       <div className="address-popup-backdrop">
         <div className="address-popup">
-          <h2>Address Required</h2>
-          <p>Please add your address in your profile before placing an order.</p>
-          <button className="close-btn" onClick={() => setShowAddressPopup(false)}>
-            Close
-          </button>
+          <h2>Add Delivery Address</h2>
+          <p style={{marginBottom: '20px', color: '#666'}}>Please provide your delivery address to continue with the order.</p>
+
+          <form className="address-form" onSubmit={(e) => { e.preventDefault(); handleSaveAddress(); }}>
+            <div className="form-group">
+              <label htmlFor="name">Full Name *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={addressForm.name}
+                onChange={handleAddressFormChange}
+                placeholder="Enter your full name"
+                required
+                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="address">Address *</label>
+              <textarea
+                id="address"
+                name="address"
+                value={addressForm.address}
+                onChange={handleAddressFormChange}
+                placeholder="Enter your complete address"
+                rows="3"
+                required
+                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+              />
+            </div>
+
+            <div className="form-row" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+              <div className="form-group">
+                <label htmlFor="city">City</label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  value={addressForm.city}
+                  onChange={handleAddressFormChange}
+                  placeholder="Enter city"
+                  style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="pin">PIN Code</label>
+                <input
+                  type="text"
+                  id="pin"
+                  name="pin"
+                  value={addressForm.pin}
+                  onChange={handleAddressFormChange}
+                  placeholder="Enter PIN code"
+                  maxLength="6"
+                  style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="mobile">Mobile Number *</label>
+              <input
+                type="tel"
+                id="mobile"
+                name="mobile"
+                value={addressForm.mobile}
+                onChange={handleAddressFormChange}
+                placeholder="Enter 10-digit mobile number"
+                maxLength="10"
+                required
+                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="gst_number">GST Number (Optional)</label>
+              <input
+                type="text"
+                id="gst_number"
+                name="gst_number"
+                value={addressForm.gst_number}
+                onChange={handleAddressFormChange}
+                placeholder="Enter GST number (if applicable)"
+                maxLength="15"
+                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+              />
+              <small style={{display: 'block', marginTop: '5px', color: '#666', fontSize: '12px'}}>
+                GST number is required if you want GST invoice
+              </small>
+            </div>
+
+            <div className="address-popup-actions" style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+              <button
+                type="button"
+                className="close-btn"
+                onClick={() => setShowAddressPopup(false)}
+                style={{flex: 1, padding: '12px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer'}}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="save-address-btn"
+                disabled={addressLoading}
+                style={{flex: 1, padding: '12px', borderRadius: '4px', border: 'none', background: '#f37254', color: '#fff', cursor: 'pointer', fontWeight: 'bold'}}
+              >
+                {addressLoading ? 'Saving...' : 'Save Address'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     )}

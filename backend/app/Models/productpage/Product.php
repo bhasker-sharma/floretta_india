@@ -24,6 +24,7 @@ class Product extends Model
         'available_quantity',
         'rating',
         'reviews_count',
+        'reviews',
         'image',
         'image_path',
         'flag',

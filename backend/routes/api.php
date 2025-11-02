@@ -135,5 +135,10 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);
     Route::delete('/delete-admin/{id}', [AdminAuthController::class, 'deleteAdmin']);
     Route::get('/all-users', [AdminAuthController::class, 'getAllUsers']);
+
+    // Product management
+    Route::get('/products', [ProductController::class, 'adminGetAllProducts']);
+    Route::post('/products', [ProductController::class, 'adminCreateProduct']);
+    Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
 });
 

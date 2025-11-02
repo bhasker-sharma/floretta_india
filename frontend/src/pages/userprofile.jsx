@@ -13,11 +13,7 @@ function UserProfile() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showAddressPopup, setShowAddressPopup] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    address: "",
-    city: "",
-    pin: "",
-  });
+  const [newAddress, setNewAddress] = useState("");
   const [showSavedAddresses, setShowSavedAddresses] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [showNoAddressPopup, setShowNoAddressPopup] = useState(
@@ -87,8 +83,7 @@ function UserProfile() {
   };
 
   const handleNewAddressChange = (e) => {
-    const { name, value } = e.target;
-    setNewAddress((prev) => ({ ...prev, [name]: value }));
+    setNewAddress(e.target.value);
   };
 
   const handleLogout = () => {
@@ -101,13 +96,13 @@ function UserProfile() {
       if (!formData[key]) {
         setFormData((prev) => ({
           ...prev,
-          [key]: `${newAddress.address}, ${newAddress.city} - ${newAddress.pin}`,
+          [key]: newAddress,
         }));
         break;
       }
     }
     setShowAddressPopup(false);
-    setNewAddress({ address: "", city: "", pin: "" });
+    setNewAddress("");
   };
 
   const handleSubmit = async (e) => {
@@ -544,26 +539,11 @@ function UserProfile() {
               <div className="popup-overlay">
                 <div className="popup-form">
                   <h3>Add New Address</h3>
-                  <input
-                    type="text"
-                    name="address"
-                    value={newAddress.address}
+                  <textarea
+                    value={newAddress}
                     onChange={handleNewAddressChange}
-                    placeholder="Address"
-                  />
-                  <input
-                    type="text"
-                    name="city"
-                    value={newAddress.city}
-                    onChange={handleNewAddressChange}
-                    placeholder="City"
-                  />
-                  <input
-                    type="text"
-                    name="pin"
-                    value={newAddress.pin}
-                    onChange={handleNewAddressChange}
-                    placeholder="PIN Code"
+                    placeholder="Enter your address"
+                    rows="4"
                   />
                   <div className="flex justify-between">
                     <button
@@ -593,9 +573,7 @@ function UserProfile() {
             <h2>Saved Addresses</h2>
             {user.address && (
               <div className="saved-address-box">
-                <p>
-                  <strong>Primary Address:</strong> {user.address}
-                </p>
+                <p>{user.address}</p>
                 <button
                   onClick={() => {
                     setSelectedAddress(user.address);
@@ -609,11 +587,11 @@ function UserProfile() {
             )}
             {[1, 2, 3, 4, 5].map((i) => {
               const addr = user[`address${i}`];
-              return addr ? (
+              if (!addr) return null;
+
+              return (
                 <div key={i} className="saved-address-box">
-                  <p>
-                    <strong>Address {i}:</strong> {addr}
-                  </p>
+                  <p>{addr}</p>
                   <button
                     onClick={() => {
                       setSelectedAddress(addr);
@@ -624,7 +602,7 @@ function UserProfile() {
                     Use this Address
                   </button>
                 </div>
-              ) : null;
+              );
             })}
             <div className="flex justify-end mt-4">
               <button

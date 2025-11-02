@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
   ADMIN_ALL: `${API_URL}/api/admin/all-admins`,
   ADMIN_DELETE: (id) => `${API_URL}/api/admin/delete-admin/${id}`,
   ADMIN_USERS: `${API_URL}/api/admin/all-users`,
+  ADMIN_PRODUCTS: `${API_URL}/api/admin/products`,
+  ADMIN_PRODUCT_DELETE: (id) => `${API_URL}/api/admin/products/${id}`,
 
   // Hotel Amenities
   ROOM_FRESHNERS: `${API_URL}/api/room-freshners`,
