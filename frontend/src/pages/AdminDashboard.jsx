@@ -3,12 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
-
-import { PrimeReactProvider, PrimeReactContext } from 'primereact/api';
-        
-
-import { Button } from 'primereact/button';
-        
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -897,6 +893,109 @@ function AdminDashboard() {
     }
   };
 
+  // Export customers to CSV
+  const exportCustomersToCSV = () => {
+    if (allUsers.length === 0) {
+      alert('No customers to export');
+      return;
+    }
+
+    // Define CSV headers
+    const headers = ['ID', 'Name', 'Email', 'Mobile', 'Address', 'City', 'PIN', 'GST Number', 'Email Verified'];
+
+    // Map user data to CSV rows
+    const rows = allUsers.map(user => [
+      user.id || '',
+      user.name || '',
+      user.email || '',
+      user.mobile || '',
+      user.address || '',
+      user.city || '',
+      user.pin || '',
+      user.gst_number || '',
+      user.email_verified ? 'Yes' : 'No'
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `floretta_customers_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export customers to PDF
+  const exportCustomersToPDF = () => {
+    if (allUsers.length === 0) {
+      alert('No customers to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // Add title
+    doc.setFontSize(18);
+    doc.text('Floretta India - Customer List', 14, 22);
+
+    // Add export date
+    doc.setFontSize(10);
+    doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 30);
+
+    // Prepare table data
+    const tableData = allUsers.map(user => [
+      user.id || '',
+      user.name || '',
+      user.email || '',
+      user.mobile || '',
+      user.city || '',
+      user.pin || '',
+      user.gst_number || '',
+      user.email_verified ? 'Yes' : 'No'
+    ]);
+
+    // Add table
+    autoTable(doc, {
+      head: [['ID', 'Name', 'Email', 'Mobile', 'City', 'PIN', 'GST', 'Verified']],
+      body: tableData,
+      startY: 35,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [243, 114, 84], textColor: 255 },
+      alternateRowStyles: { fillColor: [249, 249, 249] },
+      margin: { top: 35 },
+    });
+
+    // Generate PDF as blob and trigger direct download
+    const pdfBlob = doc.output('blob');
+    const fileName = `floretta_customers_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    // Create a link element and trigger download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfBlob);
+    link.download = fileName;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }, 100);
+  };
+
   return (
     <div className="admin-dashboard">
       {/* Sidebar */}
@@ -1266,7 +1365,55 @@ function AdminDashboard() {
         {/* Customers Section */}
         {activeSection === "customers" && (
           <section className="admin-section settings-section customers-section">
-            <h2>Customers</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0 }}>Customers</h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={exportCustomersToCSV}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                >
+                  <i className="fas fa-file-csv"></i>
+                  Export CSV
+                </button>
+                <button
+                  onClick={exportCustomersToPDF}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
+                >
+                  <i className="fas fa-file-pdf"></i>
+                  Export PDF
+                </button>
+              </div>
+            </div>
 
             <div className="settings-card">
               <h3>All Customers ({allUsers.length})</h3>
