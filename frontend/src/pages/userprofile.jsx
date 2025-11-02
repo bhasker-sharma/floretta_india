@@ -12,13 +12,17 @@ function UserProfile() {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showAddressPopup, setShowAddressPopup] = useState(false);
-  const [newAddress, setNewAddress] = useState("");
-  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState("");
-  const [showNoAddressPopup, setShowNoAddressPopup] = useState(
-    !selectedAddress
-  );
+  const [showAddressManager, setShowAddressManager] = useState(false);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [showAddNewForm, setShowAddNewForm] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    label: "",
+    name: "",
+    address: "",
+    city: "",
+    pin: "",
+    mobile: "",
+  });
   const [orders, setOrders] = useState([]);
   const [showOrders, setShowOrders] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -38,10 +42,6 @@ function UserProfile() {
       .then((res) => {
         setUser(res.data);
         setFormData(res.data);
-
-        // Default to address1 if available
-        const defaultAddr = res.data.address1 || res.data.address || "";
-        setSelectedAddress(defaultAddr);
       })
       .catch((err) => {
         if (err.response?.status === 401) {
@@ -52,10 +52,6 @@ function UserProfile() {
         }
       });
   }, [navigate, token]);
-
-  useEffect(() => {
-    setShowNoAddressPopup(!selectedAddress);
-  }, [selectedAddress]);
 
   useEffect(() => {
     if (showOrders) {
@@ -70,39 +66,155 @@ function UserProfile() {
     }
   }, [showOrders, token]);
 
-  // Optional: persist selected address to localStorage
-  // useEffect(() => {
-  //   if (selectedAddress) {
-  //     localStorage.setItem('selectedAddress', selectedAddress);
-  //   }
-  // }, [selectedAddress]);
+  // Helper functions for address management
+  const parseAddress = (jsonString) => {
+    if (!jsonString) return null;
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      return null;
+    }
+  };
+
+  const getAllAddresses = () => {
+    const addresses = [];
+    for (let i = 1; i <= 5; i++) {
+      const addr = parseAddress(user?.[`address${i}`]);
+      if (addr) {
+        addresses.push({ index: i, ...addr });
+      }
+    }
+    return addresses;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNewAddressChange = (e) => {
-    setNewAddress(e.target.value);
+  const handleAddressFormChange = (e) => {
+    const { name, value } = e.target;
+    setAddressForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
-  const handleAddNewAddress = () => {
-    for (let i = 1; i <= 5; i++) {
-      const key = `address${i}`;
-      if (!formData[key]) {
-        setFormData((prev) => ({
-          ...prev,
-          [key]: newAddress,
-        }));
-        break;
+
+  const openAddressForm = (index = null) => {
+    if (index) {
+      const addr = parseAddress(user[`address${index}`]);
+      if (addr) {
+        setAddressForm(addr);
+        setEditingAddressIndex(index);
       }
+    } else {
+      setAddressForm({
+        label: "",
+        name: "",
+        address: "",
+        city: "",
+        pin: "",
+        mobile: "",
+      });
+      setEditingAddressIndex(null);
     }
-    setShowAddressPopup(false);
-    setNewAddress("");
+    setShowAddressManager(true);
+  };
+
+  const handleSaveAddress = async () => {
+    // Validate required fields
+    if (!addressForm.name || !addressForm.address || !addressForm.city || !addressForm.pin || !addressForm.mobile) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let targetIndex = editingAddressIndex;
+
+      // If adding new address, find first empty slot
+      if (!targetIndex) {
+        for (let i = 1; i <= 5; i++) {
+          if (!user[`address${i}`]) {
+            targetIndex = i;
+            break;
+          }
+        }
+        if (!targetIndex) {
+          alert("All 5 address slots are full. Please delete an address first.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const addressData = {
+        [`address${targetIndex}`]: JSON.stringify(addressForm),
+      };
+
+      const res = await axios.post(
+        API_ENDPOINTS.UPDATE_PROFILE,
+        addressData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const updatedUser = res.data.user;
+      setUser(updatedUser);
+      setFormData(updatedUser);
+      setShowAddressManager(false);
+      setEditingAddressIndex(null);
+      setShowAddNewForm(false);
+      setAddressForm({
+        label: "",
+        name: "",
+        address: "",
+        city: "",
+        pin: "",
+        mobile: "",
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save address.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (index) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const addressData = {
+        [`address${index}`]: "",
+      };
+
+      const res = await axios.post(
+        API_ENDPOINTS.UPDATE_PROFILE,
+        addressData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const updatedUser = res.data.user;
+      setUser(updatedUser);
+      setFormData(updatedUser);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete address.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -133,10 +245,6 @@ function UserProfile() {
       setUser(updatedUser);
       setFormData(updatedUser);
       setEditMode(false);
-      // Set selectedAddress to the updated main address
-      if (updatedUser.address) {
-        setSelectedAddress(updatedUser.address);
-      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update profile.");
     } finally {
@@ -411,29 +519,6 @@ function UserProfile() {
             <h3>{user.name}</h3>
             <p>📧 {user.email}</p>
             <p>📞 {user.mobile}</p>
-            {/* <p>🧾 {user.pin}</p>
-            <p>🏙️ {user.city}</p> */}
-            {selectedAddress ? (
-              <p>📍 {selectedAddress}</p>
-            ) : (
-              showNoAddressPopup && (
-                <div className="no-address-popup-backdrop">
-                  <div className="no-address-popup">
-                    <h3>No Address Selected</h3>
-                    <p>
-                      Please add or select an address to proceed with your
-                      orders.
-                    </p>
-                    <button
-                      onClick={() => setShowNoAddressPopup(false)}
-                      className="submit-btn"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              )
-            )}
           </div>
         </div>
 
@@ -448,8 +533,8 @@ function UserProfile() {
           <h4>Account Settings</h4>
           <ul className="settings-list">
             <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
-            <li onClick={() => setShowSavedAddresses(true)}>
-              📍 Saved Addresses
+            <li onClick={() => openAddressForm()}>
+              📍 Manage Addresses
             </li>
             <li onClick={handleLogout} className="logout-btn">
               🚪 Logout
@@ -463,13 +548,14 @@ function UserProfile() {
         <div className="modal-backdrop">
           <div className="modal-form">
             <h2>Edit Profile</h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <input
                 type="text"
                 name="name"
                 value={formData.name || ""}
                 onChange={handleChange}
                 placeholder="Name"
+                style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
               />
               <input
                 type="email"
@@ -477,141 +563,314 @@ function UserProfile() {
                 value={formData.email || ""}
                 onChange={handleChange}
                 placeholder="Email"
+                style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
               />
-              <input
-                type="text"
-                name="mobile"
-                value={formData.mobile || ""}
-                onChange={handleChange}
-                placeholder="Mobile"
-              />
-              <input
-                type="text"
-                name="pin"
-                value={formData.pin || ""}
-                onChange={handleChange}
-                placeholder="PIN Code"
-              />
-              <input
-                type="text"
-                name="city"
-                value={formData.city || ""}
-                onChange={handleChange}
-                placeholder="City"
-              />
-              <input
-                type="text"
-                name="address"
-                value={formData.address || ""}
-                onChange={handleChange}
-                placeholder="Address"
-              />
-              <input
-                type="text"
-                name="gst_number"
-                value={formData.gst_number || ""}
-                onChange={handleChange}
-                placeholder="GST Number (Optional)"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAddressPopup(true)}
-                className="add-address-btn"
-              >
-                ➕ Add Another Address
-              </button>
-              <div className="flex justify-between">
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setEditMode(false)}
                   className="cancel-btn"
+                  style={{ flex: 1 }}
                 >
                   Cancel
                 </button>
-                <button type="submit" disabled={loading} className="submit-btn">
+                <button type="submit" disabled={loading} className="submit-btn" style={{ flex: 1 }}>
                   {loading ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
 
-            {/* Add New Address Popup */}
-            {showAddressPopup && (
-              <div className="popup-overlay">
-                <div className="popup-form">
-                  <h3>Add New Address</h3>
-                  <textarea
-                    value={newAddress}
-                    onChange={handleNewAddressChange}
-                    placeholder="Enter your address"
-                    rows="4"
+      {/* Address Manager Modal */}
+      {showAddressManager && (
+        <div className="modal-backdrop">
+          <div className="modal-form" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2>Manage Addresses</h2>
+
+            {/* Display all saved addresses */}
+            <div className="addresses-list" style={{ marginBottom: '20px' }}>
+              {getAllAddresses().length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#666' }}>No addresses saved yet</p>
+              ) : (
+                getAllAddresses().map((addr) => (
+                  <div key={addr.index} className="saved-address-box" style={{
+                    border: '1px solid #ddd',
+                    padding: '15px',
+                    marginBottom: '10px',
+                    borderRadius: '8px',
+                    backgroundColor: '#f9f9f9'
+                  }}>
+                    <div style={{ marginBottom: '10px' }}>
+                      <strong>{addr.label || 'Address'}</strong>
+                      <p style={{ margin: '5px 0' }}>{addr.name}</p>
+                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                        {addr.address}, {addr.city} - {addr.pin}
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                        Phone: {addr.mobile}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => openAddressForm(addr.index)}
+                        className="submit-btn"
+                        style={{ flex: 1 }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAddress(addr.index)}
+                        className="cancel-btn"
+                        style={{ flex: 1 }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add New Address Form */}
+            {editingAddressIndex === null && showAddNewForm && (
+              <div style={{
+                border: '2px dashed #ddd',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ marginBottom: '15px' }}>Add New Address</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="text"
+                    name="label"
+                    value={addressForm.label}
+                    onChange={handleAddressFormChange}
+                    placeholder="Label (e.g., Home, Office)"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
                   />
-                  <div className="flex justify-between">
+                  <input
+                    type="text"
+                    name="name"
+                    value={addressForm.name}
+                    onChange={handleAddressFormChange}
+                    placeholder="Full Name *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <textarea
+                    name="address"
+                    value={addressForm.address}
+                    onChange={handleAddressFormChange}
+                    placeholder="Street Address *"
+                    required
+                    rows="3"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    value={addressForm.city}
+                    onChange={handleAddressFormChange}
+                    placeholder="City *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="pin"
+                    value={addressForm.pin}
+                    onChange={handleAddressFormChange}
+                    placeholder="PIN Code *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={addressForm.mobile}
+                    onChange={handleAddressFormChange}
+                    placeholder="Mobile Number *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <div style={{ display: 'flex', gap: '10px' }}>
                     <button
-                      onClick={() => setShowAddressPopup(false)}
+                      onClick={() => {
+                        setShowAddNewForm(false);
+                        setAddressForm({
+                          label: "",
+                          name: "",
+                          address: "",
+                          city: "",
+                          pin: "",
+                          mobile: "",
+                        });
+                      }}
                       className="cancel-btn"
+                      style={{ flex: 1 }}
                     >
                       Cancel
                     </button>
                     <button
-                      onClick={handleAddNewAddress}
+                      onClick={handleSaveAddress}
+                      disabled={loading}
                       className="submit-btn"
+                      style={{ flex: 1 }}
                     >
-                      Add
+                      {loading ? 'Saving...' : 'Save Address'}
                     </button>
                   </div>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* Saved Addresses Modal */}
-      {showSavedAddresses && (
-        <div className="modal-backdrop">
-          <div className="modal-form">
-            <h2>Saved Addresses</h2>
-            {user.address && (
-              <div className="saved-address-box">
-                <p>{user.address}</p>
+            {/* Add New Address Button */}
+            {editingAddressIndex === null && !showAddNewForm && getAllAddresses().length < 5 && (
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <button
                   onClick={() => {
-                    setSelectedAddress(user.address);
-                    setShowSavedAddresses(false);
+                    setShowAddNewForm(true);
+                    setAddressForm({
+                      label: "",
+                      name: "",
+                      address: "",
+                      city: "",
+                      pin: "",
+                      mobile: "",
+                    });
                   }}
-                  className="submit-btn"
+                  style={{
+                    padding: '12px 24px',
+                    border: '2px dashed #232946',
+                    background: '#fff',
+                    color: '#232946',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                  }}
                 >
-                  Use this Address
+                  + Add New Address
                 </button>
               </div>
             )}
-            {[1, 2, 3, 4, 5].map((i) => {
-              const addr = user[`address${i}`];
-              if (!addr) return null;
 
-              return (
-                <div key={i} className="saved-address-box">
-                  <p>{addr}</p>
-                  <button
-                    onClick={() => {
-                      setSelectedAddress(addr);
-                      setShowSavedAddresses(false);
-                    }}
-                    className="submit-btn"
-                  >
-                    Use this Address
-                  </button>
+            {/* Edit Address Form */}
+            {editingAddressIndex !== null && (
+              <div style={{
+                border: '2px solid #232946',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                backgroundColor: '#f0f4ff'
+              }}>
+                <h3 style={{ marginBottom: '15px' }}>Edit Address</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="text"
+                    name="label"
+                    value={addressForm.label}
+                    onChange={handleAddressFormChange}
+                    placeholder="Label (e.g., Home, Office)"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="name"
+                    value={addressForm.name}
+                    onChange={handleAddressFormChange}
+                    placeholder="Full Name *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <textarea
+                    name="address"
+                    value={addressForm.address}
+                    onChange={handleAddressFormChange}
+                    placeholder="Street Address *"
+                    required
+                    rows="3"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    value={addressForm.city}
+                    onChange={handleAddressFormChange}
+                    placeholder="City *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="pin"
+                    value={addressForm.pin}
+                    onChange={handleAddressFormChange}
+                    placeholder="PIN Code *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={addressForm.mobile}
+                    onChange={handleAddressFormChange}
+                    placeholder="Mobile Number *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={() => {
+                        setEditingAddressIndex(null);
+                        setAddressForm({
+                          label: "",
+                          name: "",
+                          address: "",
+                          city: "",
+                          pin: "",
+                          mobile: "",
+                        });
+                      }}
+                      className="cancel-btn"
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveAddress}
+                      disabled={loading}
+                      className="submit-btn"
+                      style={{ flex: 1 }}
+                    >
+                      {loading ? 'Saving...' : 'Update Address'}
+                    </button>
+                  </div>
                 </div>
-              );
-            })}
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowSavedAddresses(false)}
-                className="cancel-btn"
-              >
-                Close
-              </button>
-            </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowAddressManager(false);
+                setEditingAddressIndex(null);
+                setShowAddNewForm(false);
+                setAddressForm({
+                  label: "",
+                  name: "",
+                  address: "",
+                  city: "",
+                  pin: "",
+                  mobile: "",
+                });
+              }}
+              className="cancel-btn"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

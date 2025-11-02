@@ -20,6 +20,7 @@ import AuthCallback from './pages/AuthCallback';
 import ForgotPassword from './pages/ForgotPassword';
 import VerifyOTP from './pages/VerifyOTP';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 
 const App = () => {
   return (
@@ -38,6 +39,9 @@ const App = () => {
         <Route path="/login" element={<Userlogin />} />
         <Route path="/userlogin" element={<Userlogin />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+
+        {/* Email Verification Route */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Password Reset Routes */}
         <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -14,15 +14,21 @@ const Cart = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [user, setUser] = useState(null);
-  const [showAddressPopup, setShowAddressPopup] = useState(false);
+  const [showAddressSelection, setShowAddressSelection] = useState(false);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(null);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [showAddNewForm, setShowAddNewForm] = useState(false);
   const [includeGST, setIncludeGST] = useState(false);
+  const [showGSTInput, setShowGSTInput] = useState(false);
+  const [gstNumber, setGstNumber] = useState('');
+  const [currentStep, setCurrentStep] = useState(1); // 1: Address, 2: GST, 3: Payment
   const [addressForm, setAddressForm] = useState({
+    label: '',
     name: '',
     address: '',
     city: '',
     pin: '',
     mobile: '',
-    gst_number: ''
   });
   const [addressLoading, setAddressLoading] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +52,11 @@ const Cart = () => {
 
         const userData = checkResponse.data.user;
         setUser(userData);// Store user data
+
+        // Initialize GST number if available
+        if (userData.gst_number) {
+          setGstNumber(userData.gst_number);
+        }
 
         if (!userData || !userData.name || !userData.email) {
           alert('Please complete your profile to access the cart.');
@@ -136,6 +147,36 @@ const Cart = () => {
     }
   };
 
+  // Helper functions for address management
+  const parseAddress = (jsonString) => {
+    if (!jsonString) return null;
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      return null;
+    }
+  };
+
+  const getAllAddresses = () => {
+    const addresses = [];
+    for (let i = 1; i <= 5; i++) {
+      const addr = parseAddress(user?.[`address${i}`]);
+      if (addr) {
+        addresses.push({ index: i, ...addr });
+      }
+    }
+    return addresses;
+  };
+
+  const getSelectedAddress = () => {
+    if (selectedAddressIndex) {
+      return parseAddress(user[`address${selectedAddressIndex}`]);
+    }
+    // Use default address index if available
+    const defaultIndex = user?.default_address_index || 1;
+    return parseAddress(user?.[`address${defaultIndex}`]);
+  };
+
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -168,48 +209,63 @@ const Cart = () => {
       alert('Please enter a valid mobile number (minimum 10 digits)');
       return;
     }
+    if (!addressForm.city || !addressForm.pin) {
+      alert('Please enter city and PIN code');
+      return;
+    }
 
     setAddressLoading(true);
     try {
-      const response = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
-        name: addressForm.name,
-        address: addressForm.address,
-        city: addressForm.city,
-        pin: addressForm.pin,
-        mobile: addressForm.mobile,
-        gst_number: addressForm.gst_number
-      }, {
+      let targetIndex = editingAddressIndex;
+
+      // If adding new address, find first empty slot
+      if (!targetIndex) {
+        for (let i = 1; i <= 5; i++) {
+          if (!user[`address${i}`]) {
+            targetIndex = i;
+            break;
+          }
+        }
+        if (!targetIndex) {
+          alert('All 5 address slots are full. Please delete an address from your profile first.');
+          setAddressLoading(false);
+          return;
+        }
+      }
+
+      const addressData = {
+        [`address${targetIndex}`]: JSON.stringify(addressForm),
+      };
+
+      const response = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         }
       });
 
-      if (response.data.success) {
-        // Update local user state
-        setUser(prev => ({
-          ...prev,
-          name: addressForm.name,
-          address: addressForm.address,
-          city: addressForm.city,
-          pin: addressForm.pin,
-          mobile: addressForm.mobile,
-          gst_number: addressForm.gst_number
-        }));
+      // Update local user state
+      setUser(prev => ({
+        ...prev,
+        [`address${targetIndex}`]: JSON.stringify(addressForm)
+      }));
 
-        setShowAddressPopup(false);
-        alert('Address saved successfully! You can now place your order.');
+      // Select this address
+      setSelectedAddressIndex(targetIndex);
+      setEditingAddressIndex(null);
+      setShowAddNewForm(false);
 
-        // Reset form
-        setAddressForm({
-          name: '',
-          address: '',
-          city: '',
-          pin: '',
-          mobile: '',
-          gst_number: ''
-        });
-      }
+      // Reset form
+      setAddressForm({
+        label: '',
+        name: '',
+        address: '',
+        city: '',
+        pin: '',
+        mobile: '',
+      });
+
+      alert('Address saved successfully!');
     } catch (error) {
       console.error('Error saving address:', error);
       alert('Failed to save address. Please try again.');
@@ -218,20 +274,140 @@ const Cart = () => {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handleSelectAddress = async (index) => {
+    setSelectedAddressIndex(index);
+
+    // Update default address index in backend
+    try {
+      await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
+        default_address_index: index
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
+      });
+
+      setUser(prev => ({
+        ...prev,
+        default_address_index: index
+      }));
+    } catch (error) {
+      console.error('Error updating default address:', error);
+    }
+  };
+
+  const openEditAddress = (index) => {
+    const addr = parseAddress(user[`address${index}`]);
+    if (addr) {
+      setAddressForm(addr);
+      setEditingAddressIndex(index);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAddressIndex(null);
+    setShowAddNewForm(false);
+    setAddressForm({
+      label: '',
+      name: '',
+      address: '',
+      city: '',
+      pin: '',
+      mobile: '',
+    });
+  };
+
+  const handlePlaceOrder = () => {
+    // Check if user has any addresses
+    const addresses = getAllAddresses();
+    if (addresses.length === 0) {
+      alert('Please add a delivery address from your profile before placing an order.');
+      navigate('/userprofile');
+      return;
+    }
+
+    // Set default selected address if not already set
+    if (!selectedAddressIndex) {
+      const defaultIndex = user?.default_address_index || 1;
+      setSelectedAddressIndex(defaultIndex);
+    }
+
+    // Show address selection modal and set step to 1
+    setCurrentStep(1);
+    setShowAddressSelection(true);
+  };
+
+  const proceedToInvoice = () => {
+    const selectedAddr = getSelectedAddress();
+    if (!selectedAddr) {
+      alert('Please select a delivery address');
+      return;
+    }
+
+    // Close address selection and open GST input, move to step 2
+    setCurrentStep(2);
+    setShowAddressSelection(false);
+    setShowGSTInput(true);
+  };
+
+  const goBackToAddressSelection = () => {
+    // Go back to address selection from GST
+    setCurrentStep(1);
+    setShowGSTInput(false);
+    setShowAddressSelection(true);
+  };
+
+  const proceedFromGSTToPayment = async () => {
+    // If user entered GST number, save it to profile
+    if (gstNumber && gstNumber.trim() !== '') {
+      try {
+        await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
+          gst_number: gstNumber.trim()
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          }
+        });
+
+        // Update local user state
+        setUser(prev => ({
+          ...prev,
+          gst_number: gstNumber.trim()
+        }));
+        setIncludeGST(true);
+      } catch (error) {
+        console.error('Error saving GST number:', error);
+      }
+    }
+
+    // Close GST modal and proceed to payment, move to step 3
+    setCurrentStep(3);
+    setShowGSTInput(false);
+    proceedToPayment();
+  };
+
+  const skipGSTAndProceed = () => {
+    setIncludeGST(false);
+    setCurrentStep(3);
+    setShowGSTInput(false);
+    proceedToPayment();
+  };
+
+  const proceedToPayment = async () => {
     const res = await loadRazorpayScript();
     if (!res) {
       alert("Razorpay SDK failed to load.");
       return;
     }
-    if (!user?.address || user.address.trim().length < 5) {
-      setShowAddressPopup(true);
+
+    const selectedAddr = getSelectedAddress();
+    if (!selectedAddr) {
+      alert('Please select a delivery address');
       return;
     }
-    if (!user?.mobile || user.mobile.trim().length < 10) {
-      alert("Please enter a valid mobile number in your profile before placing an order.");
-      return;
-    }
+
     try {
       const response = await axios.post(API_ENDPOINTS.RAZORPAY_CREATE_ORDER, {
         amount: totalAmount
@@ -264,15 +440,18 @@ const Cart = () => {
               quantity: item.quantity
             }));
 
+            // Format address string
+            const addressString = `${selectedAddr.address}, ${selectedAddr.city} - ${selectedAddr.pin}`;
+
             await axios.post(API_ENDPOINTS.RAZORPAY_VERIFY, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               user_id: user.id,
-              customer_name: user.name,
+              customer_name: selectedAddr.name,
               customer_email: user.email,
-              customer_phone: user.mobile,
-              customer_address: user.address,
+              customer_phone: selectedAddr.mobile,
+              customer_address: addressString,
               order_value: totalAmount,
               order_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
               order_items: minimalOrderItems,
@@ -321,6 +500,53 @@ const Cart = () => {
     }
   };
 
+  // Paginator component
+  const StepPaginator = () => (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: '20px',
+      gap: '10px'
+    }}>
+      {[1, 2, 3].map((step) => (
+        <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: currentStep >= step ? '#f37254' : '#ddd',
+            color: currentStep >= step ? '#fff' : '#666',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            fontSize: '16px'
+          }}>
+            {step}
+          </div>
+          <div style={{
+            marginLeft: '8px',
+            fontSize: '14px',
+            fontWeight: currentStep === step ? 'bold' : 'normal',
+            color: currentStep >= step ? '#333' : '#999'
+          }}>
+            {step === 1 ? 'Address' : step === 2 ? 'GST Info' : 'Payment'}
+          </div>
+          {step < 3 && (
+            <div style={{
+              width: '50px',
+              height: '2px',
+              backgroundColor: currentStep > step ? '#f37254' : '#ddd',
+              marginLeft: '10px',
+              marginRight: '10px'
+            }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <Navbar />
@@ -360,7 +586,7 @@ const Cart = () => {
                 </div>
               ))
             )}
-            <button className="place-order-wide" onClick={() => setShowInvoice(true)}>PLACE ORDER</button>
+            <button className="place-order-wide" onClick={handlePlaceOrder}>PLACE ORDER</button>
           </div>
 
           <div className="cart-right">
@@ -401,7 +627,7 @@ const Cart = () => {
               )}
             </div>
 
-            <button className="place-order-btn" onClick={() => setShowInvoice(true)}>Place Order</button>
+            <button className="place-order-btn" onClick={handlePlaceOrder}>Place Order</button>
           </div>
         </div>
       </div>
@@ -446,7 +672,7 @@ const Cart = () => {
             </div>
             <div className="invoice-actions">
               <button onClick={() => setShowInvoice(false)} className="cancel-btn">Cancel</button>
-              <button onClick={() => { setShowInvoice(false); handlePlaceOrder(); }} className="pay-btn">Pay Now</button>
+              <button onClick={proceedToPayment} className="pay-btn">Pay Now</button>
             </div>
           </div>
         </div>
@@ -462,125 +688,365 @@ const Cart = () => {
           </div>
         </div>
       )}
-      
-    {showAddressPopup && (
-      <div className="address-popup-backdrop">
-        <div className="address-popup">
-          <h2>Add Delivery Address</h2>
-          <p style={{marginBottom: '20px', color: '#666'}}>Please provide your delivery address to continue with the order.</p>
 
-          <form className="address-form" onSubmit={(e) => { e.preventDefault(); handleSaveAddress(); }}>
-            <div className="form-group">
-              <label htmlFor="name">Full Name *</label>
+      {/* GST Number Input Modal */}
+      {showGSTInput && (
+        <div className="invoice-backdrop">
+          <div className="invoice-modal" style={{ maxWidth: '500px' }}>
+            <StepPaginator />
+            <h2>GST Information</h2>
+            <p style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
+              Would you like to add a GST number to your invoice? This is optional.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                GST Number (Optional)
+              </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={addressForm.name}
-                onChange={handleAddressFormChange}
-                placeholder="Enter your full name"
-                required
-                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="address">Address *</label>
-              <textarea
-                id="address"
-                name="address"
-                value={addressForm.address}
-                onChange={handleAddressFormChange}
-                placeholder="Enter your complete address"
-                rows="3"
-                required
-                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
-              />
-            </div>
-
-            <div className="form-row" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-              <div className="form-group">
-                <label htmlFor="city">City</label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={addressForm.city}
-                  onChange={handleAddressFormChange}
-                  placeholder="Enter city"
-                  style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="pin">PIN Code</label>
-                <input
-                  type="text"
-                  id="pin"
-                  name="pin"
-                  value={addressForm.pin}
-                  onChange={handleAddressFormChange}
-                  placeholder="Enter PIN code"
-                  maxLength="6"
-                  style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="mobile">Mobile Number *</label>
-              <input
-                type="tel"
-                id="mobile"
-                name="mobile"
-                value={addressForm.mobile}
-                onChange={handleAddressFormChange}
-                placeholder="Enter 10-digit mobile number"
-                maxLength="10"
-                required
-                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="gst_number">GST Number (Optional)</label>
-              <input
-                type="text"
-                id="gst_number"
-                name="gst_number"
-                value={addressForm.gst_number}
-                onChange={handleAddressFormChange}
-                placeholder="Enter GST number (if applicable)"
+                value={gstNumber}
+                onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                placeholder="Enter GST Number (e.g., 22AAAAA0000A1Z5)"
                 maxLength="15"
-                style={{width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd'}}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px',
+                  textTransform: 'uppercase'
+                }}
               />
-              <small style={{display: 'block', marginTop: '5px', color: '#666', fontSize: '12px'}}>
-                GST number is required if you want GST invoice
+              <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                GST format: 15 characters (e.g., 22AAAAA0000A1Z5)
               </small>
             </div>
 
-            <div className="address-popup-actions" style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+            <div className="invoice-actions" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
               <button
-                type="button"
-                className="close-btn"
-                onClick={() => setShowAddressPopup(false)}
-                style={{flex: 1, padding: '12px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer'}}
+                onClick={goBackToAddressSelection}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #ddd',
+                  background: '#fff',
+                  color: '#666',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={skipGSTAndProceed}
+                className="cancel-btn"
+                style={{ flex: 1 }}
+              >
+                Skip
+              </button>
+              <button
+                onClick={proceedFromGSTToPayment}
+                className="pay-btn"
+                style={{ flex: 1 }}
+              >
+                {gstNumber ? 'Save & Continue' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Address Selection Modal */}
+      {showAddressSelection && (
+        <div className="invoice-backdrop">
+          <div className="invoice-modal" style={{ maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <StepPaginator />
+            <h2>Select Delivery Address</h2>
+
+            {/* Display all saved addresses */}
+            <div style={{ marginBottom: '20px' }}>
+              {getAllAddresses().length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                  No addresses saved. Please add an address using the button below.
+                </p>
+              ) : (
+                getAllAddresses().map((addr) => (
+                  <div
+                    key={addr.index}
+                    style={{
+                      border: selectedAddressIndex === addr.index ? '2px solid #f37254' : '1px solid #ddd',
+                      padding: '15px',
+                      marginBottom: '10px',
+                      borderRadius: '8px',
+                      backgroundColor: selectedAddressIndex === addr.index ? '#fff5f2' : '#f9f9f9',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}
+                  >
+                    <div onClick={() => handleSelectAddress(addr.index)}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '16px' }}>{addr.label || 'Address'}</strong>
+                        {selectedAddressIndex === addr.index && (
+                          <span style={{ color: '#f37254', fontWeight: 'bold' }}>✓ Selected</span>
+                        )}
+                      </div>
+                      <p style={{ margin: '5px 0', fontSize: '14px' }}><strong>{addr.name}</strong></p>
+                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                        {addr.address}
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                        {addr.city} - {addr.pin}
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                        Phone: {addr.mobile}
+                      </p>
+                    </div>
+                    {editingAddressIndex !== addr.index && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditAddress(addr.index);
+                        }}
+                        style={{
+                          marginTop: '10px',
+                          padding: '8px 16px',
+                          border: '1px solid #f37254',
+                          background: '#fff',
+                          color: '#f37254',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add/Edit Address Form */}
+            {editingAddressIndex !== null ? (
+              <div style={{
+                border: '2px solid #f37254',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                backgroundColor: '#fff5f2'
+              }}>
+                <h3 style={{ marginBottom: '15px' }}>Edit Address</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="text"
+                    name="label"
+                    value={addressForm.label}
+                    onChange={handleAddressFormChange}
+                    placeholder="Label (e.g., Home, Office)"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="name"
+                    value={addressForm.name}
+                    onChange={handleAddressFormChange}
+                    placeholder="Full Name *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <textarea
+                    name="address"
+                    value={addressForm.address}
+                    onChange={handleAddressFormChange}
+                    placeholder="Street Address *"
+                    required
+                    rows="3"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    value={addressForm.city}
+                    onChange={handleAddressFormChange}
+                    placeholder="City *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="pin"
+                    value={addressForm.pin}
+                    onChange={handleAddressFormChange}
+                    placeholder="PIN Code *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={addressForm.mobile}
+                    onChange={handleAddressFormChange}
+                    placeholder="Mobile Number *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="cancel-btn"
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveAddress}
+                      disabled={addressLoading}
+                      className="pay-btn"
+                      style={{ flex: 1 }}
+                    >
+                      {addressLoading ? 'Saving...' : 'Update Address'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : showAddNewForm ? (
+              <div style={{
+                border: '2px dashed #ddd',
+                padding: '20px',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ marginBottom: '15px' }}>Add New Address</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="text"
+                    name="label"
+                    value={addressForm.label}
+                    onChange={handleAddressFormChange}
+                    placeholder="Label (e.g., Home, Office)"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="name"
+                    value={addressForm.name}
+                    onChange={handleAddressFormChange}
+                    placeholder="Full Name *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <textarea
+                    name="address"
+                    value={addressForm.address}
+                    onChange={handleAddressFormChange}
+                    placeholder="Street Address *"
+                    required
+                    rows="3"
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    value={addressForm.city}
+                    onChange={handleAddressFormChange}
+                    placeholder="City *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="pin"
+                    value={addressForm.pin}
+                    onChange={handleAddressFormChange}
+                    placeholder="PIN Code *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={addressForm.mobile}
+                    onChange={handleAddressFormChange}
+                    placeholder="Mobile Number *"
+                    required
+                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="cancel-btn"
+                      style={{ flex: 1 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveAddress}
+                      disabled={addressLoading}
+                      className="pay-btn"
+                      style={{ flex: 1 }}
+                    >
+                      {addressLoading ? 'Saving...' : 'Save Address'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              getAllAddresses().length < 5 && (
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <button
+                    onClick={() => {
+                      setShowAddNewForm(true);
+                      setAddressForm({
+                        label: '',
+                        name: '',
+                        address: '',
+                        city: '',
+                        pin: '',
+                        mobile: '',
+                      });
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      border: '2px dashed #f37254',
+                      background: '#fff',
+                      color: '#f37254',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    + Add New Address
+                  </button>
+                </div>
+              )
+            )}
+
+            <div className="invoice-actions" style={{ marginTop: '20px' }}>
+              <button
+                onClick={() => {
+                  setShowAddressSelection(false);
+                  handleCancelEdit();
+                }}
+                className="cancel-btn"
               >
                 Cancel
               </button>
               <button
-                type="submit"
-                className="save-address-btn"
-                disabled={addressLoading}
-                style={{flex: 1, padding: '12px', borderRadius: '4px', border: 'none', background: '#f37254', color: '#fff', cursor: 'pointer', fontWeight: 'bold'}}
+                onClick={proceedToInvoice}
+                className="pay-btn"
+                disabled={!selectedAddressIndex}
               >
-                {addressLoading ? 'Saving...' : 'Save Address'}
+                Proceed
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
-    )}
+      )}
+
       <Footer />
     </>
   );

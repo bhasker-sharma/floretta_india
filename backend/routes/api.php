@@ -24,6 +24,8 @@ use Faker\Provider\ar_EG\Payment;
 // 🌐 User Auth (with rate limiting to prevent brute force attacks)
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/register', [UserController::class, 'register']);
+    Route::post('/verify-email-otp', [UserController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [UserController::class, 'resendOtp']);
     Route::post('/login', [UserController::class, 'login']);
 });
 

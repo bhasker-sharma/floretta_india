@@ -28,15 +28,11 @@ function Register() {
         }
       });
 
-      const { token, user } = response.data;
+      // Registration successful, navigate to OTP verification page
+      alert(response.data.message || 'Registration successful! Please check your email for verification code.');
 
-      // ✅ Save token to localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('isLoggedIn', 'true');
-
-      alert('Registration successful!');
-      navigate('/userprofile');
+      // Pass email to verification page
+      navigate('/verify-email', { state: { email: formData.email } });
     } catch (error) {
       console.error('Error:', error.response?.data || error.message);
       alert(error.response?.data?.message || 'Registration failed. Please try again.');

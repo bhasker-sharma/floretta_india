@@ -46,10 +46,18 @@ const LoginForm = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while trying to log in."
-      );
+
+      // Check if email is not verified
+      if (error.response?.status === 403 && error.response?.data?.email_verified === false) {
+        alert(error.response.data.message || "Please verify your email first.");
+        // Navigate to verification page with email
+        navigate("/verify-email", { state: { email: error.response.data.email } });
+      } else {
+        alert(
+          error.response?.data?.message ||
+            "An error occurred while trying to log in."
+        );
+      }
     } finally {
       setLoading(false);
     }

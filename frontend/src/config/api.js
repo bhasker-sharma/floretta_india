@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
   GOOGLE_CALLBACK: `${API_URL}/api/auth/google/callback`,
   GOOGLE_EXCHANGE_CODE: `${API_URL}/api/auth/google/exchange-code`,
 
+  // Email Verification
+  VERIFY_EMAIL_OTP: `${API_URL}/api/verify-email-otp`,
+  RESEND_OTP: `${API_URL}/api/resend-otp`,
+
   // Password Reset
   FORGOT_PASSWORD: `${API_URL}/api/forgot-password`,
   VERIFY_OTP: `${API_URL}/api/verify-otp`,
