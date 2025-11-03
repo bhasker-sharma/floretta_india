@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\AdminBookingNotification;
 use App\Models\LivePerfume\Booking;
 use App\Models\LivePerfume\HowItWorks;
 use App\Models\LivePerfume\BarPackage;
@@ -35,6 +38,25 @@ class LivePerfumeController extends Controller
         ]);
 
         $booking = Booking::create($validated);
+
+        // Attempt to notify admin via email (non-blocking for user)
+        try {
+            $adminEmail = env('ADMIN_NOTIFICATION_EMAIL') ?: env('MAIL_FROM_ADDRESS');
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new AdminBookingNotification($booking));
+                Log::info('Admin booking notification email sent', [
+                    'booking_id' => $booking->id,
+                    'admin_email' => $adminEmail,
+                ]);
+            } else {
+                Log::warning('No admin email configured for booking notifications. Set ADMIN_NOTIFICATION_EMAIL in .env');
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send admin booking notification', [
+                'booking_id' => $booking->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Booking submitted successfully.',
