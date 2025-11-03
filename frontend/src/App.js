@@ -62,6 +62,14 @@ const App = () => {
           }
         />
         <Route
+          path="/cart"
+          element={
+            <PrivateRoute>
+              <Addtocart />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/userprofile"
           element={
             <PrivateRoute>

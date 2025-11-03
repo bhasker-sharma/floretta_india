@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
 
   // Cart
   CART: `${API_URL}/api/cart`,
+  CART_ADD: `${API_URL}/api/cart`,
   CART_UPDATE: (id) => `${API_URL}/api/cart/${id}`,
   CART_DELETE: (id) => `${API_URL}/api/cart/${id}`,
   CART_CLEAR: `${API_URL}/api/cart/clear`,

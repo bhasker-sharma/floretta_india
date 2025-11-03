@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS, getImageUrl } from '../config/api';
 import Footer from '../components/footer';
@@ -32,6 +32,7 @@ const Cart = () => {
   });
   const [addressLoading, setAddressLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const token = localStorage.getItem('token');
 
@@ -82,6 +83,20 @@ const Cart = () => {
 
     checkLoginAndFetchCart();
   }, [navigate, token]);
+
+  // Auto-trigger checkout flow when coming from "Buy Now"
+  useEffect(() => {
+    const shouldAutoCheckout = searchParams.get('checkout') === 'true';
+
+    if (shouldAutoCheckout && !loading && cartItems.length > 0 && user) {
+      // Wait a bit for the cart to render, then trigger checkout
+      const timer = setTimeout(() => {
+        handlePlaceOrder();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, loading, cartItems, user]);
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;

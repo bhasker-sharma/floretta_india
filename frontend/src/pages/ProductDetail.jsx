@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_URL } from '../config/api';
 import Navbar from '../components/navbar';
@@ -9,6 +9,7 @@ import '../styles/products.css';
 const ProductDetail = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const imageRef = useRef();
 
   const [product, setProduct] = useState(null);
@@ -19,6 +20,9 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showZoom, setShowZoom] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   const baseURL = `${STORAGE_URL}/`;
   const isFreshner = location.pathname.startsWith('/freshner-mist');
@@ -99,6 +103,120 @@ const ProductDetail = () => {
       backgroundSize: '200%',
       backgroundPosition: `${backgroundPosX}% ${backgroundPosY}%`
     });
+  };
+
+  const handleQuantityChange = (e) => {
+    const value = parseInt(e.target.value);
+    if (value >= 1 && value <= 10) {
+      setQuantity(value);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
+    setAddingToCart(true);
+
+    try {
+      // Determine product type based on the flag or pathname
+      let productType = 'perfume'; // default
+      if (product.flag) {
+        productType = product.flag;
+      } else if (isFreshner || location.pathname.includes('freshner')) {
+        productType = 'freshner';
+      } else if (location.pathname.includes('face-mist')) {
+        productType = 'face_mist';
+      }
+
+      await axios.post(
+        API_ENDPOINTS.CART_ADD,
+        {
+          product_id: product.id,
+          quantity: quantity,
+          type: productType
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          }
+        }
+      );
+
+      alert('Product added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (error.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        const errorMessage = error.response?.data?.message || 'Failed to add product to cart. Please try again.';
+        alert(errorMessage);
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert('Please login to purchase');
+      navigate('/login');
+      return;
+    }
+
+    setBuyingNow(true);
+
+    try {
+      // Determine product type based on the flag or pathname
+      let productType = 'perfume'; // default
+      if (product.flag) {
+        productType = product.flag;
+      } else if (isFreshner || location.pathname.includes('freshner')) {
+        productType = 'freshner';
+      } else if (location.pathname.includes('face-mist')) {
+        productType = 'face_mist';
+      }
+
+      // Add to cart first
+      await axios.post(
+        API_ENDPOINTS.CART_ADD,
+        {
+          product_id: product.id,
+          quantity: quantity,
+          type: productType
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          }
+        }
+      );
+
+      // Navigate to cart page with auto-checkout parameter
+      navigate('/cart?checkout=true');
+    } catch (error) {
+      console.error('Error processing buy now:', error);
+      if (error.response?.status === 401) {
+        alert('Session expired. Please login again.');
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        const errorMessage = error.response?.data?.message || 'Failed to process request. Please try again.';
+        alert(errorMessage);
+      }
+      setBuyingNow(false);
+    }
   };
 
   if (loading) return <p className="loading">Loading item details...</p>;
@@ -199,13 +317,26 @@ const ProductDetail = () => {
             id="quantity-select"
             className="qty-select"
             min={1}
-            max={4}
-            defaultValue={1}
+            max={10}
+            value={quantity}
+            onChange={handleQuantityChange}
           />
 
 
-          <button className="buy-btn">Add to Cart</button>
-          <button className="buy-btn">Buy Now</button>
+          <button
+            className="buy-btn"
+            onClick={handleAddToCart}
+            disabled={addingToCart}
+          >
+            {addingToCart ? 'Adding...' : 'Add to Cart'}
+          </button>
+          <button
+            className="buy-btn"
+            onClick={handleBuyNow}
+            disabled={buyingNow}
+          >
+            {buyingNow ? 'Processing...' : 'Buy Now'}
+          </button>
         </div>
       </div>
       
