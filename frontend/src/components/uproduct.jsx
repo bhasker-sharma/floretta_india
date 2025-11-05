@@ -1,26 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { API_ENDPOINTS, getImageUrl } from '../config/api';
-import '../styles/uproducts.css';
+import React, { useEffect, useState } from "react";
+import { API_ENDPOINTS, getImageUrl } from "../config/api";
+import "../styles/uproducts.css";
 
 const UProductGallery = () => {
   const [products, setProducts] = useState([]);
 
-useEffect(() => {
-  fetch(API_ENDPOINTS.HOMEPAGE)
-    .then(res => res.json())
-    .then(data => {
-      console.log("API:", data);
-      // Adjust this line based on actual shape
-      setProducts(Array.isArray(data) ? data : data.uproducts || []);
-    });
-}, []);
-
+  useEffect(() => {
+    fetch(API_ENDPOINTS.HOMEPAGE)
+      .then((res) => res.json())
+      .then((data) => {
+        // Adjust this line based on actual shape
+        setProducts(Array.isArray(data) ? data : data.uproducts || []);
+      });
+  }, []);
 
   return (
     <div className="uproduct-gallery">
       <h2 className="section-heading">Our Products</h2>
       <div className="uproduct-grid">
-        {products.map(product => (
+        {products.map((product) => (
           <div className="uproduct-card" key={product.id}>
             <div className="uproduct-image-wrapper">
               <img
