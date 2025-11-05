@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS, getImageUrl } from '../config/api';
-import Footer from '../components/footer';
-import Navbar from '../components/navbar';
-import '../styles/cart.css';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import { API_ENDPOINTS, getImageUrl } from "../config/api";
+import Footer from "../components/footer";
+import Navbar from "../components/navbar";
+import "../styles/cart.css";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [promoCode, setPromoCode] = useState('');
+  const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -20,39 +20,39 @@ const Cart = () => {
   const [showAddNewForm, setShowAddNewForm] = useState(false);
   const [includeGST, setIncludeGST] = useState(false);
   const [showGSTInput, setShowGSTInput] = useState(false);
-  const [gstNumber, setGstNumber] = useState('');
+  const [gstNumber, setGstNumber] = useState("");
   const [currentStep, setCurrentStep] = useState(1); // 1: Address, 2: GST, 3: Payment
   const [addressForm, setAddressForm] = useState({
-    label: '',
-    name: '',
-    address: '',
-    city: '',
-    pin: '',
-    mobile: '',
+    label: "",
+    name: "",
+    address: "",
+    city: "",
+    pin: "",
+    mobile: "",
   });
   const [addressLoading, setAddressLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const checkLoginAndFetchCart = async () => {
       try {
         if (!token) {
-          alert('Please login to access your cart.');
-          return navigate('/login');
+          alert("Please login to access your cart.");
+          return navigate("/login");
         }
 
         const checkResponse = await axios.get(API_ENDPOINTS.CHECK_USER, {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          }
+            Accept: "application/json",
+          },
         });
 
         const userData = checkResponse.data.user;
-        setUser(userData);// Store user data
+        setUser(userData); // Store user data
 
         // Initialize GST number if available
         if (userData.gst_number) {
@@ -60,22 +60,22 @@ const Cart = () => {
         }
 
         if (!userData || !userData.name || !userData.email) {
-          alert('Please complete your profile to access the cart.');
-          return navigate('/userprofile');
+          alert("Please complete your profile to access the cart.");
+          return navigate("/userprofile");
         }
 
         const cartResponse = await axios.get(API_ENDPOINTS.CART, {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          }
+            Accept: "application/json",
+          },
         });
 
         setCartItems(cartResponse.data.cart || cartResponse.data);
       } catch (error) {
-        console.error('User not authenticated or error fetching cart:', error);
-        localStorage.removeItem('token');
-        navigate('/login');
+        console.error("User not authenticated or error fetching cart:", error);
+        localStorage.removeItem("token");
+        navigate("/login");
       } finally {
         setLoading(false);
       }
@@ -86,7 +86,7 @@ const Cart = () => {
 
   // Auto-trigger checkout flow when coming from "Buy Now"
   useEffect(() => {
-    const shouldAutoCheckout = searchParams.get('checkout') === 'true';
+    const shouldAutoCheckout = searchParams.get("checkout") === "true";
 
     if (shouldAutoCheckout && !loading && cartItems.length > 0 && user) {
       // Wait a bit for the cart to render, then trigger checkout
@@ -96,29 +96,34 @@ const Cart = () => {
 
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, loading, cartItems, user]);
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
 
     try {
-      await axios.put(API_ENDPOINTS.CART_UPDATE(itemId), {
-        quantity: newQuantity
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
+      await axios.put(
+        API_ENDPOINTS.CART_UPDATE(itemId),
+        {
+          quantity: newQuantity,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         }
-      });
+      );
 
-      setCartItems(prev =>
-        prev.map(item =>
+      setCartItems((prev) =>
+        prev.map((item) =>
           item.id === itemId ? { ...item, quantity: newQuantity } : item
         )
       );
     } catch (error) {
-      console.error('Error updating quantity:', error);
-      alert('Failed to update quantity.');
+      console.error("Error updating quantity:", error);
+      alert("Failed to update quantity.");
     }
   };
 
@@ -137,13 +142,13 @@ const Cart = () => {
       await axios.delete(API_ENDPOINTS.CART_DELETE(itemId), {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        }
+          Accept: "application/json",
+        },
       });
-      setCartItems(prev => prev.filter(item => item.id !== itemId));
+      setCartItems((prev) => prev.filter((item) => item.id !== itemId));
     } catch (error) {
-      console.error('Error removing item:', error);
-      alert('Failed to remove item from cart.');
+      console.error("Error removing item:", error);
+      alert("Failed to remove item from cart.");
     }
   };
 
@@ -155,7 +160,7 @@ const Cart = () => {
   const totalAmount = totalPrice - discount + deliveryCharge;
 
   const handleApplyPromo = () => {
-    if (promoCode.trim().toUpperCase() === 'SAVE200') {
+    if (promoCode.trim().toUpperCase() === "SAVE200") {
       setDiscount(200);
     } else {
       setDiscount(0);
@@ -204,28 +209,28 @@ const Cart = () => {
 
   const handleAddressFormChange = (e) => {
     const { name, value } = e.target;
-    setAddressForm(prev => ({
+    setAddressForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSaveAddress = async () => {
     // Validate form
     if (!addressForm.name || addressForm.name.trim().length < 2) {
-      alert('Please enter a valid name (minimum 2 characters)');
+      alert("Please enter a valid name (minimum 2 characters)");
       return;
     }
     if (!addressForm.address || addressForm.address.trim().length < 5) {
-      alert('Please enter a valid address (minimum 5 characters)');
+      alert("Please enter a valid address (minimum 5 characters)");
       return;
     }
     if (!addressForm.mobile || addressForm.mobile.trim().length < 10) {
-      alert('Please enter a valid mobile number (minimum 10 digits)');
+      alert("Please enter a valid mobile number (minimum 10 digits)");
       return;
     }
     if (!addressForm.city || !addressForm.pin) {
-      alert('Please enter city and PIN code');
+      alert("Please enter city and PIN code");
       return;
     }
 
@@ -242,7 +247,9 @@ const Cart = () => {
           }
         }
         if (!targetIndex) {
-          alert('All 5 address slots are full. Please delete an address from your profile first.');
+          alert(
+            "All 5 address slots are full. Please delete an address from your profile first."
+          );
           setAddressLoading(false);
           return;
         }
@@ -252,17 +259,17 @@ const Cart = () => {
         [`address${targetIndex}`]: JSON.stringify(addressForm),
       };
 
-      const response = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
+      await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        }
+          Accept: "application/json",
+        },
       });
 
       // Update local user state
-      setUser(prev => ({
+      setUser((prev) => ({
         ...prev,
-        [`address${targetIndex}`]: JSON.stringify(addressForm)
+        [`address${targetIndex}`]: JSON.stringify(addressForm),
       }));
 
       // Select this address
@@ -272,18 +279,18 @@ const Cart = () => {
 
       // Reset form
       setAddressForm({
-        label: '',
-        name: '',
-        address: '',
-        city: '',
-        pin: '',
-        mobile: '',
+        label: "",
+        name: "",
+        address: "",
+        city: "",
+        pin: "",
+        mobile: "",
       });
 
-      alert('Address saved successfully!');
+      alert("Address saved successfully!");
     } catch (error) {
-      console.error('Error saving address:', error);
-      alert('Failed to save address. Please try again.');
+      console.error("Error saving address:", error);
+      alert("Failed to save address. Please try again.");
     } finally {
       setAddressLoading(false);
     }
@@ -294,21 +301,25 @@ const Cart = () => {
 
     // Update default address index in backend
     try {
-      await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
-        default_address_index: index
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
+      await axios.post(
+        API_ENDPOINTS.UPDATE_PROFILE,
+        {
+          default_address_index: index,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         }
-      });
+      );
 
-      setUser(prev => ({
+      setUser((prev) => ({
         ...prev,
-        default_address_index: index
+        default_address_index: index,
       }));
     } catch (error) {
-      console.error('Error updating default address:', error);
+      console.error("Error updating default address:", error);
     }
   };
 
@@ -324,31 +335,26 @@ const Cart = () => {
     setEditingAddressIndex(null);
     setShowAddNewForm(false);
     setAddressForm({
-      label: '',
-      name: '',
-      address: '',
-      city: '',
-      pin: '',
-      mobile: '',
+      label: "",
+      name: "",
+      address: "",
+      city: "",
+      pin: "",
+      mobile: "",
     });
   };
 
   const handlePlaceOrder = () => {
     // Check if user has any addresses
     const addresses = getAllAddresses();
-    if (addresses.length === 0) {
-      alert('Please add a delivery address from your profile before placing an order.');
-      navigate('/userprofile');
-      return;
-    }
 
-    // Set default selected address if not already set
-    if (!selectedAddressIndex) {
+    // Set default selected address if not already set and addresses exist
+    if (addresses.length > 0 && !selectedAddressIndex) {
       const defaultIndex = user?.default_address_index || 1;
       setSelectedAddressIndex(defaultIndex);
     }
 
-    // Show address selection modal and set step to 1
+    // Show address selection modal and set step to 1 (even if no addresses exist)
     setCurrentStep(1);
     setShowAddressSelection(true);
   };
@@ -356,7 +362,7 @@ const Cart = () => {
   const proceedToInvoice = () => {
     const selectedAddr = getSelectedAddress();
     if (!selectedAddr) {
-      alert('Please select a delivery address');
+      alert("Please select a delivery address");
       return;
     }
 
@@ -375,25 +381,29 @@ const Cart = () => {
 
   const proceedFromGSTToPayment = async () => {
     // If user entered GST number, save it to profile
-    if (gstNumber && gstNumber.trim() !== '') {
+    if (gstNumber && gstNumber.trim() !== "") {
       try {
-        await axios.post(API_ENDPOINTS.UPDATE_PROFILE, {
-          gst_number: gstNumber.trim()
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
+        await axios.post(
+          API_ENDPOINTS.UPDATE_PROFILE,
+          {
+            gst_number: gstNumber.trim(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
           }
-        });
+        );
 
         // Update local user state
-        setUser(prev => ({
+        setUser((prev) => ({
           ...prev,
-          gst_number: gstNumber.trim()
+          gst_number: gstNumber.trim(),
         }));
         setIncludeGST(true);
       } catch (error) {
-        console.error('Error saving GST number:', error);
+        console.error("Error saving GST number:", error);
       }
     }
 
@@ -419,19 +429,23 @@ const Cart = () => {
 
     const selectedAddr = getSelectedAddress();
     if (!selectedAddr) {
-      alert('Please select a delivery address');
+      alert("Please select a delivery address");
       return;
     }
 
     try {
-      const response = await axios.post(API_ENDPOINTS.RAZORPAY_CREATE_ORDER, {
-        amount: totalAmount
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
+      const response = await axios.post(
+        API_ENDPOINTS.RAZORPAY_CREATE_ORDER,
+        {
+          amount: totalAmount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         }
-      });
+      );
 
       const { order_id, key, amount, currency } = response.data;
 
@@ -445,54 +459,67 @@ const Cart = () => {
         handler: async function (response) {
           try {
             if (!user) {
-              alert('User information not available');
+              alert("User information not available");
               return;
             }
-            const minimalOrderItems = cartItems.map(item => ({
-              id: item.product_id,  // Use product_id instead of cart id
+            const minimalOrderItems = cartItems.map((item) => ({
+              id: item.product_id, // Use product_id instead of cart id
               name: item.name,
               price: item.price,
-              quantity: item.quantity
+              quantity: item.quantity,
             }));
 
             // Format address string
             const addressString = `${selectedAddr.address}, ${selectedAddr.city} - ${selectedAddr.pin}`;
 
-            await axios.post(API_ENDPOINTS.RAZORPAY_VERIFY, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              user_id: user.id,
-              customer_name: selectedAddr.name,
-              customer_email: user.email,
-              customer_phone: selectedAddr.mobile,
-              customer_address: addressString,
-              order_value: totalAmount,
-              order_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-              order_items: minimalOrderItems,
-              include_gst: includeGST
-            }, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json',
-              }
-            });
-            // Clear cart in backend
-            await axios.delete(API_ENDPOINTS.CART_CLEAR, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json',
-              }
-            });
-            // Show success popup
+            // Show success popup immediately (optimistic UI)
             setShowSuccessPopup(true);
-            // Clear cart after successful order
+            // Clear cart immediately in UI
             setCartItems([]);
+
             // Automatically close popup and redirect after 3 seconds
             setTimeout(() => {
               setShowSuccessPopup(false);
             }, 3000);
 
+            // Verify payment and clear cart in background (don't wait)
+            Promise.all([
+              axios.post(
+                API_ENDPOINTS.RAZORPAY_VERIFY,
+                {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  user_id: user.id,
+                  customer_name: selectedAddr.name,
+                  customer_email: user.email,
+                  customer_phone: selectedAddr.mobile,
+                  customer_address: addressString,
+                  order_value: totalAmount,
+                  order_quantity: cartItems.reduce(
+                    (sum, item) => sum + item.quantity,
+                    0
+                  ),
+                  order_items: minimalOrderItems,
+                  include_gst: includeGST,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                  },
+                }
+              ),
+              axios.delete(API_ENDPOINTS.CART_CLEAR, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  Accept: "application/json",
+                },
+              }),
+            ]).catch((err) => {
+              console.error("Background verification error:", err);
+              // Don't show error to user since payment was successful
+            });
           } catch (err) {
             alert("Payment verification failed.");
           }
@@ -508,54 +535,61 @@ const Cart = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Something went wrong. Please try again.');
+      console.error("Error placing order:", error);
+      alert("Something went wrong. Please try again.");
     }
   };
 
   // Paginator component
   const StepPaginator = () => (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: '20px',
-      gap: '10px'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: "20px",
+        gap: "10px",
+      }}
+    >
       {[1, 2, 3].map((step) => (
-        <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: currentStep >= step ? '#f37254' : '#ddd',
-            color: currentStep >= step ? '#fff' : '#666',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            fontSize: '16px'
-          }}>
+        <div key={step} style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: currentStep >= step ? "#f37254" : "#ddd",
+              color: currentStep >= step ? "#fff" : "#666",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              fontSize: "16px",
+            }}
+          >
             {step}
           </div>
-          <div style={{
-            marginLeft: '8px',
-            fontSize: '14px',
-            fontWeight: currentStep === step ? 'bold' : 'normal',
-            color: currentStep >= step ? '#333' : '#999'
-          }}>
-            {step === 1 ? 'Address' : step === 2 ? 'GST Info' : 'Payment'}
+          <div
+            style={{
+              marginLeft: "8px",
+              fontSize: "14px",
+              fontWeight: currentStep === step ? "bold" : "normal",
+              color: currentStep >= step ? "#333" : "#999",
+            }}
+          >
+            {step === 1 ? "Address" : step === 2 ? "GST Info" : "Payment"}
           </div>
           {step < 3 && (
-            <div style={{
-              width: '50px',
-              height: '2px',
-              backgroundColor: currentStep > step ? '#f37254' : '#ddd',
-              marginLeft: '10px',
-              marginRight: '10px'
-            }} />
+            <div
+              style={{
+                width: "50px",
+                height: "2px",
+                backgroundColor: currentStep > step ? "#f37254" : "#ddd",
+                marginLeft: "10px",
+                marginRight: "10px",
+              }}
+            />
           )}
         </div>
       ))}
@@ -566,7 +600,9 @@ const Cart = () => {
     <>
       <Navbar />
       <div className="cart-page">
-        <h2 className="cart-heading">My Cart ({cartItems.length} item{cartItems.length !== 1 ? 's' : ''})</h2>
+        <h2 className="cart-heading">
+          My Cart ({cartItems.length} item{cartItems.length !== 1 ? "s" : ""})
+        </h2>
         <div className="cart-wrapper">
           <div className="cart-left">
             {loading ? (
@@ -579,29 +615,51 @@ const Cart = () => {
                   <img
                     src={getImageUrl(item.image_path || item.image)}
                     alt={item.name}
-                    onError={(e) => (e.target.src = '/fallback.jpg')}
+                    onError={(e) => (e.target.src = "/fallback.jpg")}
                   />
                   <div className="item-info">
                     <p className="brand">Floretta India</p>
                     <h3>{item.name}</h3>
                     <p className="price">
-                      RS ₹{Number(item.price).toFixed(2)}{' '}
-                      <span className="original">₹{Number(item.original_price).toFixed(2)}</span>
+                      RS ₹{Number(item.price).toFixed(2)}{" "}
+                      <span className="original">
+                        ₹{Number(item.original_price).toFixed(2)}
+                      </span>
                     </p>
                     <p className="save">
-                      SAVE RS. {(Number(item.original_price) - Number(item.price)).toFixed(2)}
+                      SAVE RS.{" "}
+                      {(
+                        Number(item.original_price) - Number(item.price)
+                      ).toFixed(2)}
                     </p>
                     <div className="qty-row">
-                      <button className="qty-btn" onClick={() => handleDecrement(item.id, item.quantity)}>-</button>
+                      <button
+                        className="qty-btn"
+                        onClick={() => handleDecrement(item.id, item.quantity)}
+                      >
+                        -
+                      </button>
                       <span>{item.quantity}</span>
-                      <button className="qty-btn" onClick={() => handleIncrement(item.id, item.quantity)}>+</button>
-                      <button className="remove" onClick={() => handleRemove(item.id)}>Remove</button>
+                      <button
+                        className="qty-btn"
+                        onClick={() => handleIncrement(item.id, item.quantity)}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="remove"
+                        onClick={() => handleRemove(item.id)}
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
               ))
             )}
-            <button className="place-order-wide" onClick={handlePlaceOrder}>PLACE ORDER</button>
+            <button className="place-order-wide" onClick={handlePlaceOrder}>
+              PLACE ORDER
+            </button>
           </div>
 
           <div className="cart-right">
@@ -621,7 +679,10 @@ const Cart = () => {
             <div className="price-box">
               <h3>Price Details</h3>
               <div className="price-row">
-                <span>Price ({cartItems.length} item{cartItems.length !== 1 ? 's' : ''})</span>
+                <span>
+                  Price ({cartItems.length} item
+                  {cartItems.length !== 1 ? "s" : ""})
+                </span>
                 <span>₹{totalPrice.toFixed(2)}</span>
               </div>
               <div className="price-row">
@@ -630,7 +691,9 @@ const Cart = () => {
               </div>
               <div className="price-row">
                 <span>Delivery Charges</span>
-                <span>{deliveryCharge === 0 ? 'Free' : `₹${deliveryCharge}`}</span>
+                <span>
+                  {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge}`}
+                </span>
               </div>
               <hr />
               <div className="price-row total">
@@ -638,11 +701,15 @@ const Cart = () => {
                 <strong>₹{totalAmount.toFixed(2)}</strong>
               </div>
               {discount > 0 && (
-                <p className="saved-note">You will save ₹{discount} on this order</p>
+                <p className="saved-note">
+                  You will save ₹{discount} on this order
+                </p>
               )}
             </div>
 
-            <button className="place-order-btn" onClick={handlePlaceOrder}>Place Order</button>
+            <button className="place-order-btn" onClick={handlePlaceOrder}>
+              Place Order
+            </button>
           </div>
         </div>
       </div>
@@ -654,7 +721,9 @@ const Cart = () => {
             <div className="invoice-content">
               {cartItems.map((item) => (
                 <div key={item.id} className="invoice-item">
-                  <span>{item.name} × {item.quantity}</span>
+                  <span>
+                    {item.name} × {item.quantity}
+                  </span>
                   <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
@@ -682,12 +751,21 @@ const Cart = () => {
                 <span>Include GST details in invoice</span>
               </label>
               {includeGST && user?.gst_number && (
-                <p className="gst-number-display">GST Number: {user.gst_number}</p>
+                <p className="gst-number-display">
+                  GST Number: {user.gst_number}
+                </p>
               )}
             </div>
             <div className="invoice-actions">
-              <button onClick={() => setShowInvoice(false)} className="cancel-btn">Cancel</button>
-              <button onClick={proceedToPayment} className="pay-btn">Pay Now</button>
+              <button
+                onClick={() => setShowInvoice(false)}
+                className="cancel-btn"
+              >
+                Cancel
+              </button>
+              <button onClick={proceedToPayment} className="pay-btn">
+                Pay Now
+              </button>
             </div>
           </div>
         </div>
@@ -707,15 +785,24 @@ const Cart = () => {
       {/* GST Number Input Modal */}
       {showGSTInput && (
         <div className="invoice-backdrop">
-          <div className="invoice-modal" style={{ maxWidth: '500px' }}>
+          <div className="invoice-modal" style={{ maxWidth: "500px" }}>
             <StepPaginator />
             <h2>GST Information</h2>
-            <p style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-              Would you like to add a GST number to your invoice? This is optional.
+            <p
+              style={{ marginBottom: "20px", color: "#666", fontSize: "14px" }}
+            >
+              Would you like to add a GST number to your invoice? This is
+              optional.
             </p>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: "bold",
+                }}
+              >
                 GST Number (Optional)
               </label>
               <input
@@ -725,32 +812,42 @@ const Cart = () => {
                 placeholder="Enter GST Number (e.g., 22AAAAA0000A1Z5)"
                 maxLength="15"
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px',
-                  textTransform: 'uppercase'
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                  textTransform: "uppercase",
                 }}
               />
-              <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+              <small
+                style={{
+                  color: "#666",
+                  fontSize: "12px",
+                  marginTop: "5px",
+                  display: "block",
+                }}
+              >
                 GST format: 15 characters (e.g., 22AAAAA0000A1Z5)
               </small>
             </div>
 
-            <div className="invoice-actions" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+            <div
+              className="invoice-actions"
+              style={{ marginTop: "20px", display: "flex", gap: "10px" }}
+            >
               <button
                 onClick={goBackToAddressSelection}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  background: '#fff',
-                  color: '#666',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold'
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  background: "#fff",
+                  color: "#666",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "bold",
                 }}
               >
                 ← Back
@@ -767,7 +864,7 @@ const Cart = () => {
                 className="pay-btn"
                 style={{ flex: 1 }}
               >
-                {gstNumber ? 'Save & Continue' : 'Continue'}
+                {gstNumber ? "Save & Continue" : "Continue"}
               </button>
             </div>
           </div>
@@ -777,45 +874,94 @@ const Cart = () => {
       {/* Address Selection Modal */}
       {showAddressSelection && (
         <div className="invoice-backdrop">
-          <div className="invoice-modal" style={{ maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div
+            className="invoice-modal"
+            style={{ maxWidth: "600px", maxHeight: "80vh", overflowY: "auto" }}
+          >
             <StepPaginator />
             <h2>Select Delivery Address</h2>
 
             {/* Display all saved addresses */}
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: "20px" }}>
               {getAllAddresses().length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
-                  No addresses saved. Please add an address using the button below.
+                <p
+                  style={{
+                    textAlign: "center",
+                    color: "#666",
+                    padding: "20px",
+                  }}
+                >
+                  No addresses saved. Please add an address using the button
+                  below.
                 </p>
               ) : (
                 getAllAddresses().map((addr) => (
                   <div
                     key={addr.index}
                     style={{
-                      border: selectedAddressIndex === addr.index ? '2px solid #f37254' : '1px solid #ddd',
-                      padding: '15px',
-                      marginBottom: '10px',
-                      borderRadius: '8px',
-                      backgroundColor: selectedAddressIndex === addr.index ? '#fff5f2' : '#f9f9f9',
-                      cursor: 'pointer',
-                      position: 'relative'
+                      border:
+                        selectedAddressIndex === addr.index
+                          ? "2px solid #f37254"
+                          : "1px solid #ddd",
+                      padding: "15px",
+                      marginBottom: "10px",
+                      borderRadius: "8px",
+                      backgroundColor:
+                        selectedAddressIndex === addr.index
+                          ? "#fff5f2"
+                          : "#f9f9f9",
+                      cursor: "pointer",
+                      position: "relative",
                     }}
                   >
                     <div onClick={() => handleSelectAddress(addr.index)}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <strong style={{ fontSize: '16px' }}>{addr.label || 'Address'}</strong>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <strong style={{ fontSize: "16px" }}>
+                          {addr.label || "Address"}
+                        </strong>
                         {selectedAddressIndex === addr.index && (
-                          <span style={{ color: '#f37254', fontWeight: 'bold' }}>✓ Selected</span>
+                          <span
+                            style={{ color: "#f37254", fontWeight: "bold" }}
+                          >
+                            ✓ Selected
+                          </span>
                         )}
                       </div>
-                      <p style={{ margin: '5px 0', fontSize: '14px' }}><strong>{addr.name}</strong></p>
-                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                      <p style={{ margin: "5px 0", fontSize: "14px" }}>
+                        <strong>{addr.name}</strong>
+                      </p>
+                      <p
+                        style={{
+                          margin: "5px 0",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
                         {addr.address}
                       </p>
-                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                      <p
+                        style={{
+                          margin: "5px 0",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
                         {addr.city} - {addr.pin}
                       </p>
-                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                      <p
+                        style={{
+                          margin: "5px 0",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
                         Phone: {addr.mobile}
                       </p>
                     </div>
@@ -826,14 +972,14 @@ const Cart = () => {
                           openEditAddress(addr.index);
                         }}
                         style={{
-                          marginTop: '10px',
-                          padding: '8px 16px',
-                          border: '1px solid #f37254',
-                          background: '#fff',
-                          color: '#f37254',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
+                          marginTop: "10px",
+                          padding: "8px 16px",
+                          border: "1px solid #f37254",
+                          background: "#fff",
+                          color: "#f37254",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontSize: "14px",
                         }}
                       >
                         Edit
@@ -846,22 +992,34 @@ const Cart = () => {
 
             {/* Add/Edit Address Form */}
             {editingAddressIndex !== null ? (
-              <div style={{
-                border: '2px solid #f37254',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                backgroundColor: '#fff5f2'
-              }}>
-                <h3 style={{ marginBottom: '15px' }}>Edit Address</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div
+                style={{
+                  border: "2px solid #f37254",
+                  padding: "20px",
+                  borderRadius: "8px",
+                  marginBottom: "20px",
+                  backgroundColor: "#fff5f2",
+                }}
+              >
+                <h3 style={{ marginBottom: "15px" }}>Edit Address</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <input
                     type="text"
                     name="label"
                     value={addressForm.label}
                     onChange={handleAddressFormChange}
                     placeholder="Label (e.g., Home, Office)"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -870,7 +1028,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="Full Name *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <textarea
                     name="address"
@@ -879,7 +1041,11 @@ const Cart = () => {
                     placeholder="Street Address *"
                     required
                     rows="3"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -888,7 +1054,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="City *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -897,7 +1067,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="PIN Code *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -906,9 +1080,13 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="Mobile Number *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       onClick={handleCancelEdit}
                       className="cancel-btn"
@@ -922,27 +1100,39 @@ const Cart = () => {
                       className="pay-btn"
                       style={{ flex: 1 }}
                     >
-                      {addressLoading ? 'Saving...' : 'Update Address'}
+                      {addressLoading ? "Saving..." : "Update Address"}
                     </button>
                   </div>
                 </div>
               </div>
             ) : showAddNewForm ? (
-              <div style={{
-                border: '2px dashed #ddd',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{ marginBottom: '15px' }}>Add New Address</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div
+                style={{
+                  border: "2px dashed #ddd",
+                  padding: "20px",
+                  borderRadius: "8px",
+                  marginBottom: "20px",
+                }}
+              >
+                <h3 style={{ marginBottom: "15px" }}>Add New Address</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <input
                     type="text"
                     name="label"
                     value={addressForm.label}
                     onChange={handleAddressFormChange}
                     placeholder="Label (e.g., Home, Office)"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -951,7 +1141,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="Full Name *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <textarea
                     name="address"
@@ -960,7 +1154,11 @@ const Cart = () => {
                     placeholder="Street Address *"
                     required
                     rows="3"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -969,7 +1167,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="City *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -978,7 +1180,11 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="PIN Code *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -987,9 +1193,13 @@ const Cart = () => {
                     onChange={handleAddressFormChange}
                     placeholder="Mobile Number *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       onClick={handleCancelEdit}
                       className="cancel-btn"
@@ -1003,35 +1213,35 @@ const Cart = () => {
                       className="pay-btn"
                       style={{ flex: 1 }}
                     >
-                      {addressLoading ? 'Saving...' : 'Save Address'}
+                      {addressLoading ? "Saving..." : "Save Address"}
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
               getAllAddresses().length < 5 && (
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ textAlign: "center", marginBottom: "20px" }}>
                   <button
                     onClick={() => {
                       setShowAddNewForm(true);
                       setAddressForm({
-                        label: '',
-                        name: '',
-                        address: '',
-                        city: '',
-                        pin: '',
-                        mobile: '',
+                        label: "",
+                        name: "",
+                        address: "",
+                        city: "",
+                        pin: "",
+                        mobile: "",
                       });
                     }}
                     style={{
-                      padding: '12px 24px',
-                      border: '2px dashed #f37254',
-                      background: '#fff',
-                      color: '#f37254',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      fontWeight: 'bold'
+                      padding: "12px 24px",
+                      border: "2px dashed #f37254",
+                      background: "#fff",
+                      color: "#f37254",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "bold",
                     }}
                   >
                     + Add New Address
@@ -1040,7 +1250,7 @@ const Cart = () => {
               )
             )}
 
-            <div className="invoice-actions" style={{ marginTop: '20px' }}>
+            <div className="invoice-actions" style={{ marginTop: "20px" }}>
               <button
                 onClick={() => {
                   setShowAddressSelection(false);
