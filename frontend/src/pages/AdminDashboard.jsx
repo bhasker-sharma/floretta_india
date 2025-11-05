@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -14,7 +14,6 @@ function AdminDashboard() {
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [minZoom, setMinZoom] = useState(50);
   const [activeSection, setActiveSection] = useState("orders");
@@ -88,6 +87,24 @@ function AdminDashboard() {
   const [adminFormMessage, setAdminFormMessage] = useState("");
   const [allAdmins, setAllAdmins] = useState([]);
 
+  // Enquiries state
+  const [userEnquiryTab, setUserEnquiryTab] = useState("contact");
+  const [contactEnquiries, setContactEnquiries] = useState([]);
+  const [contactMeta, setContactMeta] = useState({});
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState(null);
+  const [perfumeBookings, setPerfumeBookings] = useState([]);
+  const [perfumeMeta, setPerfumeMeta] = useState({});
+  const [perfumeLoading, setPerfumeLoading] = useState(false);
+  const [perfumeError, setPerfumeError] = useState(null);
+  const [enquiryFilters, setEnquiryFilters] = useState({
+    q: "",
+    start_date: "",
+    end_date: "",
+    per_page: 20,
+    page: 1,
+  });
+
   // Customers state
   const [allUsers, setAllUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -98,29 +115,29 @@ function AdminDashboard() {
   const [allProducts, setAllProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productFormData, setProductFormData] = useState({
-    name: '',
-    flag: 'perfume',
-    price: '',
-    volume_ml: '',
-    scent: '',
-    note: '',
-    Discription: '',
-    about_product: '',
-    original_price: '',
-    discount_amount: '',
+    name: "",
+    flag: "perfume",
+    price: "",
+    volume_ml: "",
+    scent: "",
+    note: "",
+    Discription: "",
+    about_product: "",
+    original_price: "",
+    discount_amount: "",
     is_discount_active: false,
-    delivery_charge: '',
-    available_quantity: '',
-    image: '',
-    ingredients: '',
-    brand: '',
-    colour: '',
-    item_form: '',
-    power_source: '',
-    launch_date: ''
+    delivery_charge: "",
+    available_quantity: "",
+    image: "",
+    ingredients: "",
+    brand: "",
+    colour: "",
+    item_form: "",
+    power_source: "",
+    launch_date: "",
   });
   const [productFormLoading, setProductFormLoading] = useState(false);
-  const [productFormMessage, setProductFormMessage] = useState('');
+  const [productFormMessage, setProductFormMessage] = useState("");
 
   // Load admin info from localStorage
   useEffect(() => {
@@ -301,6 +318,360 @@ function AdminDashboard() {
     fetchProducts();
   }, [activeSection]);
 
+  // Fetch enquiries when enquiries section is active
+  useEffect(() => {
+    const fetchEnquiries = async () => {
+      if (activeSection !== "enquiries") return;
+
+      const token = localStorage.getItem("adminToken");
+      const params = {
+        q: enquiryFilters.q,
+        start_date: enquiryFilters.start_date,
+        end_date: enquiryFilters.end_date,
+        per_page: enquiryFilters.per_page,
+        page: enquiryFilters.page,
+      };
+
+      try {
+        // Fetch contact enquiries
+        setContactLoading(true);
+        setContactError(null);
+        const contactsResponse = await axios.get(
+          API_ENDPOINTS.ADMIN_ENQUIRY_CONTACT,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params,
+          }
+        );
+
+        if (contactsResponse.data.success) {
+          setContactEnquiries(contactsResponse.data.data || []);
+          setContactMeta(contactsResponse.data.meta || {});
+        }
+      } catch (err) {
+        console.error("Error fetching contact enquiries:", err);
+        setContactError("Failed to load contact enquiries");
+      } finally {
+        setContactLoading(false);
+      }
+
+      try {
+        // Fetch perfume bar bookings
+        setPerfumeLoading(true);
+        setPerfumeError(null);
+        const bookingsResponse = await axios.get(
+          API_ENDPOINTS.ADMIN_ENQUIRY_BOOKINGS,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params,
+          }
+        );
+
+        if (bookingsResponse.data.success) {
+          setPerfumeBookings(bookingsResponse.data.data || []);
+          setPerfumeMeta(bookingsResponse.data.meta || {});
+        }
+      } catch (err) {
+        console.error("Error fetching perfume bar bookings:", err);
+        setPerfumeError("Failed to load perfume bar bookings");
+      } finally {
+        setPerfumeLoading(false);
+      }
+    };
+
+    fetchEnquiries();
+  }, [activeSection, enquiryFilters]);
+
+  // Helper to update enquiry filters
+  const updateEnquiryFilter = (key, value) => {
+    setEnquiryFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      page: key !== "page" ? 1 : value, // Reset to page 1 when filter changes (except page itself)
+    }));
+  };
+
+  // Export Contact Enquiries to CSV
+  const exportContactEnquiriesToCSV = () => {
+    if (contactEnquiries.length === 0) {
+      alert("No contact enquiries to export");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Hotel Name",
+      "Email",
+      "Mobile",
+      "Packaging",
+      "Fragrance",
+      "Quantity",
+      "Requirements",
+      "Date",
+    ];
+    const rows = contactEnquiries.map((contact) => [
+      contact.id,
+      contact.hotel_name || "N/A",
+      contact.email,
+      contact.mobile,
+      contact.packaging_option || "N/A",
+      contact.preferred_fragrance || "N/A",
+      contact.estimated_quantity || "N/A",
+      contact.additional_requirements || "N/A",
+      new Date(contact.created_at).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `hotel-amenities-enquiries-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    link.click();
+  };
+
+  // Export Perfume Bookings to CSV
+  const exportPerfumeBookingsToCSV = () => {
+    if (perfumeBookings.length === 0) {
+      alert("No perfume bookings to export");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Mobile",
+      "Package",
+      "Message",
+      "Date",
+    ];
+    const rows = perfumeBookings.map((booking) => [
+      booking.id,
+      booking.name || "N/A",
+      booking.email,
+      booking.mobile,
+      booking.package || "N/A",
+      booking.message || "N/A",
+      new Date(booking.created_at).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `perfume-bar-bookings-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    link.click();
+  };
+
+  // Export Contact Enquiries to PDF
+  const exportContactEnquiriesToPDF = () => {
+    if (contactEnquiries.length === 0) {
+      alert("No contact enquiries to export");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Hotel Amenities Contact Enquiries", pageWidth / 2, 15, {
+      align: "center",
+    });
+
+    // Date
+    doc.setFontSize(10);
+    doc.text(
+      `Generated: ${new Date().toLocaleDateString()}`,
+      pageWidth / 2,
+      22,
+      { align: "center" }
+    );
+
+    // Table
+    const tableData = contactEnquiries.map((contact) => [
+      contact.hotel_name || "N/A",
+      contact.email,
+      contact.mobile,
+      contact.packaging_option || "N/A",
+      contact.preferred_fragrance || "N/A",
+      new Date(contact.created_at).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [
+        ["Hotel Name", "Email", "Mobile", "Packaging", "Fragrance", "Date"],
+      ],
+      body: tableData,
+      startY: 28,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [35, 41, 70] },
+    });
+
+    doc.save(
+      `hotel-amenities-enquiries-${new Date().toISOString().split("T")[0]}.pdf`
+    );
+  };
+
+  // Export Perfume Bookings to PDF
+  const exportPerfumeBookingsToPDF = () => {
+    if (perfumeBookings.length === 0) {
+      alert("No perfume bookings to export");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Live Perfume Bar Bookings", pageWidth / 2, 15, {
+      align: "center",
+    });
+
+    // Date
+    doc.setFontSize(10);
+    doc.text(
+      `Generated: ${new Date().toLocaleDateString()}`,
+      pageWidth / 2,
+      22,
+      { align: "center" }
+    );
+
+    // Table
+    const tableData = perfumeBookings.map((booking) => [
+      booking.name || "N/A",
+      booking.email,
+      booking.mobile,
+      booking.package || "N/A",
+      new Date(booking.created_at).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [["Name", "Email", "Mobile", "Package", "Date"]],
+      body: tableData,
+      startY: 28,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [35, 41, 70] },
+    });
+
+    doc.save(
+      `perfume-bar-bookings-${new Date().toISOString().split("T")[0]}.pdf`
+    );
+  };
+
+  // Export Orders to CSV
+  const exportOrdersToCSV = () => {
+    if (filteredOrders.length === 0) {
+      alert("No orders to export");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Customer Name",
+      "Email",
+      "Mobile",
+      "Amount",
+      "Status",
+      "Order Status",
+      "Payment ID",
+      "Date",
+    ];
+    const rows = filteredOrders.map((order) => [
+      order.order_id,
+      order.user?.name || "N/A",
+      order.user?.email || "N/A",
+      order.user?.mobile || "N/A",
+      `₹${order.amount}`,
+      order.status,
+      order.order_status || "pending",
+      order.razorpay_payment_id || "N/A",
+      new Date(order.created_at).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `orders-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  // Export Orders to PDF
+  const exportOrdersToPDF = () => {
+    if (filteredOrders.length === 0) {
+      alert("No orders to export");
+      return;
+    }
+
+    const doc = new jsPDF("landscape");
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Orders Report", pageWidth / 2, 15, { align: "center" });
+
+    // Date range or generation date
+    doc.setFontSize(10);
+    if (startDate && endDate) {
+      doc.text(`Period: ${startDate} to ${endDate}`, pageWidth / 2, 22, {
+        align: "center",
+      });
+    } else {
+      doc.text(
+        `Generated: ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        22,
+        { align: "center" }
+      );
+    }
+
+    // Table
+    const tableData = filteredOrders.map((order) => [
+      order.order_id,
+      order.user?.name || "N/A",
+      order.user?.email || "N/A",
+      `₹${order.amount}`,
+      order.status,
+      order.order_status || "pending",
+      new Date(order.created_at).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      head: [
+        [
+          "Order ID",
+          "Customer",
+          "Email",
+          "Amount",
+          "Payment",
+          "Order Status",
+          "Date",
+        ],
+      ],
+      body: tableData,
+      startY: 28,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [35, 41, 70] },
+    });
+
+    doc.save(`orders-${new Date().toISOString().split("T")[0]}.pdf`);
+  };
+
   // Calculate minimum zoom to fit table in container
   useEffect(() => {
     const calculateMinZoom = () => {
@@ -367,155 +738,6 @@ function AdminDashboard() {
   };
 
   // Export to CSV
-  const exportToCSV = () => {
-    const headers = [
-      "Order Number",
-      "Customer Name",
-      "Email",
-      "Phone",
-      "Address",
-      "Items",
-      "Quantity",
-      "Total Amount",
-      "Status",
-      "Date",
-      "Time",
-    ];
-
-    const csvData = filteredOrders.map((order) => [
-      order.order_number,
-      order.customer_name || "N/A",
-      order.customer_email || "N/A",
-      order.customer_phone || "N/A",
-      `"${order.customer_address || "N/A"}"`, // Quoted for CSV
-      order.order_items
-        ?.map((item) => item.name || item.product_name)
-        .join("; ") || "N/A",
-      order.order_quantity || 0,
-      `₹${parseFloat(order.order_value || 0).toFixed(2)}`,
-      order.status || "Pending",
-      new Date(order.created_at).toLocaleDateString(),
-      new Date(order.created_at).toLocaleTimeString(),
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `orders_${new Date().toISOString().split("T")[0]}.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setShowExportMenu(false);
-  };
-
-  // Export to PDF
-  const exportToPDF = () => {
-    const printWindow = window.open("", "", "height=600,width=800");
-
-    const htmlContent = `
-            <html>
-            <head>
-                <title>Orders Report</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    h1 { color: #232946; text-align: center; }
-                    .meta { text-align: center; color: #666; margin-bottom: 30px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-                    th { background-color: #232946; color: white; }
-                    tr:nth-child(even) { background-color: #f9f9f9; }
-                    .items { max-width: 200px; word-wrap: break-word; }
-                    .total { font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                <h1>Floretta India - Orders Report</h1>
-                <div class="meta">
-                    <p>Generated on: ${new Date().toLocaleString()}</p>
-                    <p>Total Orders: ${filteredOrders.length}</p>
-                    ${
-                      startDate || endDate
-                        ? `<p>Filter: ${startDate || "Start"} to ${
-                            endDate || "End"
-                          }</p>`
-                        : ""
-                    }
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Customer</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Items</th>
-                            <th>Qty</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filteredOrders
-                          .map(
-                            (order) => `
-                            <tr>
-                                <td>${order.order_number}</td>
-                                <td>${order.customer_name || "N/A"}</td>
-                                <td>${order.customer_email || "N/A"}</td>
-                                <td>${order.customer_phone || "N/A"}</td>
-                                <td class="items">${
-                                  order.order_items
-                                    ?.map(
-                                      (item, idx) =>
-                                        `${idx + 1}. ${
-                                          item.name || item.product_name
-                                        }`
-                                    )
-                                    .join("<br>") || "N/A"
-                                }</td>
-                                <td>${order.order_quantity || 0}</td>
-                                <td class="total">₹${parseFloat(
-                                  order.order_value || 0
-                                ).toFixed(2)}</td>
-                                <td>${order.status || "Pending"}</td>
-                                <td>${new Date(
-                                  order.created_at
-                                ).toLocaleDateString()}</td>
-                                <td>${new Date(
-                                  order.created_at
-                                ).toLocaleTimeString()}</td>
-                            </tr>
-                        `
-                          )
-                          .join("")}
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-    setShowExportMenu(false);
-  };
-
   // Generate Invoice for individual order
   const generateInvoice = (order) => {
     const invoiceWindow = window.open("", "", "height=800,width=600");
@@ -821,14 +1043,11 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await axios.delete(
-        API_ENDPOINTS.ADMIN_DELETE(adminId),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.delete(API_ENDPOINTS.ADMIN_DELETE(adminId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
         setAdminFormMessage("✓ Admin deleted successfully!");
@@ -848,7 +1067,9 @@ function AdminDashboard() {
     } catch (error) {
       console.error("Error deleting admin:", error);
       const errorMsg =
-        error.response?.data?.error || error.response?.data?.message || "Failed to delete admin";
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to delete admin";
       setAdminFormMessage("✗ " + errorMsg);
       setTimeout(() => setAdminFormMessage(""), 5000);
     }
@@ -868,9 +1089,9 @@ function AdminDashboard() {
   // Handle product form input changes
   const handleProductFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setProductFormData(prev => ({
+    setProductFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -878,15 +1099,15 @@ function AdminDashboard() {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     setProductFormLoading(true);
-    setProductFormMessage('');
+    setProductFormMessage("");
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
 
       // Filter out empty string values
       const productData = Object.fromEntries(
         Object.entries(productFormData).filter(([key, value]) => {
-          if (typeof value === 'string') return value.trim() !== '';
+          if (typeof value === "string") return value.trim() !== "";
           return true;
         })
       );
@@ -897,36 +1118,36 @@ function AdminDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
+            Accept: "application/json",
           },
         }
       );
 
       if (response.data.success) {
-        setProductFormMessage('✓ Product created successfully!');
+        setProductFormMessage("✓ Product created successfully!");
 
         // Reset form
         setProductFormData({
-          name: '',
-          flag: 'perfume',
-          price: '',
-          volume_ml: '',
-          scent: '',
-          note: '',
-          Discription: '',
-          about_product: '',
-          original_price: '',
-          discount_amount: '',
+          name: "",
+          flag: "perfume",
+          price: "",
+          volume_ml: "",
+          scent: "",
+          note: "",
+          Discription: "",
+          about_product: "",
+          original_price: "",
+          discount_amount: "",
           is_discount_active: false,
-          delivery_charge: '',
-          available_quantity: '',
-          image: '',
-          ingredients: '',
-          brand: '',
-          colour: '',
-          item_form: '',
-          power_source: '',
-          launch_date: ''
+          delivery_charge: "",
+          available_quantity: "",
+          image: "",
+          ingredients: "",
+          brand: "",
+          colour: "",
+          item_form: "",
+          power_source: "",
+          launch_date: "",
         });
 
         // Refresh products list
@@ -939,12 +1160,15 @@ function AdminDashboard() {
           setAllProducts(productsResponse.data.products);
         }
 
-        setTimeout(() => setProductFormMessage(''), 5000);
+        setTimeout(() => setProductFormMessage(""), 5000);
       }
     } catch (error) {
-      console.error('Error creating product:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to create product';
-      setProductFormMessage('✗ ' + errorMsg);
+      console.error("Error creating product:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to create product";
+      setProductFormMessage("✗ " + errorMsg);
     } finally {
       setProductFormLoading(false);
     }
@@ -959,7 +1183,7 @@ function AdminDashboard() {
     if (!confirmDelete) return;
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       const response = await axios.delete(
         API_ENDPOINTS.ADMIN_PRODUCT_DELETE(productId),
         {
@@ -970,7 +1194,7 @@ function AdminDashboard() {
       );
 
       if (response.data.success) {
-        setProductFormMessage('✓ Product deleted successfully!');
+        setProductFormMessage("✓ Product deleted successfully!");
 
         // Refresh products list
         const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
@@ -982,12 +1206,15 @@ function AdminDashboard() {
           setAllProducts(productsResponse.data.products);
         }
 
-        setTimeout(() => setProductFormMessage(''), 5000);
+        setTimeout(() => setProductFormMessage(""), 5000);
       }
     } catch (error) {
-      console.error('Error deleting product:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to delete product';
-      setProductFormMessage('✗ ' + errorMsg);
+      console.error("Error deleting product:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to delete product";
+      setProductFormMessage("✗ " + errorMsg);
     }
   };
 
@@ -1015,40 +1242,53 @@ function AdminDashboard() {
   // Export customers to CSV
   const exportCustomersToCSV = () => {
     if (allUsers.length === 0) {
-      alert('No customers to export');
+      alert("No customers to export");
       return;
     }
 
     // Define CSV headers
-    const headers = ['ID', 'Name', 'Email', 'Mobile', 'Address', 'City', 'PIN', 'GST Number', 'Email Verified'];
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Mobile",
+      "Address",
+      "City",
+      "PIN",
+      "GST Number",
+      "Email Verified",
+    ];
 
     // Map user data to CSV rows
-    const rows = allUsers.map(user => [
-      user.id || '',
-      user.name || '',
-      user.email || '',
-      user.mobile || '',
-      user.address || '',
-      user.city || '',
-      user.pin || '',
-      user.gst_number || '',
-      user.email_verified ? 'Yes' : 'No'
+    const rows = allUsers.map((user) => [
+      user.id || "",
+      user.name || "",
+      user.email || "",
+      user.mobile || "",
+      user.address || "",
+      user.city || "",
+      user.pin || "",
+      user.gst_number || "",
+      user.email_verified ? "Yes" : "No",
     ]);
 
     // Combine headers and rows
     const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
 
     // Create blob and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    link.setAttribute('href', url);
-    link.setAttribute('download', `floretta_customers_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `floretta_customers_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
 
     document.body.appendChild(link);
     link.click();
@@ -1058,7 +1298,7 @@ function AdminDashboard() {
   // Export customers to PDF
   const exportCustomersToPDF = () => {
     if (allUsers.length === 0) {
-      alert('No customers to export');
+      alert("No customers to export");
       return;
     }
 
@@ -1066,27 +1306,29 @@ function AdminDashboard() {
 
     // Add title
     doc.setFontSize(18);
-    doc.text('Floretta India - Customer List', 14, 22);
+    doc.text("Floretta India - Customer List", 14, 22);
 
     // Add export date
     doc.setFontSize(10);
     doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 30);
 
     // Prepare table data
-    const tableData = allUsers.map(user => [
-      user.id || '',
-      user.name || '',
-      user.email || '',
-      user.mobile || '',
-      user.city || '',
-      user.pin || '',
-      user.gst_number || '',
-      user.email_verified ? 'Yes' : 'No'
+    const tableData = allUsers.map((user) => [
+      user.id || "",
+      user.name || "",
+      user.email || "",
+      user.mobile || "",
+      user.city || "",
+      user.pin || "",
+      user.gst_number || "",
+      user.email_verified ? "Yes" : "No",
     ]);
 
     // Add table
     autoTable(doc, {
-      head: [['ID', 'Name', 'Email', 'Mobile', 'City', 'PIN', 'GST', 'Verified']],
+      head: [
+        ["ID", "Name", "Email", "Mobile", "City", "PIN", "GST", "Verified"],
+      ],
       body: tableData,
       startY: 35,
       styles: { fontSize: 8, cellPadding: 2 },
@@ -1096,14 +1338,16 @@ function AdminDashboard() {
     });
 
     // Generate PDF as blob and trigger direct download
-    const pdfBlob = doc.output('blob');
-    const fileName = `floretta_customers_${new Date().toISOString().split('T')[0]}.pdf`;
+    const pdfBlob = doc.output("blob");
+    const fileName = `floretta_customers_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
 
     // Create a link element and trigger download
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(pdfBlob);
     link.download = fileName;
-    link.style.display = 'none';
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
@@ -1188,6 +1432,16 @@ function AdminDashboard() {
               </li>
             )}
             <li
+              className={activeSection === "enquiries" ? "active" : ""}
+              onClick={() => {
+                setActiveSection("enquiries");
+                setSidebarOpen(false);
+              }}
+            >
+              <i className="fas fa-envelope"></i>
+              <span>Enquiries</span>
+            </li>
+            <li
               className={activeSection === "settings" ? "active" : ""}
               onClick={() => {
                 setActiveSection("settings");
@@ -1226,9 +1480,11 @@ function AdminDashboard() {
             <span></span>
           </button>
           <h1>Dashboard</h1>
-          <h2 className="admin-header-center desktop-only">
-            All Orders ({filteredOrders.length})
-          </h2>
+          {activeSection === "orders" && (
+            <h2 className="admin-header-center desktop-only">
+              All Orders ({filteredOrders.length})
+            </h2>
+          )}
           <div className="admin-header-right">
             <span className="admin-user">Welcome, Admin</span>
             <img
@@ -1313,41 +1569,104 @@ function AdminDashboard() {
 
                 {/* Zoom Controls */}
                 {filteredOrders.length > 0 && (
-                  <div className="zoom-controls">
-                    <button
-                      onClick={() =>
-                        setZoomLevel(Math.max(minZoom, zoomLevel - 10))
-                      }
-                      className="zoom-btn"
-                      disabled={zoomLevel <= minZoom}
+                  <div
+                    className="zoom-controls"
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      alignItems: "center",
+                    }}
+                  >
+                    {/* Export Buttons */}
+                    <div
+                      className="export-buttons"
+                      style={{ display: "flex", gap: "8px" }}
                     >
-                      <span>−</span>
-                    </button>
-                    <input
-                      type="range"
-                      min={minZoom}
-                      max="150"
-                      step="5"
-                      value={zoomLevel}
-                      onChange={(e) => setZoomLevel(Number(e.target.value))}
-                      className="zoom-slider"
-                    />
-                    <span className="zoom-level">{zoomLevel}%</span>
-                    <button
-                      onClick={() =>
-                        setZoomLevel(Math.min(150, zoomLevel + 10))
-                      }
-                      className="zoom-btn"
-                      disabled={zoomLevel >= 150}
+                      <button
+                        onClick={exportOrdersToCSV}
+                        className="export-btn"
+                        style={{
+                          backgroundColor: "#28a745",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                        }}
+                        title="Export to CSV"
+                      >
+                        <i className="fas fa-file-csv"></i> CSV
+                      </button>
+                      <button
+                        onClick={exportOrdersToPDF}
+                        className="export-btn"
+                        style={{
+                          backgroundColor: "#dc3545",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                        }}
+                        title="Export to PDF"
+                      >
+                        <i className="fas fa-file-pdf"></i> PDF
+                      </button>
+                    </div>
+
+                    {/* Zoom Buttons */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "5px",
+                        alignItems: "center",
+                      }}
                     >
-                      <span>+</span>
-                    </button>
-                    <button
-                      onClick={() => setZoomLevel(100)}
-                      className="zoom-reset-btn"
-                    >
-                      Reset
-                    </button>
+                      <button
+                        onClick={() =>
+                          setZoomLevel(Math.max(minZoom, zoomLevel - 10))
+                        }
+                        className="zoom-btn"
+                        disabled={zoomLevel <= minZoom}
+                      >
+                        <span>−</span>
+                      </button>
+                      <input
+                        type="range"
+                        min={minZoom}
+                        max="150"
+                        step="5"
+                        value={zoomLevel}
+                        onChange={(e) => setZoomLevel(Number(e.target.value))}
+                        className="zoom-slider"
+                      />
+                      <span className="zoom-level">{zoomLevel}%</span>
+                      <button
+                        onClick={() =>
+                          setZoomLevel(Math.min(150, zoomLevel + 10))
+                        }
+                        className="zoom-btn"
+                        disabled={zoomLevel >= 150}
+                      >
+                        <span>+</span>
+                      </button>
+                      <button
+                        onClick={() => setZoomLevel(100)}
+                        className="zoom-reset-btn"
+                      >
+                        Reset
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1415,14 +1734,6 @@ function AdminDashboard() {
                                       key={idx}
                                       className="order-item-with-image"
                                     >
-                                      {/* {item.image && (
-                                                                <img
-                                                                    src={`http://localhost:8000/storage/${item.image}`}
-                                                                    alt={item.name || item.product_name}
-                                                                    className="order-item-image"
-                                                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                                                />
-                                                            )} */}
                                       <div className="order-item-details">
                                         <span className="item-name">
                                           {item.name || item.product_name}
@@ -1499,47 +1810,6 @@ function AdminDashboard() {
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot>
-                        <tr>
-                          <td
-                            colSpan="12"
-                            style={{ padding: 0, border: "none" }}
-                          >
-                            {/* Export Button */}
-                            <div className="export-section">
-                              <div className="export-container">
-                                <button
-                                  className="export-btn"
-                                  onClick={() =>
-                                    setShowExportMenu(!showExportMenu)
-                                  }
-                                >
-                                  <span>📥</span> Extract Data
-                                </button>
-
-                                {showExportMenu && (
-                                  <div className="export-menu">
-                                    <button
-                                      onClick={exportToCSV}
-                                      className="export-option csv-option"
-                                    >
-                                      <span className="icon-csv">CSV</span>
-                                      Export as CSV
-                                    </button>
-                                    <button
-                                      onClick={exportToPDF}
-                                      className="export-option pdf-option"
-                                    >
-                                      <span className="icon-pdf">PDF</span>
-                                      Export as PDF
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      </tfoot>
                     </table>
                   </div>
                 </div>
@@ -1732,27 +2002,38 @@ function AdminDashboard() {
         {/* Customers Section */}
         {activeSection === "customers" && (
           <section className="admin-section settings-section customers-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
               <h2 style={{ margin: 0 }}>Customers</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: "flex", gap: "10px" }}>
                 <button
                   onClick={exportCustomersToCSV}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.3s'
+                    padding: "10px 20px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    transition: "background-color 0.3s",
                   }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "#218838")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "#28a745")
+                  }
                 >
                   <i className="fas fa-file-csv"></i>
                   Export CSV
@@ -1760,21 +2041,25 @@ function AdminDashboard() {
                 <button
                   onClick={exportCustomersToPDF}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.3s'
+                    padding: "10px 20px",
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    transition: "background-color 0.3s",
                   }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "#c82333")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "#dc3545")
+                  }
                 >
                   <i className="fas fa-file-pdf"></i>
                   Export PDF
@@ -1800,7 +2085,7 @@ function AdminDashboard() {
                         key={user.id}
                         className="admin-item customer-item clickable"
                         onClick={() => handleViewUser(user)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         <div className="admin-item-header">
                           <span className="admin-email">{user.email}</span>
@@ -1818,11 +2103,13 @@ function AdminDashboard() {
                         )}
                         {user.gst_number && (
                           <span className="customer-gst">
-                            <i className="fas fa-receipt"></i> GST: {user.gst_number}
+                            <i className="fas fa-receipt"></i> GST:{" "}
+                            {user.gst_number}
                           </span>
                         )}
                         <span className="admin-date">
-                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                          Joined:{" "}
+                          {new Date(user.created_at).toLocaleDateString()}
                         </span>
                         <span className="view-details-hint">
                           <i className="fas fa-eye"></i> Click to view details
@@ -1846,10 +2133,14 @@ function AdminDashboard() {
               <div className="settings-card add-user-form">
                 <h3>Add New Product</h3>
                 <p className="settings-description">
-                  Create a new product for your store. Fill in the required fields marked with *.
+                  Create a new product for your store. Fill in the required
+                  fields marked with *.
                 </p>
 
-                <form className="admin-form product-form" onSubmit={handleCreateProduct}>
+                <form
+                  className="admin-form product-form"
+                  onSubmit={handleCreateProduct}
+                >
                   {/* Required Fields */}
                   <div className="form-group">
                     <label htmlFor="product-name">Product Name *</label>
@@ -1965,7 +2256,9 @@ function AdminDashboard() {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="product-original-price">Original Price</label>
+                      <label htmlFor="product-original-price">
+                        Original Price
+                      </label>
                       <input
                         type="number"
                         id="product-original-price"
@@ -2009,7 +2302,9 @@ function AdminDashboard() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-quantity">Available Quantity</label>
+                      <label htmlFor="product-quantity">
+                        Available Quantity
+                      </label>
                       <input
                         type="number"
                         id="product-quantity"
@@ -2071,8 +2366,15 @@ function AdminDashboard() {
                       placeholder="e.g., products/perfume.jpg (max 255 chars)"
                       maxLength="255"
                     />
-                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
-                      Enter relative path or URL. Do not paste base64 image data.
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: "5px",
+                        color: "#666",
+                      }}
+                    >
+                      Enter relative path or URL. Do not paste base64 image
+                      data.
                     </small>
                   </div>
 
@@ -2128,7 +2430,7 @@ function AdminDashboard() {
                   {productFormMessage && (
                     <div
                       className={`form-message ${
-                        productFormMessage.startsWith('✓') ? 'success' : 'error'
+                        productFormMessage.startsWith("✓") ? "success" : "error"
                       }`}
                     >
                       {productFormMessage}
@@ -2140,7 +2442,7 @@ function AdminDashboard() {
                     className="btn-create-admin"
                     disabled={productFormLoading}
                   >
-                    {productFormLoading ? 'Creating...' : 'Create Product'}
+                    {productFormLoading ? "Creating..." : "Create Product"}
                   </button>
                 </form>
               </div>
@@ -2160,27 +2462,38 @@ function AdminDashboard() {
                   ) : (
                     <ul className="admin-items">
                       {allProducts.map((product) => (
-                        <li key={product.id} className="admin-item product-item">
+                        <li
+                          key={product.id}
+                          className="admin-item product-item"
+                        >
                           <div className="admin-item-header">
-                            <span className="admin-email product-name">{product.name}</span>
+                            <span className="admin-email product-name">
+                              {product.name}
+                            </span>
                             <span className={`admin-badge ${product.flag}`}>
-                              {product.flag === 'perfume' ? 'Perfume' :
-                               product.flag === 'freshner' ? 'Freshner' : 'Face Mist'}
+                              {product.flag === "perfume"
+                                ? "Perfume"
+                                : product.flag === "freshner"
+                                ? "Freshner"
+                                : "Face Mist"}
                             </span>
                           </div>
 
                           <div className="product-details">
                             <span className="product-info">
-                              <i className="fas fa-tag"></i> Price: ₹{product.price}
+                              <i className="fas fa-tag"></i> Price: ₹
+                              {product.price}
                             </span>
                             {product.volume_ml && (
                               <span className="product-info">
-                                <i className="fas fa-flask"></i> {product.volume_ml}
+                                <i className="fas fa-flask"></i>{" "}
+                                {product.volume_ml}
                               </span>
                             )}
                             {product.available_quantity !== null && (
                               <span className="product-info">
-                                <i className="fas fa-boxes"></i> Stock: {product.available_quantity}
+                                <i className="fas fa-boxes"></i> Stock:{" "}
+                                {product.available_quantity}
                               </span>
                             )}
                           </div>
@@ -2193,14 +2506,17 @@ function AdminDashboard() {
 
                           <button
                             className="delete-admin-btn"
-                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            onClick={() =>
+                              handleDeleteProduct(product.id, product.name)
+                            }
                             title="Delete product"
                           >
                             <i className="fas fa-trash"></i> Delete
                           </button>
 
                           <span className="admin-date">
-                            Created: {new Date(product.created_at).toLocaleDateString()}
+                            Created:{" "}
+                            {new Date(product.created_at).toLocaleDateString()}
                           </span>
                         </li>
                       ))}
@@ -2295,15 +2611,17 @@ function AdminDashboard() {
                               <span className="admin-badge admin">Admin</span>
                             )}
                           </div>
-                        
+
                           <button
                             className="delete-admin-btn"
-                            onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                            onClick={() =>
+                              handleDeleteAdmin(admin.id, admin.email)
+                            }
                             title="Delete admin"
                           >
                             <i className="fas fa-trash"></i> Delete
                           </button>
-                            
+
                           <span className="admin-date">
                             Created:{" "}
                             {new Date(admin.created_at).toLocaleDateString()}
@@ -2315,6 +2633,423 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </section>
+        )}
+
+        {/* Enquiries Section */}
+        {activeSection === "enquiries" && (
+          <section className="admin-section">
+            <h2>User Enquiries</h2>
+
+            {/* Tab Navigation */}
+            <div className="enquiry-tabs" style={{ marginBottom: "20px" }}>
+              <button
+                className={
+                  userEnquiryTab === "contact" ? "tab-active" : "tab-inactive"
+                }
+                onClick={() => setUserEnquiryTab("contact")}
+                style={{
+                  padding: "10px 20px",
+                  marginRight: "10px",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  backgroundColor:
+                    userEnquiryTab === "contact" ? "#232946" : "#e9ecef",
+                  color: userEnquiryTab === "contact" ? "#fff" : "#232946",
+                  fontWeight: userEnquiryTab === "contact" ? "bold" : "normal",
+                }}
+              >
+                <i className="fas fa-hotel"></i> Hotel Amenities Contact (
+                {contactMeta.total || 0})
+              </button>
+              <button
+                className={
+                  userEnquiryTab === "perfume" ? "tab-active" : "tab-inactive"
+                }
+                onClick={() => setUserEnquiryTab("perfume")}
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  backgroundColor:
+                    userEnquiryTab === "perfume" ? "#232946" : "#e9ecef",
+                  color: userEnquiryTab === "perfume" ? "#fff" : "#232946",
+                  fontWeight: userEnquiryTab === "perfume" ? "bold" : "normal",
+                }}
+              >
+                <i className="fas fa-calendar-check"></i> Perfume Bar Bookings (
+                {perfumeMeta.total || 0})
+              </button>
+            </div>
+
+            {/* Filters */}
+            <div
+              className="enquiry-filters"
+              style={{
+                marginBottom: "20px",
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Search by name, email, mobile..."
+                value={enquiryFilters.q}
+                onChange={(e) => updateEnquiryFilter("q", e.target.value)}
+                style={{
+                  flex: "1",
+                  minWidth: "200px",
+                  padding: "8px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+              <input
+                type="date"
+                value={enquiryFilters.start_date}
+                onChange={(e) =>
+                  updateEnquiryFilter("start_date", e.target.value)
+                }
+                style={{
+                  padding: "8px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+              <input
+                type="date"
+                value={enquiryFilters.end_date}
+                onChange={(e) =>
+                  updateEnquiryFilter("end_date", e.target.value)
+                }
+                style={{
+                  padding: "8px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+
+              {/* Export Buttons */}
+              <div style={{ display: "flex", gap: "8px", marginLeft: "auto" }}>
+                <button
+                  onClick={
+                    userEnquiryTab === "contact"
+                      ? exportContactEnquiriesToCSV
+                      : exportPerfumeBookingsToCSV
+                  }
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "5px",
+                    border: "none",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                  title="Export to CSV"
+                >
+                  <i className="fas fa-file-csv"></i> CSV
+                </button>
+                <button
+                  onClick={
+                    userEnquiryTab === "contact"
+                      ? exportContactEnquiriesToPDF
+                      : exportPerfumeBookingsToPDF
+                  }
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "5px",
+                    border: "none",
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                  title="Export to PDF"
+                >
+                  <i className="fas fa-file-pdf"></i> PDF
+                </button>
+              </div>
+            </div>
+
+            {/* Contact Enquiries Tab */}
+            {userEnquiryTab === "contact" && (
+              <div>
+                {contactLoading ? (
+                  <div className="loading-spinner">
+                    <p>Loading contact enquiries...</p>
+                  </div>
+                ) : contactError ? (
+                  <div className="error-message">
+                    <p>{contactError}</p>
+                  </div>
+                ) : contactEnquiries.length === 0 ? (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#666",
+                      padding: "20px",
+                    }}
+                  >
+                    No contact enquiries found.
+                  </p>
+                ) : (
+                  <>
+                    <div className="enquiries-grid">
+                      {contactEnquiries.map((contact) => (
+                        <div key={contact.id} className="enquiry-card">
+                          <div className="enquiry-header">
+                            <h4>{contact.hotel_name || "N/A"}</h4>
+                            <span className="enquiry-date">
+                              {new Date(
+                                contact.created_at
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="enquiry-body">
+                            <p>
+                              <strong>📧 Email:</strong> {contact.email}
+                            </p>
+                            <p>
+                              <strong>📱 Mobile:</strong> {contact.mobile}
+                            </p>
+                            <p>
+                              <strong>📦 Packaging:</strong>{" "}
+                              {contact.packaging_option || "N/A"}
+                            </p>
+                            <p>
+                              <strong>🌸 Fragrance:</strong>{" "}
+                              {contact.preferred_fragrance || "N/A"}
+                            </p>
+                            <p>
+                              <strong>📊 Quantity:</strong>{" "}
+                              {contact.estimated_quantity || "N/A"}
+                            </p>
+                            {contact.additional_requirements && (
+                              <p>
+                                <strong>📝 Requirements:</strong>{" "}
+                                {contact.additional_requirements}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {contactMeta.last_page > 1 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginTop: "20px",
+                          gap: "10px",
+                        }}
+                      >
+                        <button
+                          onClick={() =>
+                            updateEnquiryFilter(
+                              "page",
+                              contactMeta.current_page - 1
+                            )
+                          }
+                          disabled={contactMeta.current_page === 1}
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            border: "1px solid #232946",
+                            backgroundColor:
+                              contactMeta.current_page === 1
+                                ? "#ccc"
+                                : "#232946",
+                            color: "#fff",
+                            cursor:
+                              contactMeta.current_page === 1
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          Previous
+                        </button>
+                        <span>
+                          Page {contactMeta.current_page} of{" "}
+                          {contactMeta.last_page}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateEnquiryFilter(
+                              "page",
+                              contactMeta.current_page + 1
+                            )
+                          }
+                          disabled={
+                            contactMeta.current_page === contactMeta.last_page
+                          }
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            border: "1px solid #232946",
+                            backgroundColor:
+                              contactMeta.current_page === contactMeta.last_page
+                                ? "#ccc"
+                                : "#232946",
+                            color: "#fff",
+                            cursor:
+                              contactMeta.current_page === contactMeta.last_page
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Perfume Bookings Tab */}
+            {userEnquiryTab === "perfume" && (
+              <div>
+                {perfumeLoading ? (
+                  <div className="loading-spinner">
+                    <p>Loading perfume bar bookings...</p>
+                  </div>
+                ) : perfumeError ? (
+                  <div className="error-message">
+                    <p>{perfumeError}</p>
+                  </div>
+                ) : perfumeBookings.length === 0 ? (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#666",
+                      padding: "20px",
+                    }}
+                  >
+                    No perfume bar bookings found.
+                  </p>
+                ) : (
+                  <>
+                    <div className="enquiries-grid">
+                      {perfumeBookings.map((booking) => (
+                        <div key={booking.id} className="enquiry-card">
+                          <div className="enquiry-header">
+                            <h4>{booking.name || "N/A"}</h4>
+                            <span className="enquiry-date">
+                              {new Date(
+                                booking.created_at
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="enquiry-body">
+                            <p>
+                              <strong>📧 Email:</strong> {booking.email}
+                            </p>
+                            <p>
+                              <strong>📱 Mobile:</strong> {booking.mobile}
+                            </p>
+                            <p>
+                              <strong>📦 Package:</strong>{" "}
+                              {booking.package || "N/A"}
+                            </p>
+                            {booking.message && (
+                              <p>
+                                <strong>💬 Message:</strong> {booking.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {perfumeMeta.last_page > 1 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginTop: "20px",
+                          gap: "10px",
+                        }}
+                      >
+                        <button
+                          onClick={() =>
+                            updateEnquiryFilter(
+                              "page",
+                              perfumeMeta.current_page - 1
+                            )
+                          }
+                          disabled={perfumeMeta.current_page === 1}
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            border: "1px solid #232946",
+                            backgroundColor:
+                              perfumeMeta.current_page === 1
+                                ? "#ccc"
+                                : "#232946",
+                            color: "#fff",
+                            cursor:
+                              perfumeMeta.current_page === 1
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          Previous
+                        </button>
+                        <span>
+                          Page {perfumeMeta.current_page} of{" "}
+                          {perfumeMeta.last_page}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateEnquiryFilter(
+                              "page",
+                              perfumeMeta.current_page + 1
+                            )
+                          }
+                          disabled={
+                            perfumeMeta.current_page === perfumeMeta.last_page
+                          }
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            border: "1px solid #232946",
+                            backgroundColor:
+                              perfumeMeta.current_page === perfumeMeta.last_page
+                                ? "#ccc"
+                                : "#232946",
+                            color: "#fff",
+                            cursor:
+                              perfumeMeta.current_page === perfumeMeta.last_page
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </section>
         )}
 
@@ -2348,7 +3083,10 @@ function AdminDashboard() {
         {/* User Detail Modal */}
         {showUserModal && selectedUser && (
           <div className="modal-overlay" onClick={closeUserModal}>
-            <div className="modal-content user-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="modal-content user-detail-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="modal-header">
                 <h2>Customer Details</h2>
                 <button className="modal-close" onClick={closeUserModal}>
@@ -2357,10 +3095,14 @@ function AdminDashboard() {
               </div>
               <div className="modal-body">
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-user"></i> Personal Information</h3>
+                  <h3>
+                    <i className="fas fa-user"></i> Personal Information
+                  </h3>
                   <div className="detail-row">
                     <span className="detail-label">Name:</span>
-                    <span className="detail-value">{selectedUser.name || 'N/A'}</span>
+                    <span className="detail-value">
+                      {selectedUser.name || "N/A"}
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Email:</span>
@@ -2368,52 +3110,71 @@ function AdminDashboard() {
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Mobile:</span>
-                    <span className="detail-value">{selectedUser.mobile || 'N/A'}</span>
+                    <span className="detail-value">
+                      {selectedUser.mobile || "N/A"}
+                    </span>
                   </div>
                   {selectedUser.gst_number && (
                     <div className="detail-row">
                       <span className="detail-label">GST Number:</span>
-                      <span className="detail-value">{selectedUser.gst_number}</span>
+                      <span className="detail-value">
+                        {selectedUser.gst_number}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-map-marker-alt"></i> Address Information</h3>
+                  <h3>
+                    <i className="fas fa-map-marker-alt"></i> Address
+                    Information
+                  </h3>
                   {selectedUser.address && (
                     <div className="detail-row">
                       <span className="detail-label">Address:</span>
-                      <span className="detail-value">{selectedUser.address}</span>
+                      <span className="detail-value">
+                        {selectedUser.address}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address1 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 1:</span>
-                      <span className="detail-value">{selectedUser.address1}</span>
+                      <span className="detail-value">
+                        {selectedUser.address1}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address2 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 2:</span>
-                      <span className="detail-value">{selectedUser.address2}</span>
+                      <span className="detail-value">
+                        {selectedUser.address2}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address3 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 3:</span>
-                      <span className="detail-value">{selectedUser.address3}</span>
+                      <span className="detail-value">
+                        {selectedUser.address3}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address4 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 4:</span>
-                      <span className="detail-value">{selectedUser.address4}</span>
+                      <span className="detail-value">
+                        {selectedUser.address4}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address5 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 5:</span>
-                      <span className="detail-value">{selectedUser.address5}</span>
+                      <span className="detail-value">
+                        {selectedUser.address5}
+                      </span>
                     </div>
                   )}
                   {selectedUser.city && (
@@ -2428,13 +3189,20 @@ function AdminDashboard() {
                       <span className="detail-value">{selectedUser.pin}</span>
                     </div>
                   )}
-                  {!selectedUser.address && !selectedUser.address1 && !selectedUser.city && !selectedUser.pin && (
-                    <p className="no-data">No address information available</p>
-                  )}
+                  {!selectedUser.address &&
+                    !selectedUser.address1 &&
+                    !selectedUser.city &&
+                    !selectedUser.pin && (
+                      <p className="no-data">
+                        No address information available
+                      </p>
+                    )}
                 </div>
 
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-calendar"></i> Account Information</h3>
+                  <h3>
+                    <i className="fas fa-calendar"></i> Account Information
+                  </h3>
                   <div className="detail-row">
                     <span className="detail-label">Customer ID:</span>
                     <span className="detail-value">#{selectedUser.id}</span>
@@ -2442,11 +3210,14 @@ function AdminDashboard() {
                   <div className="detail-row">
                     <span className="detail-label">Joined Date:</span>
                     <span className="detail-value">
-                      {new Date(selectedUser.created_at).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {new Date(selectedUser.created_at).toLocaleDateString(
+                        "en-IN",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </span>
                   </div>
                 </div>

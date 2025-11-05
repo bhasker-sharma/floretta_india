@@ -9,6 +9,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\LivePerfumeController;
 use App\Http\Controllers\HotelAmenitiesController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminEnquiryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Auth\GoogleController;
@@ -147,5 +148,9 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/products', [ProductController::class, 'adminGetAllProducts']);
     Route::post('/products', [ProductController::class, 'adminCreateProduct']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
+
+    // User Enquiries management (with pagination)
+    Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);
+    Route::get('/user-enquiry/bookings', [AdminEnquiryController::class, 'listPerfumeBarBookings']);
 });
 

@@ -48,9 +48,13 @@ class PasswordResetController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
+        // Get user name
+        $user = User::where('email', $email)->first();
+        $userName = $user->name ?? 'User';
+
         // Send OTP via email
         try {
-            Mail::send('emails.otp', ['otp' => $otp], function ($message) use ($email) {
+            Mail::send('emails.otp', ['otp' => $otp, 'name' => $userName], function ($message) use ($email) {
                 $message->to($email)
                     ->subject('Password Reset OTP - Floretta India');
             });

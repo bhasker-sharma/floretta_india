@@ -637,13 +637,13 @@
 
 .order-address {
   max-width: 300px;
-  min-width:250px;
+  min-width: 250px;
   white-space: normal;
   word-wrap: break-word;
   word-break: break-word;
   overflow-wrap: break-word;
-  font-size: 0.90rem;
-  color:#232946;
+  font-size: 0.9rem;
+  color: #232946;
   line-height: 1.4;
 }
 
@@ -1774,7 +1774,7 @@
 }
 
 .customer-item::after {
-  content: '';
+  content: "";
   position: absolute;
   right: 20px;
   top: 50%;
@@ -2053,5 +2053,138 @@
 
   .product-item {
     padding: 15px !important;
+  }
+}
+
+/* Enquiries Section Styles */
+.enquiries-container {
+  padding: 20px;
+}
+
+.enquiry-section {
+  margin-bottom: 40px;
+}
+
+.enquiry-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.enquiries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.enquiry-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.enquiry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.enquiry-header {
+  background: linear-gradient(135deg, #232946 0%, #2d3561 100%);
+  color: white;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.enquiry-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.enquiry-date {
+  font-size: 11px;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.enquiry-body {
+  padding: 12px 15px;
+}
+
+.enquiry-body p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.enquiry-body strong {
+  color: #232946;
+  display: inline-block;
+  min-width: 90px;
+  font-size: 12px;
+}
+
+.enquiry-actions {
+  padding: 0 15px 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.enquiry-actions .delete-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.enquiry-actions .delete-btn:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+.enquiry-actions .delete-btn i {
+  font-size: 12px;
+}
+
+/* Responsive for enquiries */
+@media (max-width: 768px) {
+  .enquiries-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .enquiry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .enquiry-date {
+    align-self: flex-end;
   }
 }
