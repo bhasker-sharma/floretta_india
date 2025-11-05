@@ -904,6 +904,130 @@ function UserProfile() {
                         📄 Invoice
                       </button>
                     </div>
+                    {/* Order Status Tracking */}
+                    <div className="order-status-tracker" style={{
+                      padding: '15px',
+                      margin: '10px 0',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '10px'
+                      }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
+                          Order Status:
+                        </span>
+                        <span style={{
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          backgroundColor: 
+                            order.order_status === 'Delivered' ? '#d4edda' :
+                            order.order_status === 'In-Transit' ? '#fff3cd' :
+                            order.order_status === 'Shipped' ? '#cfe2ff' :
+                            '#e2e3e5',
+                          color:
+                            order.order_status === 'Delivered' ? '#155724' :
+                            order.order_status === 'In-Transit' ? '#856404' :
+                            order.order_status === 'Shipped' ? '#084298' :
+                            '#383d41'
+                        }}>
+                          {order.order_status || 'Order Placed'}
+                        </span>
+                      </div>
+                      
+                      {/* Status Timeline */}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        position: 'relative',
+                        marginTop: '15px'
+                      }}>
+                        {/* Progress Line */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          left: '0',
+                          right: '0',
+                          height: '2px',
+                          backgroundColor: '#e0e0e0',
+                          zIndex: 0
+                        }}>
+                          <div style={{
+                            height: '100%',
+                            backgroundColor: '#28a745',
+                            width: 
+                              order.order_status === 'Delivered' ? '100%' :
+                              order.order_status === 'In-Transit' ? '66%' :
+                              order.order_status === 'Shipped' ? '33%' :
+                              '0%',
+                            transition: 'width 0.3s ease'
+                          }}></div>
+                        </div>
+                        
+                        {/* Status Steps */}
+                        {['Order Placed', 'Shipped', 'In-Transit', 'Delivered'].map((status, idx) => {
+                          const currentStatuses = ['Order Placed', 'Shipped', 'In-Transit', 'Delivered'];
+                          const currentIndex = currentStatuses.indexOf(order.order_status || 'Order Placed');
+                          const isCompleted = idx <= currentIndex;
+                          const isActive = idx === currentIndex;
+                          
+                          return (
+                            <div key={status} style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              zIndex: 1,
+                              flex: 1
+                            }}>
+                              <div style={{
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                backgroundColor: isCompleted ? '#28a745' : '#e0e0e0',
+                                border: isActive ? '3px solid #28a745' : '2px solid transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '8px',
+                                transition: 'all 0.3s ease',
+                                boxShadow: isActive ? '0 0 0 4px rgba(40, 167, 69, 0.2)' : 'none'
+                              }}>
+                                {isCompleted && (
+                                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                                )}
+                              </div>
+                              <span style={{
+                                fontSize: '11px',
+                                textAlign: 'center',
+                                color: isCompleted ? '#333' : '#999',
+                                fontWeight: isActive ? 'bold' : 'normal',
+                                maxWidth: '80px',
+                                lineHeight: '1.2'
+                              }}>
+                                {status}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {order.order_status_changed_at && (
+                        <div style={{
+                          marginTop: '12px',
+                          fontSize: '12px',
+                          color: '#666',
+                          textAlign: 'right'
+                        }}>
+                          Last updated: {new Date(order.order_status_changed_at).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
                     <div className="order-products">
                       {order.order_items &&
                         order.order_items.map((item, idx) => (

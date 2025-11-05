@@ -133,6 +133,11 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
     Route::get('/me', [AdminAuthController::class, 'me']);
     Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
+    // New Orders: unverified orders list and verification action
+    Route::get('/orders/new', [AdminAuthController::class, 'getNewOrders']);
+    Route::post('/orders/{orderId}/verify', [AdminAuthController::class, 'verifyOrder']);
+    // Order status update
+    Route::post('/orders/{orderId}/status', [AdminAuthController::class, 'updateOrderStatus']);
     Route::post('/create-admin', [AdminAuthController::class, 'createAdmin']);
     Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);
     Route::delete('/delete-admin/{id}', [AdminAuthController::class, 'deleteAdmin']);

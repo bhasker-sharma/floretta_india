@@ -8,9 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminAuthController extends Controller
 {
+    private array $allowedStatuses = ['Order Placed', 'Shipped', 'In-Transit', 'Delivered'];
     /**
      * Handle admin login (all admins are stored in database with hashed passwords)
      */
@@ -191,20 +195,29 @@ class AdminAuthController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Enrich order items with product images
+        // Enrich order items with product images (defensive)
         $orders->each(function ($order) {
-            if ($order->order_items && is_array($order->order_items)) {
-                $enrichedItems = [];
-                foreach ($order->order_items as $item) {
-                    if (isset($item['id'])) {
-                        $product = \App\Models\productpage\Product::find($item['id']);
-                        if ($product) {
-                            $item['image'] = $product->image ?? null;
-                        }
-                    }
-                    $enrichedItems[] = $item;
+            try {
+                $items = $order->order_items;
+                if (is_string($items)) {
+                    $decoded = json_decode($items, true);
+                    $items = is_array($decoded) ? $decoded : [];
                 }
-                $order->order_items = $enrichedItems;
+                if (is_array($items)) {
+                    $enrichedItems = [];
+                    foreach ($items as $item) {
+                        if (isset($item['id']) && class_exists(\App\Models\productpage\Product::class)) {
+                            $product = \App\Models\productpage\Product::find($item['id']);
+                            if ($product) {
+                                $item['image'] = $product->image ?? null;
+                            }
+                        }
+                        $enrichedItems[] = $item;
+                    }
+                    $order->order_items = $enrichedItems;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Order items enrichment failed (all orders)', ['order_id' => $order->id, 'error' => $e->getMessage()]);
             }
         });
 
@@ -318,4 +331,193 @@ class AdminAuthController extends Controller
             ], 500);
         }
     }
- }
+
+    /**
+     * Get only NEW (unverified) orders
+     */
+    public function getNewOrders()
+    {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized',
+                'message' => 'Admin authentication required'
+            ], 401);
+        }
+
+        $orders = \App\Models\Order::with('user:id,name,email,gst_number')
+            ->whereNull('verified_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $orders->each(function ($order) {
+            try {
+                $items = $order->order_items;
+                if (is_string($items)) {
+                    $decoded = json_decode($items, true);
+                    $items = is_array($decoded) ? $decoded : [];
+                }
+                if (is_array($items)) {
+                    $enrichedItems = [];
+                    foreach ($items as $item) {
+                        if (isset($item['id']) && class_exists(\App\Models\productpage\Product::class)) {
+                            $product = \App\Models\productpage\Product::find($item['id']);
+                            if ($product) {
+                                $item['image'] = $product->image ?? null;
+                            }
+                        }
+                        $enrichedItems[] = $item;
+                    }
+                    $order->order_items = $enrichedItems;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Order items enrichment failed (new orders)', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'orders' => $orders
+        ]);
+    }
+
+    /**
+     * Verify an order (idempotent). Marks verified_at and verified_by_admin_id
+     */
+    public function verifyOrder($orderId)
+    {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized',
+                'message' => 'Admin authentication required'
+            ], 401);
+        }
+
+        $order = \App\Models\Order::find($orderId);
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Order not found'
+            ], 404);
+        }
+
+        // If already verified, return current state (idempotent)
+        if ($order->verified_at) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order already verified',
+                'order' => $order
+            ]);
+        }
+
+        $order->verified_at = now();
+        $order->verified_by_admin_id = $admin->id;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order verified successfully',
+            'order' => $order
+        ]);
+    }
+
+    /**
+     * Update order status (Admin only) and record history
+     */
+    public function updateOrderStatus(Request $request, $orderId)
+    {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized',
+                'message' => 'Admin authentication required'
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'status' => 'required|string',
+        ]);
+
+        $newStatus = trim($data['status']);
+        if (!in_array($newStatus, $this->allowedStatuses, true)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid status',
+                'allowed' => $this->allowedStatuses,
+            ], 422);
+        }
+
+        $order = \App\Models\Order::find($orderId);
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Order not found'
+            ], 404);
+        }
+
+        if ($order->order_status === $newStatus) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No change',
+                'order' => $order,
+            ]);
+        }
+
+        try {
+            DB::transaction(function () use ($order, $newStatus, $admin) {
+                $from = $order->order_status ?? null;
+                $order->order_status = $newStatus;
+                $order->order_status_changed_at = now();
+                $order->save();
+
+                // Write status history if table exists; don't fail the request if it doesn't
+                try {
+                    if (Schema::hasTable('order_status_updates')) {
+                        \App\Models\OrderStatusUpdate::create([
+                            'order_id' => $order->id,
+                            'from_status' => $from,
+                            'to_status' => $newStatus,
+                            'changed_by_admin_id' => $admin->id,
+                            'note' => null,
+                        ]);
+                    } else {
+                        Log::warning('order_status_updates table missing; skipping history insert', [
+                            'order_id' => $order->id,
+                            'admin_id' => $admin->id,
+                            'from' => $from,
+                            'to' => $newStatus,
+                        ]);
+                    }
+                } catch (\Throwable $ex) {
+                    Log::warning('Failed to insert order status history row', [
+                        'order_id' => $order->id,
+                        'admin_id' => $admin->id,
+                        'from' => $from,
+                        'to' => $newStatus,
+                        'error' => $ex->getMessage(),
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Failed to update order status', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update order status'
+            ], 500);
+        }
+
+        $order->refresh();
+        return response()->json([
+            'success' => true,
+            'message' => 'Order status updated',
+            'order' => $order,
+        ]);
+    }
+}

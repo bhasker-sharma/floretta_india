@@ -19,8 +19,64 @@ function AdminDashboard() {
   const [minZoom, setMinZoom] = useState(50);
   const [activeSection, setActiveSection] = useState("orders");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // New Orders state
+  const [newOrders, setNewOrders] = useState([]);
+  const [loadingNewOrders, setLoadingNewOrders] = useState(false);
+  const [errorNewOrders, setErrorNewOrders] = useState(null);
   const tableRef = React.useRef(null);
   const containerRef = React.useRef(null);
+
+  // Order Status options for admin-managed lifecycle
+  const ORDER_STATUS_OPTIONS = [
+    "Order Placed",
+    "Shipped",
+    "In-Transit",
+    "Delivered",
+  ];
+
+  const [updatingStatusIds, setUpdatingStatusIds] = useState([]);
+
+  const handleChangeOrderStatus = async (
+    orderId,
+    newStatus,
+    context = "orders"
+  ) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        navigate("/admin/login");
+        return;
+      }
+      setUpdatingStatusIds((prev) => [...prev, orderId]);
+      const resp = await axios.post(
+        API_ENDPOINTS.ADMIN_ORDER_SET_STATUS(orderId),
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const updated = resp.data?.order;
+      if (updated) {
+        // Update in orders list
+        setOrders((prev) =>
+          prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+        );
+        setFilteredOrders((prev) =>
+          prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+        );
+        // Update in newOrders list if present
+        setNewOrders((prev) =>
+          prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+        );
+      }
+    } catch (e) {
+      console.error("Failed to update order status", e);
+      alert("Failed to update order status. Please try again.");
+    } finally {
+      setUpdatingStatusIds((prev) => prev.filter((id) => id !== orderId));
+    }
+  };
 
   // Admin info state
   const [adminInfo, setAdminInfo] = useState(null);
@@ -103,6 +159,69 @@ function AdminDashboard() {
 
     fetchOrders();
   }, [navigate]);
+
+  // Fetch NEW (unverified) orders for New Orders section
+  useEffect(() => {
+    const fetchNewOrders = async () => {
+      if (activeSection !== "newOrders") return;
+      try {
+        setLoadingNewOrders(true);
+        setErrorNewOrders(null);
+        const token = localStorage.getItem("adminToken");
+        if (!token) {
+          navigate("/admin/login");
+          return;
+        }
+        const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS_NEW, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNewOrders(response.data.orders || []);
+      } catch (err) {
+        console.error("Error fetching new orders:", err);
+        setErrorNewOrders("Failed to load new orders. Please try again.");
+      } finally {
+        setLoadingNewOrders(false);
+      }
+    };
+
+    fetchNewOrders();
+  }, [activeSection, navigate]);
+
+  const handleVerifyOrder = async (orderId) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        navigate("/admin/login");
+        return;
+      }
+      await axios.post(
+        API_ENDPOINTS.ADMIN_ORDER_VERIFY(orderId),
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      // Remove from newOrders list optimistically
+      setNewOrders((prev) => prev.filter((o) => o.id !== orderId));
+      // Optionally refresh main orders list
+      // We can refetch orders in background
+      (async () => {
+        try {
+          const resp = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const fetchedOrders = resp.data.orders || [];
+          setOrders(fetchedOrders);
+          setFilteredOrders(fetchedOrders);
+        } catch (e) {
+          console.warn("Could not refresh orders after verify.");
+        }
+      })();
+    } catch (err) {
+      console.error("Verification failed:", err);
+      alert("Failed to verify order. Please try again.");
+    }
+  };
 
   // Fetch all admins for superadmin
   useEffect(() => {
@@ -1126,6 +1245,42 @@ function AdminDashboard() {
             <h2 className="mobile-only">
               All Orders ({filteredOrders.length})
             </h2>
+            {/* Top Actions */}
+            <div
+              className="top-actions"
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                margin: "10px 0",
+              }}
+            >
+              <button
+                className="new-orders-btn"
+                onClick={() => setActiveSection("newOrders")}
+                title="View New (Unverified) Orders"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <i className="fas fa-inbox"></i>
+                <span>View New Orders</span>
+                <span
+                  className="badge"
+                  style={{
+                    background: "#f37254",
+                    color: "#fff",
+                    borderRadius: "12px",
+                    padding: "2px 8px",
+                    fontSize: "12px",
+                  }}
+                >
+                  {orders.filter((o) => !o.is_verified).length}
+                </span>
+              </button>
+            </div>
             {/* Date Filter */}
             <div className="date-filter">
               <div className="filter-inputs">
@@ -1234,7 +1389,8 @@ function AdminDashboard() {
                           <th>Items</th>
                           <th>Quantity</th>
                           <th>Total Amount</th>
-                          <th>Status</th>
+                          <th>Order Status</th>
+                          <th>Verification</th>
                           <th>Date & Time</th>
                           <th>Invoice</th>
                         </tr>
@@ -1290,11 +1446,41 @@ function AdminDashboard() {
                               ₹{parseFloat(order.order_value || 0).toFixed(2)}
                             </td>
                             <td>
-                              <span
-                                className={`status-badge status-${order.status?.toLowerCase()}`}
+                              <select
+                                value={order.order_status || "Order Placed"}
+                                onChange={(e) =>
+                                  handleChangeOrderStatus(
+                                    order.id,
+                                    e.target.value,
+                                    "orders"
+                                  )
+                                }
+                                disabled={updatingStatusIds.includes(order.id)}
+                                className="order-status-select"
+                                title="Update order status"
                               >
-                                {order.status || "Pending"}
-                              </span>
+                                {ORDER_STATUS_OPTIONS.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              {order.is_verified ? (
+                                <span className="status-badge status-verified">
+                                  Verified
+                                  {order.verified_at
+                                    ? ` (${new Date(
+                                        order.verified_at
+                                      ).toLocaleDateString()})`
+                                    : ""}
+                                </span>
+                              ) : (
+                                <span className="status-badge status-pending">
+                                  Not Verified
+                                </span>
+                              )}
                             </td>
                             <td className="order-datetime">
                               {new Date(order.created_at).toLocaleDateString()}
@@ -1316,7 +1502,7 @@ function AdminDashboard() {
                       <tfoot>
                         <tr>
                           <td
-                            colSpan="11"
+                            colSpan="12"
                             style={{ padding: 0, border: "none" }}
                           >
                             {/* Export Button */}
@@ -1358,6 +1544,187 @@ function AdminDashboard() {
                   </div>
                 </div>
               </>
+            )}
+          </section>
+        )}
+
+        {/* New Orders Section */}
+        {activeSection === "newOrders" && (
+          <section className="admin-section orders-section">
+            <div
+              className="section-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <h2 style={{ margin: 0 }}>New Orders (Unverified)</h2>
+              <div
+                className="section-actions"
+                style={{ display: "flex", gap: "10px" }}
+              >
+                <button
+                  className="back-to-orders-btn"
+                  onClick={() => setActiveSection("orders")}
+                  title="Back to All Orders"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <i className="fas fa-arrow-left"></i>
+                  <span>Back to Orders</span>
+                </button>
+              </div>
+            </div>
+
+            {loadingNewOrders ? (
+              <div className="loading-spinner">
+                <p>Loading new orders...</p>
+              </div>
+            ) : errorNewOrders ? (
+              <div className="error-message">
+                <p>{errorNewOrders}</p>
+              </div>
+            ) : newOrders.length === 0 ? (
+              <div className="orders-placeholder">
+                <p>No new orders found.</p>
+                <div className="orders-illustration">
+                  <i className="fas fa-inbox fa-3x"></i>
+                </div>
+              </div>
+            ) : (
+              <div className="orders-table-container">
+                <div
+                  className="table-zoom-wrapper"
+                  style={{
+                    transform: `scale(${zoomLevel / 100})`,
+                    transformOrigin: "top left",
+                  }}
+                >
+                  <table className="orders-table">
+                    <thead>
+                      <tr>
+                        <th>Order Number</th>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Items</th>
+                        <th>Quantity</th>
+                        <th>Total Amount</th>
+                        <th>Order Status</th>
+                        <th>Verification</th>
+                        <th>Date & Time</th>
+                        <th>Invoice</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {newOrders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="order-number">{order.order_number}</td>
+                          <td>{order.customer_name || "N/A"}</td>
+                          <td>{order.customer_email || "N/A"}</td>
+                          <td>{order.customer_phone || "N/A"}</td>
+                          <td
+                            style={{ maxWidth: "220px", whiteSpace: "normal" }}
+                          >
+                            {order.customer_address || "N/A"}
+                          </td>
+                          <td>
+                            <div className="order-items">
+                              {Array.isArray(order.order_items) &&
+                              order.order_items.length > 0 ? (
+                                order.order_items.map((item, idx) => (
+                                  <div key={idx} className="item-row">
+                                    <div className="item-details">
+                                      <span className="item-name">
+                                        {item.name || `Item ${idx + 1}`}
+                                      </span>
+                                      <span className="item-qty">
+                                        Qty: {item.quantity || 0}
+                                      </span>
+                                      <span className="item-price">
+                                        ₹
+                                        {parseFloat(item.price || 0).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <span>No items</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>{order.order_quantity || 0}</td>
+                          <td className="order-total">
+                            ₹{parseFloat(order.order_value || 0).toFixed(2)}
+                          </td>
+                          <td>
+                            <select
+                              value={order.order_status || "Order Placed"}
+                              onChange={(e) =>
+                                handleChangeOrderStatus(
+                                  order.id,
+                                  e.target.value,
+                                  "newOrders"
+                                )
+                              }
+                              disabled={updatingStatusIds.includes(order.id)}
+                              className="order-status-select"
+                              title="Update order status"
+                            >
+                              {ORDER_STATUS_OPTIONS.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            {order.is_verified ? (
+                              <span className="status-badge status-verified">
+                                Verified
+                              </span>
+                            ) : (
+                              <span className="status-badge status-pending">
+                                Not Verified
+                              </span>
+                            )}
+                          </td>
+                          <td className="order-datetime">
+                            {new Date(order.created_at).toLocaleDateString()}
+                            <br />
+                            {new Date(order.created_at).toLocaleTimeString()}
+                          </td>
+                          <td>
+                            <button
+                              className="invoice-btn"
+                              onClick={() => generateInvoice(order)}
+                              title="Generate Invoice"
+                            >
+                              📄 Invoice
+                            </button>
+                          </td>
+                          <td>
+                            <button
+                              className="verify-btn"
+                              onClick={() => handleVerifyOrder(order.id)}
+                              title="Mark as Verified"
+                            >
+                              ✓ Verify
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </section>
         )}
