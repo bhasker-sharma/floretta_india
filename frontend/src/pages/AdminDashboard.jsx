@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -98,29 +98,29 @@ function AdminDashboard() {
   const [allProducts, setAllProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productFormData, setProductFormData] = useState({
-    name: '',
-    flag: 'perfume',
-    price: '',
-    volume_ml: '',
-    scent: '',
-    note: '',
-    Discription: '',
-    about_product: '',
-    original_price: '',
-    discount_amount: '',
+    name: "",
+    flag: "perfume",
+    price: "",
+    volume_ml: "",
+    scent: "",
+    note: "",
+    Discription: "",
+    about_product: "",
+    original_price: "",
+    discount_amount: "",
     is_discount_active: false,
-    delivery_charge: '',
-    available_quantity: '',
-    image: '',
-    ingredients: '',
-    brand: '',
-    colour: '',
-    item_form: '',
-    power_source: '',
-    launch_date: ''
+    delivery_charge: "",
+    available_quantity: "",
+    image: "",
+    ingredients: "",
+    brand: "",
+    colour: "",
+    item_form: "",
+    power_source: "",
+    launch_date: "",
   });
   const [productFormLoading, setProductFormLoading] = useState(false);
-  const [productFormMessage, setProductFormMessage] = useState('');
+  const [productFormMessage, setProductFormMessage] = useState("");
 
   // Load admin info from localStorage
   useEffect(() => {
@@ -821,14 +821,11 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await axios.delete(
-        API_ENDPOINTS.ADMIN_DELETE(adminId),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.delete(API_ENDPOINTS.ADMIN_DELETE(adminId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
         setAdminFormMessage("✓ Admin deleted successfully!");
@@ -848,7 +845,9 @@ function AdminDashboard() {
     } catch (error) {
       console.error("Error deleting admin:", error);
       const errorMsg =
-        error.response?.data?.error || error.response?.data?.message || "Failed to delete admin";
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to delete admin";
       setAdminFormMessage("✗ " + errorMsg);
       setTimeout(() => setAdminFormMessage(""), 5000);
     }
@@ -868,9 +867,9 @@ function AdminDashboard() {
   // Handle product form input changes
   const handleProductFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setProductFormData(prev => ({
+    setProductFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -878,15 +877,15 @@ function AdminDashboard() {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     setProductFormLoading(true);
-    setProductFormMessage('');
+    setProductFormMessage("");
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
 
       // Filter out empty string values
       const productData = Object.fromEntries(
         Object.entries(productFormData).filter(([key, value]) => {
-          if (typeof value === 'string') return value.trim() !== '';
+          if (typeof value === "string") return value.trim() !== "";
           return true;
         })
       );
@@ -897,36 +896,36 @@ function AdminDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
+            Accept: "application/json",
           },
         }
       );
 
       if (response.data.success) {
-        setProductFormMessage('✓ Product created successfully!');
+        setProductFormMessage("✓ Product created successfully!");
 
         // Reset form
         setProductFormData({
-          name: '',
-          flag: 'perfume',
-          price: '',
-          volume_ml: '',
-          scent: '',
-          note: '',
-          Discription: '',
-          about_product: '',
-          original_price: '',
-          discount_amount: '',
+          name: "",
+          flag: "perfume",
+          price: "",
+          volume_ml: "",
+          scent: "",
+          note: "",
+          Discription: "",
+          about_product: "",
+          original_price: "",
+          discount_amount: "",
           is_discount_active: false,
-          delivery_charge: '',
-          available_quantity: '',
-          image: '',
-          ingredients: '',
-          brand: '',
-          colour: '',
-          item_form: '',
-          power_source: '',
-          launch_date: ''
+          delivery_charge: "",
+          available_quantity: "",
+          image: "",
+          ingredients: "",
+          brand: "",
+          colour: "",
+          item_form: "",
+          power_source: "",
+          launch_date: "",
         });
 
         // Refresh products list
@@ -939,12 +938,15 @@ function AdminDashboard() {
           setAllProducts(productsResponse.data.products);
         }
 
-        setTimeout(() => setProductFormMessage(''), 5000);
+        setTimeout(() => setProductFormMessage(""), 5000);
       }
     } catch (error) {
-      console.error('Error creating product:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to create product';
-      setProductFormMessage('✗ ' + errorMsg);
+      console.error("Error creating product:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to create product";
+      setProductFormMessage("✗ " + errorMsg);
     } finally {
       setProductFormLoading(false);
     }
@@ -959,7 +961,7 @@ function AdminDashboard() {
     if (!confirmDelete) return;
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       const response = await axios.delete(
         API_ENDPOINTS.ADMIN_PRODUCT_DELETE(productId),
         {
@@ -970,7 +972,7 @@ function AdminDashboard() {
       );
 
       if (response.data.success) {
-        setProductFormMessage('✓ Product deleted successfully!');
+        setProductFormMessage("✓ Product deleted successfully!");
 
         // Refresh products list
         const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
@@ -982,12 +984,15 @@ function AdminDashboard() {
           setAllProducts(productsResponse.data.products);
         }
 
-        setTimeout(() => setProductFormMessage(''), 5000);
+        setTimeout(() => setProductFormMessage(""), 5000);
       }
     } catch (error) {
-      console.error('Error deleting product:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to delete product';
-      setProductFormMessage('✗ ' + errorMsg);
+      console.error("Error deleting product:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to delete product";
+      setProductFormMessage("✗ " + errorMsg);
     }
   };
 
@@ -1015,40 +1020,53 @@ function AdminDashboard() {
   // Export customers to CSV
   const exportCustomersToCSV = () => {
     if (allUsers.length === 0) {
-      alert('No customers to export');
+      alert("No customers to export");
       return;
     }
 
     // Define CSV headers
-    const headers = ['ID', 'Name', 'Email', 'Mobile', 'Address', 'City', 'PIN', 'GST Number', 'Email Verified'];
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Mobile",
+      "Address",
+      "City",
+      "PIN",
+      "GST Number",
+      "Email Verified",
+    ];
 
     // Map user data to CSV rows
-    const rows = allUsers.map(user => [
-      user.id || '',
-      user.name || '',
-      user.email || '',
-      user.mobile || '',
-      user.address || '',
-      user.city || '',
-      user.pin || '',
-      user.gst_number || '',
-      user.email_verified ? 'Yes' : 'No'
+    const rows = allUsers.map((user) => [
+      user.id || "",
+      user.name || "",
+      user.email || "",
+      user.mobile || "",
+      user.address || "",
+      user.city || "",
+      user.pin || "",
+      user.gst_number || "",
+      user.email_verified ? "Yes" : "No",
     ]);
 
     // Combine headers and rows
     const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
 
     // Create blob and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    link.setAttribute('href', url);
-    link.setAttribute('download', `floretta_customers_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `floretta_customers_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
 
     document.body.appendChild(link);
     link.click();
@@ -1058,7 +1076,7 @@ function AdminDashboard() {
   // Export customers to PDF
   const exportCustomersToPDF = () => {
     if (allUsers.length === 0) {
-      alert('No customers to export');
+      alert("No customers to export");
       return;
     }
 
@@ -1066,27 +1084,29 @@ function AdminDashboard() {
 
     // Add title
     doc.setFontSize(18);
-    doc.text('Floretta India - Customer List', 14, 22);
+    doc.text("Floretta India - Customer List", 14, 22);
 
     // Add export date
     doc.setFontSize(10);
     doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 30);
 
     // Prepare table data
-    const tableData = allUsers.map(user => [
-      user.id || '',
-      user.name || '',
-      user.email || '',
-      user.mobile || '',
-      user.city || '',
-      user.pin || '',
-      user.gst_number || '',
-      user.email_verified ? 'Yes' : 'No'
+    const tableData = allUsers.map((user) => [
+      user.id || "",
+      user.name || "",
+      user.email || "",
+      user.mobile || "",
+      user.city || "",
+      user.pin || "",
+      user.gst_number || "",
+      user.email_verified ? "Yes" : "No",
     ]);
 
     // Add table
     autoTable(doc, {
-      head: [['ID', 'Name', 'Email', 'Mobile', 'City', 'PIN', 'GST', 'Verified']],
+      head: [
+        ["ID", "Name", "Email", "Mobile", "City", "PIN", "GST", "Verified"],
+      ],
       body: tableData,
       startY: 35,
       styles: { fontSize: 8, cellPadding: 2 },
@@ -1096,14 +1116,16 @@ function AdminDashboard() {
     });
 
     // Generate PDF as blob and trigger direct download
-    const pdfBlob = doc.output('blob');
-    const fileName = `floretta_customers_${new Date().toISOString().split('T')[0]}.pdf`;
+    const pdfBlob = doc.output("blob");
+    const fileName = `floretta_customers_${
+      new Date().toISOString().split("T")[0]
+    }.pdf`;
 
     // Create a link element and trigger download
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(pdfBlob);
     link.download = fileName;
-    link.style.display = 'none';
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
@@ -1732,27 +1754,38 @@ function AdminDashboard() {
         {/* Customers Section */}
         {activeSection === "customers" && (
           <section className="admin-section settings-section customers-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
               <h2 style={{ margin: 0 }}>Customers</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: "flex", gap: "10px" }}>
                 <button
                   onClick={exportCustomersToCSV}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.3s'
+                    padding: "10px 20px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    transition: "background-color 0.3s",
                   }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "#218838")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "#28a745")
+                  }
                 >
                   <i className="fas fa-file-csv"></i>
                   Export CSV
@@ -1760,21 +1793,25 @@ function AdminDashboard() {
                 <button
                   onClick={exportCustomersToPDF}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.3s'
+                    padding: "10px 20px",
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    transition: "background-color 0.3s",
                   }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "#c82333")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "#dc3545")
+                  }
                 >
                   <i className="fas fa-file-pdf"></i>
                   Export PDF
@@ -1800,7 +1837,7 @@ function AdminDashboard() {
                         key={user.id}
                         className="admin-item customer-item clickable"
                         onClick={() => handleViewUser(user)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         <div className="admin-item-header">
                           <span className="admin-email">{user.email}</span>
@@ -1818,11 +1855,13 @@ function AdminDashboard() {
                         )}
                         {user.gst_number && (
                           <span className="customer-gst">
-                            <i className="fas fa-receipt"></i> GST: {user.gst_number}
+                            <i className="fas fa-receipt"></i> GST:{" "}
+                            {user.gst_number}
                           </span>
                         )}
                         <span className="admin-date">
-                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                          Joined:{" "}
+                          {new Date(user.created_at).toLocaleDateString()}
                         </span>
                         <span className="view-details-hint">
                           <i className="fas fa-eye"></i> Click to view details
@@ -1846,10 +1885,14 @@ function AdminDashboard() {
               <div className="settings-card add-user-form">
                 <h3>Add New Product</h3>
                 <p className="settings-description">
-                  Create a new product for your store. Fill in the required fields marked with *.
+                  Create a new product for your store. Fill in the required
+                  fields marked with *.
                 </p>
 
-                <form className="admin-form product-form" onSubmit={handleCreateProduct}>
+                <form
+                  className="admin-form product-form"
+                  onSubmit={handleCreateProduct}
+                >
                   {/* Required Fields */}
                   <div className="form-group">
                     <label htmlFor="product-name">Product Name *</label>
@@ -1965,7 +2008,9 @@ function AdminDashboard() {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="product-original-price">Original Price</label>
+                      <label htmlFor="product-original-price">
+                        Original Price
+                      </label>
                       <input
                         type="number"
                         id="product-original-price"
@@ -2009,7 +2054,9 @@ function AdminDashboard() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-quantity">Available Quantity</label>
+                      <label htmlFor="product-quantity">
+                        Available Quantity
+                      </label>
                       <input
                         type="number"
                         id="product-quantity"
@@ -2071,8 +2118,15 @@ function AdminDashboard() {
                       placeholder="e.g., products/perfume.jpg (max 255 chars)"
                       maxLength="255"
                     />
-                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
-                      Enter relative path or URL. Do not paste base64 image data.
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: "5px",
+                        color: "#666",
+                      }}
+                    >
+                      Enter relative path or URL. Do not paste base64 image
+                      data.
                     </small>
                   </div>
 
@@ -2128,7 +2182,7 @@ function AdminDashboard() {
                   {productFormMessage && (
                     <div
                       className={`form-message ${
-                        productFormMessage.startsWith('✓') ? 'success' : 'error'
+                        productFormMessage.startsWith("✓") ? "success" : "error"
                       }`}
                     >
                       {productFormMessage}
@@ -2140,7 +2194,7 @@ function AdminDashboard() {
                     className="btn-create-admin"
                     disabled={productFormLoading}
                   >
-                    {productFormLoading ? 'Creating...' : 'Create Product'}
+                    {productFormLoading ? "Creating..." : "Create Product"}
                   </button>
                 </form>
               </div>
@@ -2160,27 +2214,38 @@ function AdminDashboard() {
                   ) : (
                     <ul className="admin-items">
                       {allProducts.map((product) => (
-                        <li key={product.id} className="admin-item product-item">
+                        <li
+                          key={product.id}
+                          className="admin-item product-item"
+                        >
                           <div className="admin-item-header">
-                            <span className="admin-email product-name">{product.name}</span>
+                            <span className="admin-email product-name">
+                              {product.name}
+                            </span>
                             <span className={`admin-badge ${product.flag}`}>
-                              {product.flag === 'perfume' ? 'Perfume' :
-                               product.flag === 'freshner' ? 'Freshner' : 'Face Mist'}
+                              {product.flag === "perfume"
+                                ? "Perfume"
+                                : product.flag === "freshner"
+                                ? "Freshner"
+                                : "Face Mist"}
                             </span>
                           </div>
 
                           <div className="product-details">
                             <span className="product-info">
-                              <i className="fas fa-tag"></i> Price: ₹{product.price}
+                              <i className="fas fa-tag"></i> Price: ₹
+                              {product.price}
                             </span>
                             {product.volume_ml && (
                               <span className="product-info">
-                                <i className="fas fa-flask"></i> {product.volume_ml}
+                                <i className="fas fa-flask"></i>{" "}
+                                {product.volume_ml}
                               </span>
                             )}
                             {product.available_quantity !== null && (
                               <span className="product-info">
-                                <i className="fas fa-boxes"></i> Stock: {product.available_quantity}
+                                <i className="fas fa-boxes"></i> Stock:{" "}
+                                {product.available_quantity}
                               </span>
                             )}
                           </div>
@@ -2193,14 +2258,17 @@ function AdminDashboard() {
 
                           <button
                             className="delete-admin-btn"
-                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            onClick={() =>
+                              handleDeleteProduct(product.id, product.name)
+                            }
                             title="Delete product"
                           >
                             <i className="fas fa-trash"></i> Delete
                           </button>
 
                           <span className="admin-date">
-                            Created: {new Date(product.created_at).toLocaleDateString()}
+                            Created:{" "}
+                            {new Date(product.created_at).toLocaleDateString()}
                           </span>
                         </li>
                       ))}
@@ -2295,15 +2363,17 @@ function AdminDashboard() {
                               <span className="admin-badge admin">Admin</span>
                             )}
                           </div>
-                        
+
                           <button
                             className="delete-admin-btn"
-                            onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                            onClick={() =>
+                              handleDeleteAdmin(admin.id, admin.email)
+                            }
                             title="Delete admin"
                           >
                             <i className="fas fa-trash"></i> Delete
                           </button>
-                            
+
                           <span className="admin-date">
                             Created:{" "}
                             {new Date(admin.created_at).toLocaleDateString()}
@@ -2348,7 +2418,10 @@ function AdminDashboard() {
         {/* User Detail Modal */}
         {showUserModal && selectedUser && (
           <div className="modal-overlay" onClick={closeUserModal}>
-            <div className="modal-content user-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="modal-content user-detail-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="modal-header">
                 <h2>Customer Details</h2>
                 <button className="modal-close" onClick={closeUserModal}>
@@ -2357,10 +2430,14 @@ function AdminDashboard() {
               </div>
               <div className="modal-body">
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-user"></i> Personal Information</h3>
+                  <h3>
+                    <i className="fas fa-user"></i> Personal Information
+                  </h3>
                   <div className="detail-row">
                     <span className="detail-label">Name:</span>
-                    <span className="detail-value">{selectedUser.name || 'N/A'}</span>
+                    <span className="detail-value">
+                      {selectedUser.name || "N/A"}
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Email:</span>
@@ -2368,52 +2445,71 @@ function AdminDashboard() {
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Mobile:</span>
-                    <span className="detail-value">{selectedUser.mobile || 'N/A'}</span>
+                    <span className="detail-value">
+                      {selectedUser.mobile || "N/A"}
+                    </span>
                   </div>
                   {selectedUser.gst_number && (
                     <div className="detail-row">
                       <span className="detail-label">GST Number:</span>
-                      <span className="detail-value">{selectedUser.gst_number}</span>
+                      <span className="detail-value">
+                        {selectedUser.gst_number}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-map-marker-alt"></i> Address Information</h3>
+                  <h3>
+                    <i className="fas fa-map-marker-alt"></i> Address
+                    Information
+                  </h3>
                   {selectedUser.address && (
                     <div className="detail-row">
                       <span className="detail-label">Address:</span>
-                      <span className="detail-value">{selectedUser.address}</span>
+                      <span className="detail-value">
+                        {selectedUser.address}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address1 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 1:</span>
-                      <span className="detail-value">{selectedUser.address1}</span>
+                      <span className="detail-value">
+                        {selectedUser.address1}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address2 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 2:</span>
-                      <span className="detail-value">{selectedUser.address2}</span>
+                      <span className="detail-value">
+                        {selectedUser.address2}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address3 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 3:</span>
-                      <span className="detail-value">{selectedUser.address3}</span>
+                      <span className="detail-value">
+                        {selectedUser.address3}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address4 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 4:</span>
-                      <span className="detail-value">{selectedUser.address4}</span>
+                      <span className="detail-value">
+                        {selectedUser.address4}
+                      </span>
                     </div>
                   )}
                   {selectedUser.address5 && (
                     <div className="detail-row">
                       <span className="detail-label">Address Line 5:</span>
-                      <span className="detail-value">{selectedUser.address5}</span>
+                      <span className="detail-value">
+                        {selectedUser.address5}
+                      </span>
                     </div>
                   )}
                   {selectedUser.city && (
@@ -2428,13 +2524,20 @@ function AdminDashboard() {
                       <span className="detail-value">{selectedUser.pin}</span>
                     </div>
                   )}
-                  {!selectedUser.address && !selectedUser.address1 && !selectedUser.city && !selectedUser.pin && (
-                    <p className="no-data">No address information available</p>
-                  )}
+                  {!selectedUser.address &&
+                    !selectedUser.address1 &&
+                    !selectedUser.city &&
+                    !selectedUser.pin && (
+                      <p className="no-data">
+                        No address information available
+                      </p>
+                    )}
                 </div>
 
                 <div className="user-detail-section">
-                  <h3><i className="fas fa-calendar"></i> Account Information</h3>
+                  <h3>
+                    <i className="fas fa-calendar"></i> Account Information
+                  </h3>
                   <div className="detail-row">
                     <span className="detail-label">Customer ID:</span>
                     <span className="detail-value">#{selectedUser.id}</span>
@@ -2442,11 +2545,14 @@ function AdminDashboard() {
                   <div className="detail-row">
                     <span className="detail-label">Joined Date:</span>
                     <span className="detail-value">
-                      {new Date(selectedUser.created_at).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {new Date(selectedUser.created_at).toLocaleDateString(
+                        "en-IN",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </span>
                   </div>
                 </div>

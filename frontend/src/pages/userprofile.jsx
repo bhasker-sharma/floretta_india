@@ -126,7 +126,13 @@ function UserProfile() {
 
   const handleSaveAddress = async () => {
     // Validate required fields
-    if (!addressForm.name || !addressForm.address || !addressForm.city || !addressForm.pin || !addressForm.mobile) {
+    if (
+      !addressForm.name ||
+      !addressForm.address ||
+      !addressForm.city ||
+      !addressForm.pin ||
+      !addressForm.mobile
+    ) {
       alert("Please fill all required fields");
       return;
     }
@@ -144,7 +150,9 @@ function UserProfile() {
           }
         }
         if (!targetIndex) {
-          alert("All 5 address slots are full. Please delete an address first.");
+          alert(
+            "All 5 address slots are full. Please delete an address first."
+          );
           setLoading(false);
           return;
         }
@@ -154,16 +162,12 @@ function UserProfile() {
         [`address${targetIndex}`]: JSON.stringify(addressForm),
       };
 
-      const res = await axios.post(
-        API_ENDPOINTS.UPDATE_PROFILE,
-        addressData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       const updatedUser = res.data.user;
       setUser(updatedUser);
@@ -197,16 +201,12 @@ function UserProfile() {
         [`address${index}`]: "",
       };
 
-      const res = await axios.post(
-        API_ENDPOINTS.UPDATE_PROFILE,
-        addressData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       const updatedUser = res.data.user;
       setUser(updatedUser);
@@ -226,21 +226,17 @@ function UserProfile() {
       // Filter out null, undefined, and non-string values
       const cleanedData = {};
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
+        if (value !== null && value !== undefined && value !== "") {
           cleanedData[key] = value;
         }
       });
 
-      const res = await axios.post(
-        API_ENDPOINTS.UPDATE_PROFILE,
-        cleanedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, cleanedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       const updatedUser = res.data.user;
       setUser(updatedUser);
@@ -508,12 +504,11 @@ function UserProfile() {
         <div className="left-panel">
           <div className="avatar">
             {user.image ? (
-              <img
-                src={getImageUrl(user.image)}
-                alt="User"
-              />
+              <img src={getImageUrl(user.image)} alt="User" />
             ) : (
-              <span className="avatar-initial">{user.name ? user.name.charAt(0).toUpperCase() : '?'}</span>
+              <span className="avatar-initial">
+                {user.name ? user.name.charAt(0).toUpperCase() : "?"}
+              </span>
             )}
           </div>
           <div className="info-box">
@@ -534,9 +529,7 @@ function UserProfile() {
           <h4>Account Settings</h4>
           <ul className="settings-list">
             <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
-            <li onClick={() => openAddressForm()}>
-              📍 Manage Addresses
-            </li>
+            <li onClick={() => openAddressForm()}>📍 Manage Addresses</li>
             <li onClick={handleLogout} className="logout-btn">
               🚪 Logout
             </li>
@@ -549,14 +542,22 @@ function UserProfile() {
         <div className="modal-backdrop">
           <div className="modal-form">
             <h2>Edit Profile</h2>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+            >
               <input
                 type="text"
                 name="name"
                 value={formData.name || ""}
                 onChange={handleChange}
                 placeholder="Name"
-                style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                style={{
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                }}
               />
               <input
                 type="email"
@@ -564,9 +565,14 @@ function UserProfile() {
                 value={formData.email || ""}
                 onChange={handleChange}
                 placeholder="Email"
-                style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                style={{
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                }}
               />
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                 <button
                   type="button"
                   onClick={() => setEditMode(false)}
@@ -575,7 +581,12 @@ function UserProfile() {
                 >
                   Cancel
                 </button>
-                <button type="submit" disabled={loading} className="submit-btn" style={{ flex: 1 }}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="submit-btn"
+                  style={{ flex: 1 }}
+                >
                   {loading ? "Saving..." : "Save"}
                 </button>
               </div>
@@ -587,33 +598,54 @@ function UserProfile() {
       {/* Address Manager Modal */}
       {showAddressManager && (
         <div className="modal-backdrop">
-          <div className="modal-form" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+          <div
+            className="modal-form"
+            style={{ maxHeight: "90vh", overflowY: "auto" }}
+          >
             <h2>Manage Addresses</h2>
 
             {/* Display all saved addresses */}
-            <div className="addresses-list" style={{ marginBottom: '20px' }}>
+            <div className="addresses-list" style={{ marginBottom: "20px" }}>
               {getAllAddresses().length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#666' }}>No addresses saved yet</p>
+                <p style={{ textAlign: "center", color: "#666" }}>
+                  No addresses saved yet
+                </p>
               ) : (
                 getAllAddresses().map((addr) => (
-                  <div key={addr.index} className="saved-address-box" style={{
-                    border: '1px solid #ddd',
-                    padding: '15px',
-                    marginBottom: '10px',
-                    borderRadius: '8px',
-                    backgroundColor: '#f9f9f9'
-                  }}>
-                    <div style={{ marginBottom: '10px' }}>
-                      <strong>{addr.label || 'Address'}</strong>
-                      <p style={{ margin: '5px 0' }}>{addr.name}</p>
-                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                  <div
+                    key={addr.index}
+                    className="saved-address-box"
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "15px",
+                      marginBottom: "10px",
+                      borderRadius: "8px",
+                      backgroundColor: "#f9f9f9",
+                    }}
+                  >
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>{addr.label || "Address"}</strong>
+                      <p style={{ margin: "5px 0" }}>{addr.name}</p>
+                      <p
+                        style={{
+                          margin: "5px 0",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
                         {addr.address}, {addr.city} - {addr.pin}
                       </p>
-                      <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                      <p
+                        style={{
+                          margin: "5px 0",
+                          fontSize: "14px",
+                          color: "#666",
+                        }}
+                      >
                         Phone: {addr.mobile}
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: "flex", gap: "10px" }}>
                       <button
                         onClick={() => openAddressForm(addr.index)}
                         className="submit-btn"
@@ -636,21 +668,33 @@ function UserProfile() {
 
             {/* Add New Address Form */}
             {editingAddressIndex === null && showAddNewForm && (
-              <div style={{
-                border: '2px dashed #ddd',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{ marginBottom: '15px' }}>Add New Address</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div
+                style={{
+                  border: "2px dashed #ddd",
+                  padding: "20px",
+                  borderRadius: "8px",
+                  marginBottom: "20px",
+                }}
+              >
+                <h3 style={{ marginBottom: "15px" }}>Add New Address</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <input
                     type="text"
                     name="label"
                     value={addressForm.label}
                     onChange={handleAddressFormChange}
                     placeholder="Label (e.g., Home, Office)"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -659,7 +703,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="Full Name *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <textarea
                     name="address"
@@ -668,7 +716,11 @@ function UserProfile() {
                     placeholder="Street Address *"
                     required
                     rows="3"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -677,7 +729,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="City *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -686,7 +742,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="PIN Code *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -695,9 +755,13 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="Mobile Number *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       onClick={() => {
                         setShowAddNewForm(false);
@@ -721,7 +785,7 @@ function UserProfile() {
                       className="submit-btn"
                       style={{ flex: 1 }}
                     >
-                      {loading ? 'Saving...' : 'Save Address'}
+                      {loading ? "Saving..." : "Save Address"}
                     </button>
                   </div>
                 </div>
@@ -729,54 +793,68 @@ function UserProfile() {
             )}
 
             {/* Add New Address Button */}
-            {editingAddressIndex === null && !showAddNewForm && getAllAddresses().length < 5 && (
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <button
-                  onClick={() => {
-                    setShowAddNewForm(true);
-                    setAddressForm({
-                      label: "",
-                      name: "",
-                      address: "",
-                      city: "",
-                      pin: "",
-                      mobile: "",
-                    });
-                  }}
-                  style={{
-                    padding: '12px 24px',
-                    border: '2px dashed #232946',
-                    background: '#fff',
-                    color: '#232946',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  + Add New Address
-                </button>
-              </div>
-            )}
+            {editingAddressIndex === null &&
+              !showAddNewForm &&
+              getAllAddresses().length < 5 && (
+                <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                  <button
+                    onClick={() => {
+                      setShowAddNewForm(true);
+                      setAddressForm({
+                        label: "",
+                        name: "",
+                        address: "",
+                        city: "",
+                        pin: "",
+                        mobile: "",
+                      });
+                    }}
+                    style={{
+                      padding: "12px 24px",
+                      border: "2px dashed #232946",
+                      background: "#fff",
+                      color: "#232946",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    + Add New Address
+                  </button>
+                </div>
+              )}
 
             {/* Edit Address Form */}
             {editingAddressIndex !== null && (
-              <div style={{
-                border: '2px solid #232946',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                backgroundColor: '#f0f4ff'
-              }}>
-                <h3 style={{ marginBottom: '15px' }}>Edit Address</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div
+                style={{
+                  border: "2px solid #232946",
+                  padding: "20px",
+                  borderRadius: "8px",
+                  marginBottom: "20px",
+                  backgroundColor: "#f0f4ff",
+                }}
+              >
+                <h3 style={{ marginBottom: "15px" }}>Edit Address</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <input
                     type="text"
                     name="label"
                     value={addressForm.label}
                     onChange={handleAddressFormChange}
                     placeholder="Label (e.g., Home, Office)"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -785,7 +863,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="Full Name *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <textarea
                     name="address"
@@ -794,7 +876,11 @@ function UserProfile() {
                     placeholder="Street Address *"
                     required
                     rows="3"
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -803,7 +889,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="City *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -812,7 +902,11 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="PIN Code *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
                   <input
                     type="text"
@@ -821,9 +915,13 @@ function UserProfile() {
                     onChange={handleAddressFormChange}
                     placeholder="Mobile Number *"
                     required
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                    }}
                   />
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       onClick={() => {
                         setEditingAddressIndex(null);
@@ -847,7 +945,7 @@ function UserProfile() {
                       className="submit-btn"
                       style={{ flex: 1 }}
                     >
-                      {loading ? 'Saving...' : 'Update Address'}
+                      {loading ? "Saving..." : "Update Address"}
                     </button>
                   </div>
                 </div>
@@ -905,126 +1003,192 @@ function UserProfile() {
                       </button>
                     </div>
                     {/* Order Status Tracking */}
-                    <div className="order-status-tracker" style={{
-                      padding: '15px',
-                      margin: '10px 0',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '8px',
-                      border: '1px solid #e0e0e0'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        marginBottom: '10px'
-                      }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
+                    <div
+                      className="order-status-tracker"
+                      style={{
+                        padding: "15px",
+                        margin: "10px 0",
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: "8px",
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            color: "#333",
+                          }}
+                        >
                           Order Status:
                         </span>
-                        <span style={{
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                          backgroundColor: 
-                            order.order_status === 'Delivered' ? '#d4edda' :
-                            order.order_status === 'In-Transit' ? '#fff3cd' :
-                            order.order_status === 'Shipped' ? '#cfe2ff' :
-                            '#e2e3e5',
-                          color:
-                            order.order_status === 'Delivered' ? '#155724' :
-                            order.order_status === 'In-Transit' ? '#856404' :
-                            order.order_status === 'Shipped' ? '#084298' :
-                            '#383d41'
-                        }}>
-                          {order.order_status || 'Order Placed'}
+                        <span
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "20px",
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            backgroundColor:
+                              order.order_status === "Delivered"
+                                ? "#d4edda"
+                                : order.order_status === "In-Transit"
+                                ? "#fff3cd"
+                                : order.order_status === "Shipped"
+                                ? "#cfe2ff"
+                                : "#e2e3e5",
+                            color:
+                              order.order_status === "Delivered"
+                                ? "#155724"
+                                : order.order_status === "In-Transit"
+                                ? "#856404"
+                                : order.order_status === "Shipped"
+                                ? "#084298"
+                                : "#383d41",
+                          }}
+                        >
+                          {order.order_status || "Order Placed"}
                         </span>
                       </div>
-                      
+
                       {/* Status Timeline */}
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        position: 'relative',
-                        marginTop: '15px'
-                      }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          position: "relative",
+                          marginTop: "15px",
+                        }}
+                      >
                         {/* Progress Line */}
-                        <div style={{
-                          position: 'absolute',
-                          top: '12px',
-                          left: '0',
-                          right: '0',
-                          height: '2px',
-                          backgroundColor: '#e0e0e0',
-                          zIndex: 0
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            backgroundColor: '#28a745',
-                            width: 
-                              order.order_status === 'Delivered' ? '100%' :
-                              order.order_status === 'In-Transit' ? '66%' :
-                              order.order_status === 'Shipped' ? '33%' :
-                              '0%',
-                            transition: 'width 0.3s ease'
-                          }}></div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "12px",
+                            left: "0",
+                            right: "0",
+                            height: "2px",
+                            backgroundColor: "#e0e0e0",
+                            zIndex: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "100%",
+                              backgroundColor: "#28a745",
+                              width:
+                                order.order_status === "Delivered"
+                                  ? "100%"
+                                  : order.order_status === "In-Transit"
+                                  ? "66%"
+                                  : order.order_status === "Shipped"
+                                  ? "33%"
+                                  : "0%",
+                              transition: "width 0.3s ease",
+                            }}
+                          ></div>
                         </div>
-                        
+
                         {/* Status Steps */}
-                        {['Order Placed', 'Shipped', 'In-Transit', 'Delivered'].map((status, idx) => {
-                          const currentStatuses = ['Order Placed', 'Shipped', 'In-Transit', 'Delivered'];
-                          const currentIndex = currentStatuses.indexOf(order.order_status || 'Order Placed');
+                        {[
+                          "Order Placed",
+                          "Shipped",
+                          "In-Transit",
+                          "Delivered",
+                        ].map((status, idx) => {
+                          const currentStatuses = [
+                            "Order Placed",
+                            "Shipped",
+                            "In-Transit",
+                            "Delivered",
+                          ];
+                          const currentIndex = currentStatuses.indexOf(
+                            order.order_status || "Order Placed"
+                          );
                           const isCompleted = idx <= currentIndex;
                           const isActive = idx === currentIndex;
-                          
+
                           return (
-                            <div key={status} style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              zIndex: 1,
-                              flex: 1
-                            }}>
-                              <div style={{
-                                width: '24px',
-                                height: '24px',
-                                borderRadius: '50%',
-                                backgroundColor: isCompleted ? '#28a745' : '#e0e0e0',
-                                border: isActive ? '3px solid #28a745' : '2px solid transparent',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: '8px',
-                                transition: 'all 0.3s ease',
-                                boxShadow: isActive ? '0 0 0 4px rgba(40, 167, 69, 0.2)' : 'none'
-                              }}>
+                            <div
+                              key={status}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                zIndex: 1,
+                                flex: 1,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "50%",
+                                  backgroundColor: isCompleted
+                                    ? "#28a745"
+                                    : "#e0e0e0",
+                                  border: isActive
+                                    ? "3px solid #28a745"
+                                    : "2px solid transparent",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  marginBottom: "8px",
+                                  transition: "all 0.3s ease",
+                                  boxShadow: isActive
+                                    ? "0 0 0 4px rgba(40, 167, 69, 0.2)"
+                                    : "none",
+                                }}
+                              >
                                 {isCompleted && (
-                                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                                  <span
+                                    style={{
+                                      color: "#fff",
+                                      fontSize: "14px",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    ✓
+                                  </span>
                                 )}
                               </div>
-                              <span style={{
-                                fontSize: '11px',
-                                textAlign: 'center',
-                                color: isCompleted ? '#333' : '#999',
-                                fontWeight: isActive ? 'bold' : 'normal',
-                                maxWidth: '80px',
-                                lineHeight: '1.2'
-                              }}>
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  textAlign: "center",
+                                  color: isCompleted ? "#333" : "#999",
+                                  fontWeight: isActive ? "bold" : "normal",
+                                  maxWidth: "80px",
+                                  lineHeight: "1.2",
+                                }}
+                              >
                                 {status}
                               </span>
                             </div>
                           );
                         })}
                       </div>
-                      
+
                       {order.order_status_changed_at && (
-                        <div style={{
-                          marginTop: '12px',
-                          fontSize: '12px',
-                          color: '#666',
-                          textAlign: 'right'
-                        }}>
-                          Last updated: {new Date(order.order_status_changed_at).toLocaleString()}
+                        <div
+                          style={{
+                            marginTop: "12px",
+                            fontSize: "12px",
+                            color: "#666",
+                            textAlign: "right",
+                          }}
+                        >
+                          Last updated:{" "}
+                          {new Date(
+                            order.order_status_changed_at
+                          ).toLocaleString()}
                         </div>
                       )}
                     </div>
@@ -1074,7 +1238,7 @@ function UserProfile() {
           </div>
         </div>
       )}
-      <Footer/>
+      <Footer />
     </>
   );
 }

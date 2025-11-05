@@ -8,7 +8,7 @@
 
 // Get API URL from environment variable or use default
 // Create React App uses process.env.REACT_APP_* prefix
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -88,8 +88,8 @@ export const STORAGE_URL = `${API_URL}/storage`;
 
 // Helper function to get storage URL for images
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return '/fallback.jpg';
-  if (imagePath.startsWith('http')) return imagePath;
+  if (!imagePath) return "/fallback.jpg";
+  if (imagePath.startsWith("http")) return imagePath;
   return `${STORAGE_URL}/${imagePath}`;
 };
 
