@@ -433,6 +433,14 @@ const Cart = () => {
       return;
     }
 
+    // Get fresh token from localStorage
+    const currentToken = localStorage.getItem("token");
+    if (!currentToken) {
+      alert("Please login to continue");
+      navigate("/login");
+      return;
+    }
+
     try {
       const response = await axios.post(
         API_ENDPOINTS.RAZORPAY_CREATE_ORDER,
@@ -441,7 +449,7 @@ const Cart = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
             Accept: "application/json",
           },
         }
@@ -482,6 +490,9 @@ const Cart = () => {
               setShowSuccessPopup(false);
             }, 3000);
 
+            // Get fresh token for background requests
+            const currentToken = localStorage.getItem("token");
+
             // Verify payment and clear cart in background (don't wait)
             Promise.all([
               axios.post(
@@ -505,14 +516,14 @@ const Cart = () => {
                 },
                 {
                   headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${currentToken}`,
                     Accept: "application/json",
                   },
                 }
               ),
               axios.delete(API_ENDPOINTS.CART_CLEAR, {
                 headers: {
-                  Authorization: `Bearer ${token}`,
+                  Authorization: `Bearer ${currentToken}`,
                   Accept: "application/json",
                 },
               }),
