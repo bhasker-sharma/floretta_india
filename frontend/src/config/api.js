@@ -7,8 +7,8 @@
  */
 
 // Get API URL from environment variable or use default
-// Create React App uses process.env.REACT_APP_* prefix
-export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+// Vite uses import.meta.env.VITE_* prefix
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // API Endpoints
 export const API_ENDPOINTS = {
