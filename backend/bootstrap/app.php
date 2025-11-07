@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Apply security headers to all API requests
+        // CRITICAL: Apply CORS to global middleware stack FIRST
+        // This ensures CORS headers are added before any other middleware
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        
+        // Apply security headers to all API requests (after CORS)
         $middleware->api(append: [
             \App\Http\Middleware\SecurityHeaders::class,
         ]);

@@ -136,6 +136,8 @@ function AdminDashboard() {
     power_source: "",
     launch_date: "",
   });
+  const [productImages, setProductImages] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
   const [productFormLoading, setProductFormLoading] = useState(false);
   const [productFormMessage, setProductFormMessage] = useState("");
 
@@ -1095,6 +1097,131 @@ function AdminDashboard() {
     }));
   };
 
+  // Handle image file selection
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+  };
+
+  // Handle drag and drop events
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+  };
+
+  // Compress image before upload
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with quality 0.8
+          canvas.toBlob(
+            (blob) => {
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            0.8
+          );
+        };
+      };
+    });
+  };
+
+  // Process selected files
+  const handleFiles = async (files) => {
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (imageFiles.length === 0) {
+      alert("Please select only image files");
+      return;
+    }
+
+    // Compress images before adding to state
+    const compressedImages = await Promise.all(
+      imageFiles.map(async (file, index) => {
+        const compressedFile = await compressImage(file);
+        return {
+          id: Date.now() + index,
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+          name: file.name,
+        };
+      })
+    );
+
+    setProductImages((prev) => [...prev, ...compressedImages]);
+  };
+
+  // Remove image from list
+  const handleRemoveImage = (imageId) => {
+    setProductImages((prev) => {
+      const imageToRemove = prev.find((img) => img.id === imageId);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return prev.filter((img) => img.id !== imageId);
+    });
+  };
+
+  // Reorder images (drag to reorder)
+  const handleImageReorder = (fromIndex, toIndex) => {
+    setProductImages((prev) => {
+      const newImages = [...prev];
+      const [removed] = newImages.splice(fromIndex, 1);
+      newImages.splice(toIndex, 0, removed);
+      return newImages;
+    });
+  };
+
   // Handle creating a new product
   const handleCreateProduct = async (e) => {
     e.preventDefault();
@@ -1104,21 +1231,40 @@ function AdminDashboard() {
     try {
       const token = localStorage.getItem("adminToken");
 
-      // Filter out empty string values
-      const productData = Object.fromEntries(
-        Object.entries(productFormData).filter(([key, value]) => {
-          if (typeof value === "string") return value.trim() !== "";
-          return true;
-        })
-      );
+      // Create FormData for file upload
+      const formData = new FormData();
+
+      // Add all product data
+      Object.entries(productFormData).forEach(([key, value]) => {
+        if (typeof value === "string" && value.trim() !== "") {
+          formData.append(key, value);
+        } else if (typeof value === "boolean") {
+          // Convert boolean to 1 or 0 for Laravel validation
+          formData.append(key, value ? "1" : "0");
+        } else if (typeof value === "number") {
+          formData.append(key, value);
+        }
+      });
+
+      // Add images
+      productImages.forEach((img, index) => {
+        formData.append(`images[]`, img.file);
+      });
 
       const response = await axios.post(
         API_ENDPOINTS.ADMIN_PRODUCTS,
-        productData,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: "application/json",
+            // Don't manually set Content-Type - let axios set it with boundary
+          },
+          timeout: 120000, // 2 minutes timeout for large uploads
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            console.log(`Upload Progress: ${percentCompleted}%`);
           },
         }
       );
@@ -1149,6 +1295,10 @@ function AdminDashboard() {
           power_source: "",
           launch_date: "",
         });
+
+        // Clear images
+        productImages.forEach((img) => URL.revokeObjectURL(img.preview));
+        setProductImages([]);
 
         // Refresh products list
         const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
@@ -2355,15 +2505,84 @@ function AdminDashboard() {
                     </div>
                   </div>
 
+                  {/* Multiple Image Upload with Drag & Drop */}
                   <div className="form-group">
-                    <label htmlFor="product-image">Image Path</label>
+                    <label>Product Images *</label>
+                    <div
+                      className={`image-upload-container ${
+                        dragActive ? "drag-active" : ""
+                      }`}
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                    >
+                      <input
+                        type="file"
+                        id="product-images"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        style={{ display: "none" }}
+                      />
+                      <label htmlFor="product-images" className="upload-label">
+                        <div className="upload-icon">📁</div>
+                        <p>
+                          <strong>Drag & drop images here</strong> or click to
+                          browse
+                        </p>
+                        <small>Supported formats: JPG, PNG, GIF, WebP</small>
+                      </label>
+                    </div>
+
+                    {/* Image Preview Grid */}
+                    {productImages.length > 0 && (
+                      <div className="image-preview-grid">
+                        {productImages.map((img, index) => (
+                          <div key={img.id} className="image-preview-item">
+                            <img
+                              src={img.preview}
+                              alt={`Product ${index + 1}`}
+                            />
+                            <div className="image-preview-overlay">
+                              <span className="image-order">{index + 1}</span>
+                              <button
+                                type="button"
+                                className="remove-image-btn"
+                                onClick={() => handleRemoveImage(img.id)}
+                                title="Remove image"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                            <small className="image-name">{img.name}</small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: "10px",
+                        color: "#666",
+                      }}
+                    >
+                      First image will be the main product image. You can add
+                      multiple images.
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="product-image">
+                      Legacy Image Path (Optional)
+                    </label>
                     <input
                       type="text"
                       id="product-image"
                       name="image"
                       value={productFormData.image}
                       onChange={handleProductFormChange}
-                      placeholder="e.g., products/perfume.jpg (max 255 chars)"
+                      placeholder="e.g., products/perfume.jpg (for backward compatibility)"
                       maxLength="255"
                     />
                     <small
@@ -2373,8 +2592,7 @@ function AdminDashboard() {
                         color: "#666",
                       }}
                     >
-                      Enter relative path or URL. Do not paste base64 image
-                      data.
+                      This field is optional if you upload images above.
                     </small>
                   </div>
 

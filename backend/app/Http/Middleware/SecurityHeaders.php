@@ -17,23 +17,26 @@ class SecurityHeaders
     {
         $response = $next($request);
 
+        // Don't override CORS headers - preserve any existing Access-Control headers
+        // CORS middleware should have already set these
+        
         // X-Content-Type-Options: Prevents MIME type sniffing
         // Stops browsers from trying to guess the MIME type of responses
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('X-Content-Type-Options', 'nosniff', false);
 
         // X-Frame-Options: Prevents clickjacking attacks
         // Prevents the site from being embedded in iframes on other domains
-        $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-Frame-Options', 'DENY', false);
 
         // X-XSS-Protection: Legacy XSS filter (for older browsers)
         // Enables the browser's built-in XSS protection
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
+        $response->headers->set('X-XSS-Protection', '1; mode=block', false);
 
         // Strict-Transport-Security: Enforces HTTPS connections
         // Forces browsers to only connect via HTTPS for 1 year
         // Note: Only apply in production with valid SSL certificate
         if (config('app.env') === 'production') {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains', false);
         }
 
         // Content-Security-Policy: Comprehensive XSS protection
@@ -52,11 +55,11 @@ class SecurityHeaders
             "frame-ancestors 'none'",
             "upgrade-insecure-requests"
         ]);
-        $response->headers->set('Content-Security-Policy', $csp);
+        $response->headers->set('Content-Security-Policy', $csp, false);
 
         // Referrer-Policy: Controls referrer information
         // Prevents leaking sensitive URL information to external sites
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin', false);
 
         // Permissions-Policy: Controls browser features and APIs
         // Restricts access to sensitive browser features
@@ -70,7 +73,7 @@ class SecurityHeaders
             'gyroscope=()',
             'accelerometer=()'
         ]);
-        $response->headers->set('Permissions-Policy', $permissions);
+        $response->headers->set('Permissions-Policy', $permissions, false);
 
         return $response;
     }

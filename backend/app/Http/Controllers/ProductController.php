@@ -21,7 +21,8 @@ class ProductController extends Controller
         // Only fetch perfumes
         $query->where('flag', 'perfume');
 
-        $products = $query->orderBy('name')->get();
+        // Load images relationship
+        $products = $query->with('images')->orderBy('name')->get();
 
         return response()->json($products);
     }
@@ -29,7 +30,10 @@ class ProductController extends Controller
     // Get single product by ID (perfume only)
     public function show($id)
     {
-        $product = Product::where('id', $id)->where('flag', 'perfume')->first();
+        $product = Product::where('id', $id)
+                         ->where('flag', 'perfume')
+                         ->with('images')
+                         ->first();
 
         if (!$product) {
             return response()->json(['error' => 'Product not found'], 404);
@@ -94,7 +98,8 @@ class ProductController extends Controller
         }
 
         try {
-            $products = Product::orderBy('created_at', 'desc')->get();
+            // Load products with their images
+            $products = Product::with('images')->orderBy('created_at', 'desc')->get();
 
             return response()->json([
                 'success' => true,
@@ -138,6 +143,8 @@ class ProductController extends Controller
             'delivery_charge' => 'nullable|numeric|min:0',
             'available_quantity' => 'nullable|integer|min:0',
             'image' => 'nullable|string',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max per image
             'ingredients' => 'nullable|string',
             'brand' => 'nullable|string',
             'colour' => 'nullable|string',
@@ -147,6 +154,35 @@ class ProductController extends Controller
         ]);
 
         try {
+            // Handle image uploads
+            $imagePath = '';
+            $uploadedImages = [];
+            
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    // Generate unique filename
+                    $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    
+                    // Store in public/storage/images directory (to match URL structure)
+                    $image->move(public_path('storage/images'), $filename);
+                    
+                    $uploadedImages[] = [
+                        'path' => 'images/' . $filename,
+                        'sort_order' => $index,
+                        'is_primary' => $index === 0 // First image is primary
+                    ];
+                }
+                
+                // Use first image as primary image (for backward compatibility)
+                $imagePath = $uploadedImages[0]['path'] ?? '';
+            } elseif (!empty($validated['image'])) {
+                // Use provided image path (legacy support)
+                $imagePath = $validated['image'];
+            }
+
+            // Set image path or empty string
+            $validated['image'] = $imagePath ?: '';
+
             // Map Discription to discription (database uses lowercase)
             if (isset($validated['Discription'])) {
                 $validated['discription'] = $validated['Discription'];
@@ -155,12 +191,30 @@ class ProductController extends Controller
                 $validated['discription'] = '';
             }
 
+            // Remove images array from validated data (we already processed it)
+            unset($validated['images']);
+
             // Set default values for fields that don't have database defaults
             $validated['rating'] = $validated['rating'] ?? 0;
             $validated['reviews_count'] = $validated['reviews_count'] ?? 0;
             $validated['reviews'] = $validated['reviews'] ?? 0;
 
+            // Create the product
             $product = Product::create($validated);
+
+            // Save all uploaded images to product_images table
+            if (!empty($uploadedImages)) {
+                foreach ($uploadedImages as $imageData) {
+                    $product->images()->create([
+                        'image_path' => $imageData['path'],
+                        'sort_order' => $imageData['sort_order'],
+                        'is_primary' => $imageData['is_primary']
+                    ]);
+                }
+            }
+
+            // Load images relationship for response
+            $product->load('images');
 
             return response()->json([
                 'success' => true,
