@@ -9,6 +9,7 @@ use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Mail\AdminOrderNotification;
 
 
 class PaymentController extends Controller
@@ -80,34 +81,36 @@ class PaymentController extends Controller
                 'include_gst' => $data['include_gst'] ?? false,
             ]);
 
+            // Generate PDF invoice once for both customer and admin
+            $user = User::find($data['user_id']);
+            $customerEmail = $data['customer_email'] ?? $user->email;
+
+            // Generate PDF invoice
+            $pdf = Pdf::loadView('pdfs.invoice-pdf', [
+                'order' => $order,
+                'user' => $user
+            ]);
+
+            // Set PDF options
+            $pdf->setPaper('a4', 'portrait');
+            $pdf->setOption('isHtml5ParserEnabled', true);
+            $pdf->setOption('isRemoteEnabled', true);
+
+            // Generate filename
+            $pdfFilename = 'Invoice_' . $orderNumber . '.pdf';
+            $pdfContent = $pdf->output();
+
             // Send invoice email with PDF attachment to customer
             try {
-                $user = User::find($data['user_id']);
-                $customerEmail = $data['customer_email'] ?? $user->email;
-
                 if ($customerEmail) {
-                    // Generate PDF invoice
-                    $pdf = Pdf::loadView('pdfs.invoice-pdf', [
-                        'order' => $order,
-                        'user' => $user
-                    ]);
-
-                    // Set PDF options
-                    $pdf->setPaper('a4', 'portrait');
-                    $pdf->setOption('isHtml5ParserEnabled', true);
-                    $pdf->setOption('isRemoteEnabled', true);
-
-                    // Generate filename
-                    $pdfFilename = 'Invoice_' . $orderNumber . '.pdf';
-
                     // Send email with PDF attachment
                     Mail::send('emails.invoice', [
                         'order' => $order,
                         'user' => $user
-                    ], function ($message) use ($customerEmail, $orderNumber, $pdf, $pdfFilename) {
+                    ], function ($message) use ($customerEmail, $orderNumber, $pdfContent, $pdfFilename) {
                         $message->to($customerEmail)
                             ->subject('Order Confirmation & Invoice - ' . $orderNumber . ' - Floretta India')
-                            ->attachData($pdf->output(), $pdfFilename, [
+                            ->attachData($pdfContent, $pdfFilename, [
                                 'mime' => 'application/pdf',
                             ]);
                     });
@@ -121,6 +124,36 @@ class PaymentController extends Controller
             } catch (\Exception $e) {
                 // Log email error but don't fail the order
                 Log::error('Failed to send invoice email', [
+                    'order_number' => $orderNumber,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
+            // Send order notification to admin with PDF attachment
+            try {
+                $adminEmail = env('ADMIN_NOTIFICATION_EMAIL');
+
+                if ($adminEmail) {
+                    // Get user's GST number if GST is included
+                    $gstNumber = null;
+                    if ($order->include_gst) {
+                        $gstNumber = $user->gst_number;
+                    }
+
+                    // Send admin notification email with PDF attachment
+                    Mail::to($adminEmail)->send(
+                        new AdminOrderNotification($order, $data['order_items'] ?? [], $gstNumber, $pdfContent, $pdfFilename)
+                    );
+
+                    Log::info('Admin notification email sent successfully', [
+                        'order_number' => $orderNumber,
+                        'admin_email' => $adminEmail
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Log email error but don't fail the order
+                Log::error('Failed to send admin notification email', [
                     'order_number' => $orderNumber,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()

@@ -9,6 +9,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\LivePerfumeController;
 use App\Http\Controllers\HotelAmenitiesController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminEnquiryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Auth\GoogleController;
@@ -21,18 +22,27 @@ use Faker\Provider\ar_EG\Payment;
 |--------------------------------------------------------------------------
 */
 
-// 🌐 User Auth
-Route::post('/register', [UserController::class, 'register']);
-Route::post('/login', [UserController::class, 'login']);
+// 🌐 User Auth (with rate limiting to prevent brute force attacks)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/register', [UserController::class, 'register']);
+    Route::post('/verify-email-otp', [UserController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [UserController::class, 'resendOtp']);
+    Route::post('/login', [UserController::class, 'login']);
+});
 
-// 🌐 Google OAuth
-Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
-Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+// 🌐 Google OAuth (with rate limiting to prevent abuse)
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleController::class, 'redirect']);
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+    Route::post('/auth/google/exchange-code', [GoogleController::class, 'exchangeCode']);
+});
 
-// 🔑 Password Reset Routes
-Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);
-Route::post('/verify-otp', [PasswordResetController::class, 'verifyOTP']);
-Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+// 🔑 Password Reset Routes (with rate limiting to prevent abuse)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendOTP']);
+    Route::post('/verify-otp', [PasswordResetController::class, 'verifyOTP']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+});
 
 // 🧍‍♂️ Public User Access
 Route::get('/users', [UserController::class, 'index']);
@@ -52,13 +62,15 @@ Route::get('/freshners-mist-all/{id}', [ProductController::class, 'showFreshner'
 // 🌐 Hotel Amenities
 Route::get('/room-freshners', [HotelAmenitiesController::class, 'index']);
 
-// 🌐 Contact Us
-Route::post('/contact', [HotelAmenitiesController::class, 'submitContactForm']);
+// 🌐 Contact Us (with rate limiting to prevent form spam)
+Route::middleware('throttle:3,1')->post('/contact', [HotelAmenitiesController::class, 'submitContactForm']);
 
 // 🌐 Live Perfumery
 Route::get('/liveperfume', [LivePerfumeController::class, 'index']);
 Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
-Route::post('/bookings', [LivePerfumeController::class, 'submitBooking']);
+
+// 🌐 Bookings (with rate limiting to prevent form spam)
+Route::middleware('throttle:3,1')->post('/bookings', [LivePerfumeController::class, 'submitBooking']);
 
 /*
 |--------------------------------------------------------------------------
@@ -113,14 +125,34 @@ Route::middleware('auth:api')->group(function () {
 | Admin Auth Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login']);
 });
 
-Route::prefix('admin')->group(function () {
+// 🔐 Admin Protected Routes (JWT auth:admin middleware)
+Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
+    Route::get('/me', [AdminAuthController::class, 'me']);
     Route::get('/orders', [AdminAuthController::class, 'getAllOrders']);
+    // New Orders: unverified orders list and verification action
+    Route::get('/orders/new', [AdminAuthController::class, 'getNewOrders']);
+    Route::post('/orders/{orderId}/verify', [AdminAuthController::class, 'verifyOrder']);
+    // Order status update
+    Route::post('/orders/{orderId}/status', [AdminAuthController::class, 'updateOrderStatus']);
     Route::post('/create-admin', [AdminAuthController::class, 'createAdmin']);
     Route::get('/all-admins', [AdminAuthController::class, 'getAllAdmins']);
+    Route::delete('/delete-admin/{id}', [AdminAuthController::class, 'deleteAdmin']);
+    Route::get('/all-users', [AdminAuthController::class, 'getAllUsers']);
+
+    // Product management
+    Route::get('/products', [ProductController::class, 'adminGetAllProducts']);
+    Route::post('/products', [ProductController::class, 'adminCreateProduct']);
+    Route::post('/products/{id}', [ProductController::class, 'adminUpdateProduct']); // POST with _method=PUT for FormData
+    Route::put('/products/{id}', [ProductController::class, 'adminUpdateProduct']);
+    Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
+
+    // User Enquiries management (with pagination)
+    Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);
+    Route::get('/user-enquiry/bookings', [AdminEnquiryController::class, 'listPerfumeBarBookings']);
 });
 

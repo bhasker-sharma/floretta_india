@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 import ProductCard from '../components/ProductCard';
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Footer from '../components/footer';
 import Rfreshner from '../components/rfreshner';
-import axios from 'axios';
 
 // Static slider images (make sure these exist in /public/slider/)
 const staticSliderImages = [
@@ -27,7 +28,7 @@ const Product = () => {
   // Fetch products from API based on note
   const fetchProducts = (note) => {
    axios
-  .get(`http://localhost:8000/api/products?note=${note}`) // ✅ only from perfumes
+  .get(`${API_ENDPOINTS.PRODUCTS}?note=${note}`) // ✅ only from perfumes
   .then((res) => {
     const filtered = res.data.filter(p => p.flag === 'perfume');
     setProducts(filtered);

@@ -3,94 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset OTP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .container {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            color: #c06;
-            margin: 0;
-        }
-        .otp-box {
-            background-color: #fff;
-            border: 2px dashed #c06;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .otp-code {
-            font-size: 32px;
-            font-weight: bold;
-            color: #c06;
-            letter-spacing: 8px;
-            margin: 10px 0;
-        }
-        .message {
-            text-align: center;
-            margin: 20px 0;
-            color: #666;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #999;
-            font-size: 12px;
-        }
-        .warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 20px 0;
-        }
-    </style>
+    <title>Email Verification</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Floretta India</h1>
-            <p>Password Reset Request</p>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 50px auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f37254;">
+            <h1 style="color: #f37254; margin: 0; font-size: 28px;">Floretta India</h1>
         </div>
-
-        <p>Hello,</p>
-        <p>We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed:</p>
-
-        <div class="otp-box">
-            <p style="margin: 0; color: #666;">Your OTP Code</p>
-            <div class="otp-code">{{ $otp }}</div>
-            <p style="margin: 0; color: #666; font-size: 12px;">Valid for 10 minutes</p>
+        <div style="padding: 30px 0; text-align: center;">
+            <h2 style="color: #333; margin-bottom: 10px;">Hello {{ $name }}!</h2>
+            <p style="color: #666; font-size: 16px; line-height: 1.5;">Thank you for registering with Floretta India. To complete your registration, please verify your email address using the OTP below:</p>
+            <div style="background-color: #f9f9f9; border: 2px dashed #f37254; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="margin: 0; color: #666; font-size: 14px;">Your verification code is:</p>
+                <div style="font-size: 36px; font-weight: bold; color: #f37254; letter-spacing: 8px; margin: 10px 0;">{{ $otp }}</div>
+            </div>
+            <div style="background-color: #fff5f2; border-left: 4px solid #f37254; padding: 15px; margin: 20px 0; font-size: 14px; color: #666;">
+                <strong>⚠️ Important:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px; text-align: left;">
+                    <li>This OTP will expire in <strong>10 minutes</strong></li>
+                    <li>Do not share this code with anyone</li>
+                    <li>If you did not request this code, please ignore this email</li>
+                </ul>
+            </div>
+            <p style="color: #666; font-size: 16px;">Enter this code on the registration page to verify your email and complete your account setup.</p>
         </div>
-
-        <div class="warning">
-            <strong>Security Notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-        </div>
-
-        <div class="message">
-            <p>This OTP will expire in 10 minutes for security reasons.</p>
-            <p>Please do not share this code with anyone.</p>
-        </div>
-
-        <div class="footer">
-            <p>© {{ date('Y') }} Floretta India. All rights reserved.</p>
-            <p>This is an automated email. Please do not reply.</p>
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 14px;">
+            <p><strong>Floretta India</strong></p>
+            <p>Your Trusted Fragrance Partner</p>
+            <p style="margin-top: 10px;">Sarswati Puram Colony, Near Dikhshalya Institute<br>Khankhal, Haridwar, Uttarakhand - 249408</p>
+            <p>Phone: +91 9639970148 | Email: florettaindia@gmail.com</p>
+            <p style="margin-top: 15px; font-size: 12px;">This is an automated email. Please do not reply to this message.</p>
         </div>
     </div>
 </body>

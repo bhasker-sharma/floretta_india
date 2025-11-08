@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config/api';
 import Navbar from '../components/navbar';
 import ProductCard from '../components/ProductCard'; // ✅ Import the reusable ProductCard
 import '../styles/wishlist.css'; // ✅ Assuming same styles apply
@@ -18,7 +19,7 @@ const Wishlist = () => {
     }
 
     axios
-      .get('http://localhost:8000/api/wishlist', {
+      .get(API_ENDPOINTS.WISHLIST, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setWishlistItems(res.data))
@@ -34,7 +35,7 @@ const Wishlist = () => {
 
   const handleRemoveFromWishlist = async (productId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/wishlist/${productId}`, {
+      await axios.delete(API_ENDPOINTS.WISHLIST_REMOVE(productId), {
         headers: { Authorization: `Bearer ${token}` },
       });
 

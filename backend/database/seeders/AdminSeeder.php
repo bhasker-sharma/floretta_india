@@ -17,13 +17,24 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         // Super Admin - Main admin account with full access
+        // Credentials are read from .env file for security
+        $email = env('SUPER_ADMIN_EMAIL');
+        $password = env('SUPER_ADMIN_PASSWORD');
+
+        if (!$email || !$password) {
+            $this->command->error('SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set in .env file');
+            return;
+        }
+
         AdminAuth::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
+            ['email' => $email],
             [
-                'password' => Hash::make('admin@123'),
+                'password' => Hash::make($password),
                 'role' => 'superadmin'
             ]
         );
 
+        $this->command->info('Super admin created/verified successfully');
+        $this->command->warn('IMPORTANT: You can now remove SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD from .env for security');
     }
 }

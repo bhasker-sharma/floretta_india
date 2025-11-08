@@ -364,3 +364,55 @@
   color: #555;
   font-family: monospace;
 }
+
+/* Address Form Styling */
+.address-popup {
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.address-form {
+  margin-top: 10px;
+}
+
+.address-form .form-group {
+  margin-bottom: 15px;
+}
+
+.address-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.address-form input,
+.address-form textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.address-form input:focus,
+.address-form textarea:focus {
+  outline: none;
+  border-color: #f37254;
+  box-shadow: 0 0 0 2px rgba(243, 114, 84, 0.1);
+}
+
+.address-popup-actions button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.address-popup-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-address-btn:hover:not(:disabled) {
+  background: #d86449 !important;
+}

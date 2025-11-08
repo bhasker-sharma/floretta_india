@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/ResetPassword.css';
 
 function ResetPassword() {
@@ -15,6 +16,13 @@ function ResetPassword() {
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,11 +39,29 @@ function ResetPassword() {
     }
   }, [navigate]);
 
+  const validatePassword = (password) => {
+    const validation = {
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password),
+    };
+    setPasswordValidation(validation);
+    return validation;
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Validate password in real-time
+    if (name === 'newPassword') {
+      validatePassword(value);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -49,16 +75,19 @@ function ResetPassword() {
       return;
     }
 
-    // Validate password length
-    if (formData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Validate password strength
+    const validation = validatePassword(formData.newPassword);
+    const allValid = Object.values(validation).every(v => v === true);
+
+    if (!allValid) {
+      setError('Please ensure your password meets all the requirements below');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/reset-password', {
+      const response = await axios.post(API_ENDPOINTS.RESET_PASSWORD, {
         email: email,
         otp: otp,
         password: formData.newPassword,
@@ -77,7 +106,9 @@ function ResetPassword() {
       }
     } catch (err) {
       setError(
-        err.response?.data?.error || 'Failed to reset password. Please try again.'
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Failed to reset password. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -128,6 +159,44 @@ function ResetPassword() {
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </span>
               </div>
+
+              {formData.newPassword && (
+                <div className="password-requirements">
+                  <p className="requirements-title">Password must contain:</p>
+                  <ul className="requirements-list">
+                    <li className={passwordValidation.minLength ? 'valid' : 'invalid'}>
+                      <span className="requirement-icon">
+                        {passwordValidation.minLength ? '✓' : '✗'}
+                      </span>
+                      At least 8 characters
+                    </li>
+                    <li className={passwordValidation.hasUppercase ? 'valid' : 'invalid'}>
+                      <span className="requirement-icon">
+                        {passwordValidation.hasUppercase ? '✓' : '✗'}
+                      </span>
+                      One uppercase letter (A-Z)
+                    </li>
+                    <li className={passwordValidation.hasLowercase ? 'valid' : 'invalid'}>
+                      <span className="requirement-icon">
+                        {passwordValidation.hasLowercase ? '✓' : '✗'}
+                      </span>
+                      One lowercase letter (a-z)
+                    </li>
+                    <li className={passwordValidation.hasNumber ? 'valid' : 'invalid'}>
+                      <span className="requirement-icon">
+                        {passwordValidation.hasNumber ? '✓' : '✗'}
+                      </span>
+                      One number (0-9)
+                    </li>
+                    <li className={passwordValidation.hasSpecialChar ? 'valid' : 'invalid'}>
+                      <span className="requirement-icon">
+                        {passwordValidation.hasSpecialChar ? '✓' : '✗'}
+                      </span>
+                      One special character (!@#$%^&*)
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="form-group">

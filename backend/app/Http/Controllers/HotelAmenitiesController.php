@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\ContactEnquiryNotification;
 use App\Models\HotelAmenities\RoomFreshner;
 use App\Models\HotelAmenities\Contact;
 
@@ -44,6 +47,25 @@ class HotelAmenitiesController extends Controller
         ]);
 
         $contact = Contact::create($validated);
+
+        // Attempt to notify dedicated admin via email (non-blocking for user)
+        try {
+            $adminEmail = env('CONTACT_ENQUIRY_EMAIL') ?: env('MAIL_FROM_ADDRESS');
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new ContactEnquiryNotification($contact));
+                Log::info('Hotel Amenities contact enquiry email sent', [
+                    'contact_id' => $contact->id,
+                    'admin_email' => $adminEmail,
+                ]);
+            } else {
+                Log::warning('No contact enquiry admin email configured. Set CONTACT_ENQUIRY_EMAIL in .env');
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send hotel amenities contact enquiry email', [
+                'contact_id' => $contact->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json(['message' => 'Contact submitted successfully.'], 201);
     }

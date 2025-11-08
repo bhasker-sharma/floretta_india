@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/ForgotPassword.css';
 
 function ForgotPassword() {
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  // Pre-fill email if passed from login page
+  useEffect(() => {
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +26,7 @@ function ForgotPassword() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/forgot-password', {
+      const response = await axios.post(API_ENDPOINTS.FORGOT_PASSWORD, {
         email: email,
       });
 

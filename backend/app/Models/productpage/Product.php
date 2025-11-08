@@ -24,6 +24,7 @@ class Product extends Model
         'available_quantity',
         'rating',
         'reviews_count',
+        'reviews',
         'image',
         'image_path',
         'flag',
@@ -56,6 +57,40 @@ class Product extends Model
         return $this->image ? Storage::url($this->image) : null;
     }
 
+    // Accessor: Get all image URLs
+    public function getAllImagesAttribute()
+    {
+        if ($this->relationLoaded('images') && $this->images->count() > 0) {
+            return $this->images->map(function($image) {
+                // Use storage path to match existing images
+                return [
+                    'id' => $image->id,
+                    'path' => $image->image_path,
+                    'url' => url('storage/' . $image->image_path),
+                    'sort_order' => $image->sort_order,
+                    'is_primary' => $image->is_primary
+                ];
+            })->toArray();
+        }
+        return [];
+    }
+
     // Appended attributes for JSON output
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'all_images'];
+
+    /**
+     * Get all images for the product
+     */
+    public function images()
+    {
+        return $this->hasMany(\App\Models\ProductImage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get the primary image for the product
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(\App\Models\ProductImage::class)->where('is_primary', true);
+    }
 }

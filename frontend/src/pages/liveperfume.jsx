@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Footer from '../components/footer';
@@ -29,7 +30,7 @@ const LivePerfume = () => {
   ];
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/liveperfume')
+    fetch(API_ENDPOINTS.LIVEPERFUME)
       .then((res) => res.json())
       .then((data) => {
         setSteps(data.how_it_works || []);
@@ -37,7 +38,7 @@ const LivePerfume = () => {
       })
       .catch((err) => console.error('Failed to fetch live perfume data:', err));
 
-    fetch('http://localhost:8000/api/products')
+    fetch(API_ENDPOINTS.PRODUCTS)
       .then((res) => res.json())
       .then((data) => setProducts(data || []))
       .catch((err) => console.error('Error fetching products:', err));
@@ -53,7 +54,7 @@ const LivePerfume = () => {
     setFormStatus('Submitting...');
 
     try {
-      const response = await fetch('http://localhost:8000/api/bookings', {
+      const response = await fetch(API_ENDPOINTS.BOOKINGS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ const LivePerfume = () => {
             steps.map((step) => (
               <div className="hiw-step-image-container" key={step.id}>
                 <img
-                  src={`http://localhost:8000/storage/${step.image}`}
+                  src={getImageUrl(step.image)}
                   alt={step.title}
                   className="hiw-image"
                 />

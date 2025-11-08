@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_URL } from '../config/api';
 import '../styles/slider.css';
 
 const Slider = ({ images = [], fetchUrl, interval = 3000 }) => {
@@ -10,8 +11,8 @@ useEffect(() => {
     fetch(fetchUrl)
       .then((res) => res.json())
       .then((data) => {
-        const fetchedImages = data.sliders?.map(slider => 
-          `http://localhost:8000${slider.image_url}`
+        const fetchedImages = data.sliders?.map(slider =>
+          `${API_URL}${slider.image_url}`
         );
         setSlides(fetchedImages || []);
       })

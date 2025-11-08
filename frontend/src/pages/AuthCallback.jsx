@@ -1,54 +1,96 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import { API_ENDPOINTS } from "../config/api";
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hasExchangedCode = useRef(false); // Prevent duplicate calls in React Strict Mode
+
+  const exchangeCodeForToken = useCallback(
+    async (code) => {
+      try {
+        // Exchange code for token via secure POST request
+        const response = await axios.post(API_ENDPOINTS.GOOGLE_EXCHANGE_CODE, {
+          code: code,
+        });
+
+        if (response.data.success) {
+          const { token, user } = response.data;
+
+          // Save token and user to localStorage
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("isLoggedIn", "true");
+
+          // Clear code from URL (security best practice)
+          window.history.replaceState({}, document.title, "/auth/callback");
+
+          navigate("/userprofile");
+        } else {
+          const errorMsg =
+            response.data.message || "Login failed. Please try again.";
+          console.error("Login failed:", errorMsg);
+          alert("Login failed: " + errorMsg);
+          navigate("/userlogin");
+        }
+      } catch (error) {
+        console.error("Error exchanging code for token:", error);
+        const errorMsg =
+          error.response?.data?.message ||
+          error.message ||
+          "Login failed. Please try again.";
+        console.error("Backend error message:", errorMsg);
+        console.error("Full error response:", error.response?.data);
+        alert("Login failed: " + errorMsg);
+        navigate("/userlogin");
+      }
+    },
+    [navigate]
+  );
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const userString = searchParams.get('user');
-    const error = searchParams.get('error');
-    const message = searchParams.get('message');
-
-    if (error) {
-      const errorMsg = message ? decodeURIComponent(message) : 'Google login failed. Please try again.';
-      console.error('Google OAuth Error:', errorMsg);
-      alert('Google login failed: ' + errorMsg);
-      navigate('/userlogin');
+    // Prevent duplicate API calls in React 18 Strict Mode (development)
+    if (hasExchangedCode.current) {
       return;
     }
 
-    if (token && userString) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userString));
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+    const message = searchParams.get("message");
 
-        // Save token and user to localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('isLoggedIn', 'true');
-
-        // alert('Login successful!');
-        navigate('/userprofile');
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-        alert('Login failed. Please try again.');
-        navigate('/userlogin');
-      }
-    } else {
-      alert('Login failed. Missing authentication data.');
-      navigate('/userlogin');
+    if (error) {
+      const errorMsg = message
+        ? decodeURIComponent(message)
+        : "Google login failed. Please try again.";
+      console.error("Google OAuth Error:", errorMsg);
+      alert("Google login failed: " + errorMsg);
+      navigate("/userlogin");
+      return;
     }
-  }, [searchParams, navigate]);
+
+    // SECURITY: Exchange one-time code for JWT token via POST
+    // Prevents token exposure in URLs, browser history, and server logs
+    if (code) {
+      hasExchangedCode.current = true; // Mark as initiated
+      exchangeCodeForToken(code);
+    } else {
+      alert("Login failed. Missing authentication code.");
+      navigate("/userlogin");
+    }
+  }, [searchParams, navigate, exchangeCodeForToken]);
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontSize: '18px'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontSize: "18px",
+      }}
+    >
       Processing login...
     </div>
   );

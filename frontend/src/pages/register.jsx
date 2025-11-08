@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import '../styles/LoginForm.css';
 
 function Register() {
@@ -21,21 +22,17 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/api/register', formData, {
+      const response = await axios.post(API_ENDPOINTS.REGISTER, formData, {
         headers: {
           'Accept': 'application/json'
         }
       });
 
-      const { token, user } = response.data;
+      // Registration successful, navigate to OTP verification page
+      alert(response.data.message || 'Registration successful! Please check your email for verification code.');
 
-      // ✅ Save token to localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('isLoggedIn', 'true');
-
-      alert('Registration successful!');
-      navigate('/userprofile');
+      // Pass email to verification page
+      navigate('/verify-email', { state: { email: formData.email } });
     } catch (error) {
       console.error('Error:', error.response?.data || error.message);
       alert(error.response?.data?.message || 'Registration failed. Please try again.');

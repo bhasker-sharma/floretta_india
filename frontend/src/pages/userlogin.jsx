@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ENDPOINTS } from "../config/api";
 import "../styles/LoginForm.css";
 
 const LoginForm = () => {
@@ -19,7 +20,7 @@ const LoginForm = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/login",
+        API_ENDPOINTS.LOGIN,
         formData,
         {
           headers: {
@@ -45,10 +46,18 @@ const LoginForm = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while trying to log in."
-      );
+
+      // Check if email is not verified
+      if (error.response?.status === 403 && error.response?.data?.email_verified === false) {
+        alert(error.response.data.message || "Please verify your email first.");
+        // Navigate to verification page with email
+        navigate("/verify-email", { state: { email: error.response.data.email } });
+      } else {
+        alert(
+          error.response?.data?.message ||
+            "An error occurred while trying to log in."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -100,7 +109,12 @@ const LoginForm = () => {
       </form>
 
       <div className="forgot-password-link">
-        <Link to="/forgot-password">Forgot Password?</Link>
+        <Link
+          to="/forgot-password"
+          state={{ email: formData.email }}
+        >
+          Forgot Password?
+        </Link>
       </div>
 
       <div className="or-separator">
@@ -110,8 +124,7 @@ const LoginForm = () => {
       <button
         className="social-btn google"
         onClick={() =>
-          (window.location.href =
-            "http://localhost:8000/api/auth/google/redirect")
+          (window.location.href = API_ENDPOINTS.GOOGLE_REDIRECT)
         }
       >
         <img

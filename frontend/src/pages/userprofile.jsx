@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import "../styles/userprofile.css";
+import Footer from "../components/footer";
 
 function UserProfile() {
   const [user, setUser] = useState(null);
@@ -12,17 +14,16 @@ function UserProfile() {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showAddressPopup, setShowAddressPopup] = useState(false);
-  const [newAddress, setNewAddress] = useState({
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [showAddNewForm, setShowAddNewForm] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    label: "",
+    name: "",
     address: "",
     city: "",
     pin: "",
+    mobile: "",
   });
-  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState("");
-  const [showNoAddressPopup, setShowNoAddressPopup] = useState(
-    !selectedAddress
-  );
   const [orders, setOrders] = useState([]);
   const [showOrders, setShowOrders] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -36,16 +37,12 @@ function UserProfile() {
       return;
     }
     axios
-      .get("http://localhost:8000/api/me", {
+      .get(API_ENDPOINTS.USER_PROFILE, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setUser(res.data);
         setFormData(res.data);
-
-        // Default to address1 if available
-        const defaultAddr = res.data.address1 || res.data.address || "";
-        setSelectedAddress(defaultAddr);
       })
       .catch((err) => {
         if (err.response?.status === 401) {
@@ -58,14 +55,10 @@ function UserProfile() {
   }, [navigate, token]);
 
   useEffect(() => {
-    setShowNoAddressPopup(!selectedAddress);
-  }, [selectedAddress]);
-
-  useEffect(() => {
     if (showOrders) {
       setOrdersLoading(true);
       axios
-        .get("http://localhost:8000/api/my-orders", {
+        .get(API_ENDPOINTS.MY_ORDERS, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => setOrders(res.data))
@@ -74,40 +67,155 @@ function UserProfile() {
     }
   }, [showOrders, token]);
 
-  // Optional: persist selected address to localStorage
-  // useEffect(() => {
-  //   if (selectedAddress) {
-  //     localStorage.setItem('selectedAddress', selectedAddress);
-  //   }
-  // }, [selectedAddress]);
+  // Helper functions for address management
+  const parseAddress = (jsonString) => {
+    if (!jsonString) return null;
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      return null;
+    }
+  };
+
+  const getAllAddresses = () => {
+    const addresses = [];
+    for (let i = 1; i <= 5; i++) {
+      const addr = parseAddress(user?.[`address${i}`]);
+      if (addr) {
+        addresses.push({ index: i, ...addr });
+      }
+    }
+    return addresses;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNewAddressChange = (e) => {
+  const handleAddressFormChange = (e) => {
     const { name, value } = e.target;
-    setNewAddress((prev) => ({ ...prev, [name]: value }));
+    setAddressForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
-  const handleAddNewAddress = () => {
-    for (let i = 1; i <= 5; i++) {
-      const key = `address${i}`;
-      if (!formData[key]) {
-        setFormData((prev) => ({
-          ...prev,
-          [key]: `${newAddress.address}, ${newAddress.city} - ${newAddress.pin}`,
-        }));
-        break;
+
+  const openAddressForm = (index = null) => {
+    if (index) {
+      const addr = parseAddress(user[`address${index}`]);
+      if (addr) {
+        setAddressForm(addr);
+        setEditingAddressIndex(index);
       }
+    } else {
+      setAddressForm({
+        label: "",
+        name: "",
+        address: "",
+        city: "",
+        pin: "",
+        mobile: "",
+      });
+      setEditingAddressIndex(null);
     }
-    setShowAddressPopup(false);
-    setNewAddress({ address: "", city: "", pin: "" });
+    // Address form is now within Edit Profile modal, no separate modal needed
+  };
+
+  const handleSaveAddress = async () => {
+    // Validate required fields
+    if (
+      !addressForm.name ||
+      !addressForm.address ||
+      !addressForm.city ||
+      !addressForm.pin ||
+      !addressForm.mobile
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let targetIndex = editingAddressIndex;
+
+      // If adding new address, find first empty slot
+      if (!targetIndex) {
+        for (let i = 1; i <= 5; i++) {
+          if (!user[`address${i}`]) {
+            targetIndex = i;
+            break;
+          }
+        }
+        if (!targetIndex) {
+          alert(
+            "All 5 address slots are full. Please delete an address first."
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
+      const addressData = {
+        [`address${targetIndex}`]: JSON.stringify(addressForm),
+      };
+
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const updatedUser = res.data.user;
+      setUser(updatedUser);
+      setFormData(updatedUser);
+      setEditingAddressIndex(null);
+      setShowAddNewForm(false);
+      setAddressForm({
+        label: "",
+        name: "",
+        address: "",
+        city: "",
+        pin: "",
+        mobile: "",
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save address.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (index) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const addressData = {
+        [`address${index}`]: null,
+      };
+
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, addressData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const updatedUser = res.data.user;
+      setUser(updatedUser);
+      setFormData(updatedUser);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete address.");
+      console.error("Delete address error:", err.response?.data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -118,30 +226,22 @@ function UserProfile() {
       // Filter out null, undefined, and non-string values
       const cleanedData = {};
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
+        if (value !== null && value !== undefined && value !== "") {
           cleanedData[key] = value;
         }
       });
 
-      const res = await axios.post(
-        "http://localhost:8000/api/update-profile",
-        cleanedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await axios.post(API_ENDPOINTS.UPDATE_PROFILE, cleanedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       const updatedUser = res.data.user;
       setUser(updatedUser);
       setFormData(updatedUser);
       setEditMode(false);
-      // Set selectedAddress to the updated main address
-      if (updatedUser.address) {
-        setSelectedAddress(updatedUser.address);
-      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update profile.");
     } finally {
@@ -404,41 +504,17 @@ function UserProfile() {
         <div className="left-panel">
           <div className="avatar">
             {user.image ? (
-              <img
-                src={`http://localhost:8000/storage/${user.image}`}
-                alt="User"
-              />
+              <img src={getImageUrl(user.image)} alt="User" />
             ) : (
-              <span className="avatar-initial">{user.name ? user.name.charAt(0).toUpperCase() : '?'}</span>
+              <span className="avatar-initial">
+                {user.name ? user.name.charAt(0).toUpperCase() : "?"}
+              </span>
             )}
           </div>
           <div className="info-box">
             <h3>{user.name}</h3>
             <p>📧 {user.email}</p>
             <p>📞 {user.mobile}</p>
-            {/* <p>🧾 {user.pin}</p>
-            <p>🏙️ {user.city}</p> */}
-            {selectedAddress ? (
-              <p>📍 {selectedAddress}</p>
-            ) : (
-              showNoAddressPopup && (
-                <div className="no-address-popup-backdrop">
-                  <div className="no-address-popup">
-                    <h3>No Address Selected</h3>
-                    <p>
-                      Please add or select an address to proceed with your
-                      orders.
-                    </p>
-                    <button
-                      onClick={() => setShowNoAddressPopup(false)}
-                      className="submit-btn"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              )
-            )}
           </div>
         </div>
 
@@ -453,9 +529,6 @@ function UserProfile() {
           <h4>Account Settings</h4>
           <ul className="settings-list">
             <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
-            <li onClick={() => setShowSavedAddresses(true)}>
-              📍 Saved Addresses
-            </li>
             <li onClick={handleLogout} className="logout-btn">
               🚪 Logout
             </li>
@@ -466,174 +539,480 @@ function UserProfile() {
       {/* Edit Profile Modal */}
       {editMode && (
         <div className="modal-backdrop">
-          <div className="modal-form">
+          <div
+            className="modal-form"
+            style={{ maxWidth: "600px", maxHeight: "90vh", overflowY: "auto" }}
+          >
             <h2>Edit Profile</h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="text"
-                name="name"
-                value={formData.name || ""}
-                onChange={handleChange}
-                placeholder="Name"
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email || ""}
-                onChange={handleChange}
-                placeholder="Email"
-              />
-              <input
-                type="text"
-                name="mobile"
-                value={formData.mobile || ""}
-                onChange={handleChange}
-                placeholder="Mobile"
-              />
-              <input
-                type="text"
-                name="pin"
-                value={formData.pin || ""}
-                onChange={handleChange}
-                placeholder="PIN Code"
-              />
-              <input
-                type="text"
-                name="city"
-                value={formData.city || ""}
-                onChange={handleChange}
-                placeholder="City"
-              />
-              <input
-                type="text"
-                name="address"
-                value={formData.address || ""}
-                onChange={handleChange}
-                placeholder="Address"
-              />
-              <input
-                type="text"
-                name="gst_number"
-                value={formData.gst_number || ""}
-                onChange={handleChange}
-                placeholder="GST Number (Optional)"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAddressPopup(true)}
-                className="add-address-btn"
+
+            {/* Profile Information Section */}
+            <div
+              style={{
+                marginBottom: "30px",
+                borderBottom: "2px solid #eee",
+                paddingBottom: "20px",
+              }}
+            >
+              <h3 style={{ marginBottom: "15px", color: "#232946" }}>
+                Personal Information
+              </h3>
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "15px",
+                }}
               >
-                ➕ Add Another Address
-              </button>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setEditMode(false)}
-                  className="cancel-btn"
-                >
-                  Cancel
-                </button>
-                <button type="submit" disabled={loading} className="submit-btn">
-                  {loading ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </form>
-
-            {/* Add New Address Popup */}
-            {showAddressPopup && (
-              <div className="popup-overlay">
-                <div className="popup-form">
-                  <h3>Add New Address</h3>
-                  <input
-                    type="text"
-                    name="address"
-                    value={newAddress.address}
-                    onChange={handleNewAddressChange}
-                    placeholder="Address"
-                  />
-                  <input
-                    type="text"
-                    name="city"
-                    value={newAddress.city}
-                    onChange={handleNewAddressChange}
-                    placeholder="City"
-                  />
-                  <input
-                    type="text"
-                    name="pin"
-                    value={newAddress.pin}
-                    onChange={handleNewAddressChange}
-                    placeholder="PIN Code"
-                  />
-                  <div className="flex justify-between">
-                    <button
-                      onClick={() => setShowAddressPopup(false)}
-                      className="cancel-btn"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleAddNewAddress}
-                      className="submit-btn"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Saved Addresses Modal */}
-      {showSavedAddresses && (
-        <div className="modal-backdrop">
-          <div className="modal-form">
-            <h2>Saved Addresses</h2>
-            {user.address && (
-              <div className="saved-address-box">
-                <p>
-                  <strong>Primary Address:</strong> {user.address}
-                </p>
-                <button
-                  onClick={() => {
-                    setSelectedAddress(user.address);
-                    setShowSavedAddresses(false);
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name || ""}
+                  onChange={handleChange}
+                  placeholder="Name"
+                  style={{
+                    padding: "12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
                   }}
-                  className="submit-btn"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="Email"
+                  style={{
+                    padding: "12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                  }}
+                />
+                <input
+                  type="tel"
+                  name="mobile"
+                  value={formData.mobile || ""}
+                  onChange={handleChange}
+                  placeholder="Phone Number"
+                  style={{
+                    padding: "12px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                  }}
+                />
+                <div
+                  style={{ display: "flex", gap: "10px", marginTop: "10px" }}
                 >
-                  Use this Address
-                </button>
-              </div>
-            )}
-            {[1, 2, 3, 4, 5].map((i) => {
-              const addr = user[`address${i}`];
-              return addr ? (
-                <div key={i} className="saved-address-box">
-                  <p>
-                    <strong>Address {i}:</strong> {addr}
-                  </p>
                   <button
-                    onClick={() => {
-                      setSelectedAddress(addr);
-                      setShowSavedAddresses(false);
-                    }}
+                    type="submit"
+                    disabled={loading}
                     className="submit-btn"
+                    style={{ flex: 1 }}
                   >
-                    Use this Address
+                    {loading ? "Saving..." : "Update Profile"}
                   </button>
                 </div>
-              ) : null;
-            })}
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowSavedAddresses(false)}
-                className="cancel-btn"
-              >
-                Close
-              </button>
+              </form>
             </div>
+
+            {/* Address Management Section */}
+            <div style={{ marginBottom: "20px" }}>
+              <h3 style={{ marginBottom: "15px", color: "#232946" }}>
+                📍 Manage Addresses
+              </h3>
+
+              {/* Display all saved addresses */}
+              <div className="addresses-list" style={{ marginBottom: "20px" }}>
+                {getAllAddresses().length === 0 ? (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#666",
+                      padding: "20px",
+                      backgroundColor: "#f9f9f9",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    No addresses saved yet
+                  </p>
+                ) : (
+                  getAllAddresses().map((addr) => (
+                    <div
+                      key={addr.index}
+                      className="saved-address-box"
+                      style={{
+                        border: "1px solid #ddd",
+                        padding: "15px",
+                        marginBottom: "10px",
+                        borderRadius: "8px",
+                        backgroundColor: "#f9f9f9",
+                      }}
+                    >
+                      <div style={{ marginBottom: "10px" }}>
+                        <strong>{addr.label || "Address"}</strong>
+                        <p style={{ margin: "5px 0" }}>{addr.name}</p>
+                        <p
+                          style={{
+                            margin: "5px 0",
+                            fontSize: "14px",
+                            color: "#666",
+                          }}
+                        >
+                          {addr.address}, {addr.city} - {addr.pin}
+                        </p>
+                        <p
+                          style={{
+                            margin: "5px 0",
+                            fontSize: "14px",
+                            color: "#666",
+                          }}
+                        >
+                          Phone: {addr.mobile}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                          onClick={() => openAddressForm(addr.index)}
+                          className="submit-btn"
+                          style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAddress(addr.index)}
+                          className="cancel-btn"
+                          style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add New Address Form */}
+              {editingAddressIndex === null && showAddNewForm && (
+                <div
+                  style={{
+                    border: "2px dashed #ddd",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <h4 style={{ marginBottom: "15px" }}>Add New Address</h4>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="label"
+                      value={addressForm.label}
+                      onChange={handleAddressFormChange}
+                      placeholder="Label (e.g., Home, Office)"
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="name"
+                      value={addressForm.name}
+                      onChange={handleAddressFormChange}
+                      placeholder="Full Name *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <textarea
+                      name="address"
+                      value={addressForm.address}
+                      onChange={handleAddressFormChange}
+                      placeholder="Street Address *"
+                      required
+                      rows="3"
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="city"
+                      value={addressForm.city}
+                      onChange={handleAddressFormChange}
+                      placeholder="City *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="pin"
+                      value={addressForm.pin}
+                      onChange={handleAddressFormChange}
+                      placeholder="PIN Code *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="mobile"
+                      value={addressForm.mobile}
+                      onChange={handleAddressFormChange}
+                      placeholder="Mobile Number *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        onClick={() => {
+                          setShowAddNewForm(false);
+                          setAddressForm({
+                            label: "",
+                            name: "",
+                            address: "",
+                            city: "",
+                            pin: "",
+                            mobile: "",
+                          });
+                        }}
+                        className="cancel-btn"
+                        style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveAddress}
+                        disabled={loading}
+                        className="submit-btn"
+                        style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                      >
+                        {loading ? "Saving..." : "Save Address"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Address Button */}
+              {editingAddressIndex === null &&
+                !showAddNewForm &&
+                getAllAddresses().length < 5 && (
+                  <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                    <button
+                      onClick={() => {
+                        setShowAddNewForm(true);
+                        setAddressForm({
+                          label: "",
+                          name: "",
+                          address: "",
+                          city: "",
+                          pin: "",
+                          mobile: "",
+                        });
+                      }}
+                      style={{
+                        padding: "12px 24px",
+                        border: "2px dashed #232946",
+                        background: "#fff",
+                        color: "#232946",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      + Add New Address
+                    </button>
+                  </div>
+                )}
+
+              {/* Edit Address Form */}
+              {editingAddressIndex !== null && (
+                <div
+                  style={{
+                    border: "2px solid #232946",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                    backgroundColor: "#f0f4ff",
+                  }}
+                >
+                  <h4 style={{ marginBottom: "15px" }}>Edit Address</h4>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="label"
+                      value={addressForm.label}
+                      onChange={handleAddressFormChange}
+                      placeholder="Label (e.g., Home, Office)"
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="name"
+                      value={addressForm.name}
+                      onChange={handleAddressFormChange}
+                      placeholder="Full Name *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <textarea
+                      name="address"
+                      value={addressForm.address}
+                      onChange={handleAddressFormChange}
+                      placeholder="Street Address *"
+                      required
+                      rows="3"
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="city"
+                      value={addressForm.city}
+                      onChange={handleAddressFormChange}
+                      placeholder="City *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="pin"
+                      value={addressForm.pin}
+                      onChange={handleAddressFormChange}
+                      placeholder="PIN Code *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      name="mobile"
+                      value={addressForm.mobile}
+                      onChange={handleAddressFormChange}
+                      placeholder="Mobile Number *"
+                      required
+                      style={{
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        fontSize: "13px",
+                      }}
+                    />
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        onClick={() => {
+                          setEditingAddressIndex(null);
+                          setAddressForm({
+                            label: "",
+                            name: "",
+                            address: "",
+                            city: "",
+                            pin: "",
+                            mobile: "",
+                          });
+                        }}
+                        className="cancel-btn"
+                        style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveAddress}
+                        disabled={loading}
+                        className="submit-btn"
+                        style={{ flex: 1, fontSize: "13px", padding: "8px" }}
+                      >
+                        {loading ? "Saving..." : "Update Address"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setEditMode(false);
+                setEditingAddressIndex(null);
+                setShowAddNewForm(false);
+                setAddressForm({
+                  label: "",
+                  name: "",
+                  address: "",
+                  city: "",
+                  pin: "",
+                  mobile: "",
+                });
+              }}
+              className="cancel-btn"
+              style={{ width: "100%" }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -666,16 +1045,202 @@ function UserProfile() {
                         📄 Invoice
                       </button>
                     </div>
+                    {/* Order Status Tracking */}
+                    <div
+                      className="order-status-tracker"
+                      style={{
+                        padding: "15px",
+                        margin: "10px 0",
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: "8px",
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            color: "#333",
+                          }}
+                        >
+                          Order Status:
+                        </span>
+                        <span
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "20px",
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            backgroundColor:
+                              order.order_status === "Delivered"
+                                ? "#d4edda"
+                                : order.order_status === "In-Transit"
+                                ? "#fff3cd"
+                                : order.order_status === "Shipped"
+                                ? "#cfe2ff"
+                                : "#e2e3e5",
+                            color:
+                              order.order_status === "Delivered"
+                                ? "#155724"
+                                : order.order_status === "In-Transit"
+                                ? "#856404"
+                                : order.order_status === "Shipped"
+                                ? "#084298"
+                                : "#383d41",
+                          }}
+                        >
+                          {order.order_status || "Order Placed"}
+                        </span>
+                      </div>
+
+                      {/* Status Timeline */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          position: "relative",
+                          marginTop: "15px",
+                        }}
+                      >
+                        {/* Progress Line */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "12px",
+                            left: "0",
+                            right: "0",
+                            height: "2px",
+                            backgroundColor: "#e0e0e0",
+                            zIndex: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "100%",
+                              backgroundColor: "#28a745",
+                              width:
+                                order.order_status === "Delivered"
+                                  ? "100%"
+                                  : order.order_status === "In-Transit"
+                                  ? "66%"
+                                  : order.order_status === "Shipped"
+                                  ? "33%"
+                                  : "0%",
+                              transition: "width 0.3s ease",
+                            }}
+                          ></div>
+                        </div>
+
+                        {/* Status Steps */}
+                        {[
+                          "Order Placed",
+                          "Shipped",
+                          "In-Transit",
+                          "Delivered",
+                        ].map((status, idx) => {
+                          const currentStatuses = [
+                            "Order Placed",
+                            "Shipped",
+                            "In-Transit",
+                            "Delivered",
+                          ];
+                          const currentIndex = currentStatuses.indexOf(
+                            order.order_status || "Order Placed"
+                          );
+                          const isCompleted = idx <= currentIndex;
+                          const isActive = idx === currentIndex;
+
+                          return (
+                            <div
+                              key={status}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                zIndex: 1,
+                                flex: 1,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "50%",
+                                  backgroundColor: isCompleted
+                                    ? "#28a745"
+                                    : "#e0e0e0",
+                                  border: isActive
+                                    ? "3px solid #28a745"
+                                    : "2px solid transparent",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  marginBottom: "8px",
+                                  transition: "all 0.3s ease",
+                                  boxShadow: isActive
+                                    ? "0 0 0 4px rgba(40, 167, 69, 0.2)"
+                                    : "none",
+                                }}
+                              >
+                                {isCompleted && (
+                                  <span
+                                    style={{
+                                      color: "#fff",
+                                      fontSize: "14px",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  textAlign: "center",
+                                  color: isCompleted ? "#333" : "#999",
+                                  fontWeight: isActive ? "bold" : "normal",
+                                  maxWidth: "80px",
+                                  lineHeight: "1.2",
+                                }}
+                              >
+                                {status}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {order.order_status_changed_at && (
+                        <div
+                          style={{
+                            marginTop: "12px",
+                            fontSize: "12px",
+                            color: "#666",
+                            textAlign: "right",
+                          }}
+                        >
+                          Last updated:{" "}
+                          {new Date(
+                            order.order_status_changed_at
+                          ).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
                     <div className="order-products">
                       {order.order_items &&
                         order.order_items.map((item, idx) => (
                           <div key={idx} className="order-product">
                             <img
-                              src={
-                                item.image
-                                  ? `http://localhost:8000/storage/${item.image}`
-                                  : "/fallback.jpg"
-                              }
+                              src={getImageUrl(item.image)}
                               alt={item.name}
                               className="order-product-img"
                               onError={(e) => (e.target.src = "/fallback.jpg")}

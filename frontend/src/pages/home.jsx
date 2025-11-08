@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_ENDPOINTS, getImageUrl } from '../config/api';
 
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
@@ -7,7 +9,6 @@ import Testimonials from '../components/testimonials';
 import Uproducts from '../components/uproduct';
 import Footer from '../components/footer';
 import ProductCard from '../components/ProductCard';
-import axios from 'axios';
 
 import '../styles/home.css';
 
@@ -26,7 +27,7 @@ const Home = () => {
 
   useEffect(() => {
     // Load home products
-    fetch('http://localhost:8000/api/products?note=all')
+    fetch(`${API_ENDPOINTS.PRODUCTS}?note=all`)
       .then((res) => res.json())
       .then((data) => {
         const perfumes = data.filter((p) => p.flag === 'perfume');
@@ -54,7 +55,7 @@ const Home = () => {
     }
 
     try {
-      await axios.post('http://localhost:8000/api/cart', {
+      await axios.post(API_ENDPOINTS.CART, {
         product_id: featuredProduct.id,
         quantity: 1,
         type: featuredProduct.flag || 'perfume'
@@ -87,7 +88,7 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      <Slider fetchUrl="http://localhost:8000/api/homepage" interval={4000} />
+      <Slider fetchUrl={API_ENDPOINTS.HOMEPAGE} interval={4000} />
 
       {/* === HOME PRODUCTS === */}
       <div className="homep-product-list">
@@ -120,7 +121,7 @@ const Home = () => {
             <div className="pdp-product-images">
               <img
                 className="pdp-product-main-image"
-                src={`http://localhost:8000/storage/${selectedImage}`}
+                src={getImageUrl(selectedImage)}
                 alt="Main"
               />
               <div className="pdp-product-thumbnails">
@@ -128,7 +129,7 @@ const Home = () => {
                   <img
                     key={idx}
                     className={`pdp-thumbnail ${img === selectedImage ? 'active' : ''}`}
-                    src={`http://localhost:8000/storage/${img}`}
+                    src={getImageUrl(img)}
                     alt={`Thumb ${idx + 1}`}
                     onClick={() => setSelectedImage(img)}
                     onError={(e) => (e.target.src = '/fallback.jpg')}

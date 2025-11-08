@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -47,9 +48,13 @@ class PasswordResetController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
+        // Get user name
+        $user = User::where('email', $email)->first();
+        $userName = $user->name ?? 'User';
+
         // Send OTP via email
         try {
-            Mail::send('emails.otp', ['otp' => $otp], function ($message) use ($email) {
+            Mail::send('emails.otp', ['otp' => $otp, 'name' => $userName], function ($message) use ($email) {
                 $message->to($email)
                     ->subject('Password Reset OTP - Floretta India');
             });
@@ -115,7 +120,7 @@ class PasswordResetController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
             'otp' => 'required|string|size:6',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => ['required', 'string', 'confirmed', new StrongPassword()],
         ]);
 
         if ($validator->fails()) {

@@ -24,11 +24,15 @@ protected $fillable = [
     'address3',
     'address4',
     'address5',
+    'default_address_index',
     'pin',
     'city',
     'image',
     'google_id',
     'gst_number',
+    'email_verification_otp',
+    'otp_expires_at',
+    'email_verified',
 ];
 
 

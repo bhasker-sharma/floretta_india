@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../styles/adminLogin.css'; 
+import { API_ENDPOINTS } from '../config/api';
+import '../styles/adminLogin.css';
 // +9
 
 function AdminLogin() {
@@ -14,7 +15,7 @@ function AdminLogin() {
         setError('');
         setLoading(true);
         try {
-            const res = await axios.post('http://localhost:8000/api/admin/login', {
+            const res = await axios.post(API_ENDPOINTS.ADMIN_LOGIN, {
                 email,
                 password,
             });
