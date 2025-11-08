@@ -171,9 +171,6 @@ class UserController extends Controller
 
         // Check if email is verified
         if (!$user->email_verified) {
-            // Invalidate the token
-            JWTAuth::invalidate($token);
-
             return response()->json([
                 'message' => 'Please verify your email first. Check your email for the verification code.',
                 'email' => $user->email,

@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('order_id');
                 $table->string('from_status')->nullable();
                 $table->string('to_status');
-                $table->unsignedBigInteger('changed_by_admin_id')->nullable();
+                $table->unsignedInteger('changed_by_admin_id')->nullable();
                 $table->text('note')->nullable();
                 $table->timestamps();
 
