@@ -140,6 +140,9 @@ function AdminDashboard() {
   const [dragActive, setDragActive] = useState(false);
   const [productFormLoading, setProductFormLoading] = useState(false);
   const [productFormMessage, setProductFormMessage] = useState("");
+  const [editingProduct, setEditingProduct] = useState(null); // Track which product is being edited
+  const [isEditMode, setIsEditMode] = useState(false); // Track if we're in edit mode
+  const [productView, setProductView] = useState("list"); // "list" or "add" - toggle between product list and add form
 
   // Load admin info from localStorage
   useEffect(() => {
@@ -1205,7 +1208,8 @@ function AdminDashboard() {
   const handleRemoveImage = (imageId) => {
     setProductImages((prev) => {
       const imageToRemove = prev.find((img) => img.id === imageId);
-      if (imageToRemove) {
+      if (imageToRemove && !imageToRemove.isExisting) {
+        // Only revoke blob URLs for new images, not existing ones
         URL.revokeObjectURL(imageToRemove.preview);
       }
       return prev.filter((img) => img.id !== imageId);
@@ -1218,6 +1222,19 @@ function AdminDashboard() {
       const newImages = [...prev];
       const [removed] = newImages.splice(fromIndex, 1);
       newImages.splice(toIndex, 0, removed);
+      return newImages;
+    });
+  };
+
+  // Set image as primary (move to first position)
+  const handleSetAsPrimary = (imageId) => {
+    setProductImages((prev) => {
+      const imageIndex = prev.findIndex((img) => img.id === imageId);
+      if (imageIndex === -1 || imageIndex === 0) return prev; // Already first or not found
+
+      const newImages = [...prev];
+      const [movedImage] = newImages.splice(imageIndex, 1);
+      newImages.unshift(movedImage); // Add to beginning
       return newImages;
     });
   };
@@ -1248,29 +1265,66 @@ function AdminDashboard() {
 
       // Add images
       productImages.forEach((img, index) => {
-        formData.append(`images[]`, img.file);
+        // Only append new images (those with file objects), skip existing ones
+        if (img.file && !img.isExisting) {
+          formData.append(`images[]`, img.file);
+        }
       });
 
-      const response = await axios.post(
-        API_ENDPOINTS.ADMIN_PRODUCTS,
-        formData,
-        {
+      // Send existing images order for update mode
+      if (isEditMode && editingProduct) {
+        const imageOrder = productImages
+          .filter((img) => img.isExisting)
+          .map((img, index) => ({
+            id: img.id.replace("existing-", ""), // Remove 'existing-' prefix to get actual DB id
+            sort_order: index,
+            is_primary: index === 0,
+          }));
+        formData.append("existing_images_order", JSON.stringify(imageOrder));
+      }
+
+      let response;
+      if (isEditMode && editingProduct) {
+        // UPDATE existing product
+        formData.append("_method", "PUT"); // Laravel requires this for FormData PUT requests
+        response = await axios.post(
+          API_ENDPOINTS.ADMIN_PRODUCT_UPDATE(editingProduct.id),
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            timeout: 120000,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              console.log(`Upload Progress: ${percentCompleted}%`);
+            },
+          }
+        );
+      } else {
+        // CREATE new product
+        response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
-            // Don't manually set Content-Type - let axios set it with boundary
           },
-          timeout: 120000, // 2 minutes timeout for large uploads
+          timeout: 120000,
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
             console.log(`Upload Progress: ${percentCompleted}%`);
           },
-        }
-      );
+        });
+      }
 
       if (response.data.success) {
-        setProductFormMessage("✓ Product created successfully!");
+        setProductFormMessage(
+          isEditMode
+            ? "✓ Product updated successfully!"
+            : "✓ Product created successfully!"
+        );
 
         // Reset form
         setProductFormData({
@@ -1296,9 +1350,18 @@ function AdminDashboard() {
           launch_date: "",
         });
 
-        // Clear images
-        productImages.forEach((img) => URL.revokeObjectURL(img.preview));
+        // Clear images - only revoke blob URLs for new images
+        productImages.forEach((img) => {
+          if (!img.isExisting && img.preview) {
+            URL.revokeObjectURL(img.preview);
+          }
+        });
         setProductImages([]);
+
+        // Exit edit mode
+        setIsEditMode(false);
+        setEditingProduct(null);
+        setProductView("list"); // Switch back to list view
 
         // Refresh products list
         const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
@@ -1313,15 +1376,101 @@ function AdminDashboard() {
         setTimeout(() => setProductFormMessage(""), 5000);
       }
     } catch (error) {
-      console.error("Error creating product:", error);
+      console.error("Error saving product:", error);
       const errorMsg =
         error.response?.data?.message ||
         error.response?.data?.error ||
-        "Failed to create product";
+        `Failed to ${isEditMode ? "update" : "create"} product`;
       setProductFormMessage("✗ " + errorMsg);
     } finally {
       setProductFormLoading(false);
     }
+  };
+
+  // Handle editing a product - populate form with existing data
+  const handleEditProduct = (product) => {
+    setIsEditMode(true);
+    setEditingProduct(product);
+    setProductView("add"); // Switch to add/edit view
+
+    // Populate form with existing product data
+    setProductFormData({
+      name: product.name || "",
+      flag: product.flag || "perfume",
+      price: product.price || "",
+      volume_ml: product.volume_ml || "",
+      scent: product.scent || "",
+      note: product.note || "",
+      Discription: product.discription || product.Discription || "",
+      about_product: product.about_product || "",
+      original_price: product.original_price || "",
+      discount_amount: product.discount_amount || "",
+      is_discount_active: product.is_discount_active || false,
+      delivery_charge: product.delivery_charge || "",
+      available_quantity: product.available_quantity || "",
+      image: product.image || "",
+      ingredients: product.ingredients || "",
+      brand: product.brand || "",
+      colour: product.colour || "",
+      item_form: product.item_form || "",
+      power_source: product.power_source || "",
+      launch_date: product.launch_date || "",
+    });
+
+    // Populate existing images for preview (if available)
+    if (
+      product.all_images &&
+      Array.isArray(product.all_images) &&
+      product.all_images.length > 0
+    ) {
+      const existingImages = product.all_images.map((img, index) => ({
+        id: `existing-${img.id || index}`,
+        preview: img.url, // Use the full URL from API
+        name: `Image ${index + 1}`,
+        file: null, // No file object for existing images
+        isExisting: true, // Flag to identify existing images
+      }));
+      setProductImages(existingImages);
+    } else {
+      setProductImages([]);
+    }
+
+    // Scroll to product form
+    document
+      .getElementById("product-form-section")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Cancel editing mode
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditingProduct(null);
+    setProductView("list"); // Switch back to list view
+
+    // Reset form
+    setProductFormData({
+      name: "",
+      flag: "perfume",
+      price: "",
+      volume_ml: "",
+      scent: "",
+      note: "",
+      Discription: "",
+      about_product: "",
+      original_price: "",
+      discount_amount: "",
+      is_discount_active: false,
+      delivery_charge: "",
+      available_quantity: "",
+      image: "",
+      ingredients: "",
+      brand: "",
+      colour: "",
+      item_form: "",
+      power_source: "",
+      launch_date: "",
+    });
+    setProductImages([]);
   };
 
   // Handle deleting a product
@@ -2276,472 +2425,626 @@ function AdminDashboard() {
         {/* Products Section */}
         {activeSection === "products" && (
           <section className="admin-section settings-section products-section">
-            <h2>Products</h2>
+            <div className="section-header-with-actions">
+              <h2>Products</h2>
+              <div className="product-view-toggle">
+                <button
+                  className={`toggle-btn ${
+                    productView === "add" ? "active" : ""
+                  }`}
+                  onClick={() => setProductView("add")}
+                >
+                  <i className="fas fa-plus-circle"></i> Add Product
+                </button>
+                <button
+                  className={`toggle-btn ${
+                    productView === "list" ? "active" : ""
+                  }`}
+                  onClick={() => setProductView("list")}
+                >
+                  <i className="fas fa-list"></i> All Products
+                </button>
+              </div>
+            </div>
 
             <div className="add-user-container">
               {/* Add Product Form */}
-              <div className="settings-card add-user-form">
-                <h3>Add New Product</h3>
-                <p className="settings-description">
-                  Create a new product for your store. Fill in the required
-                  fields marked with *.
-                </p>
-
-                <form
-                  className="admin-form product-form"
-                  onSubmit={handleCreateProduct}
+              {productView === "add" && (
+                <div
+                  className="settings-card add-user-form"
+                  id="product-form-section"
                 >
-                  {/* Required Fields */}
-                  <div className="form-group">
-                    <label htmlFor="product-name">Product Name *</label>
-                    <input
-                      type="text"
-                      id="product-name"
-                      name="name"
-                      value={productFormData.name}
-                      onChange={handleProductFormChange}
-                      placeholder="Enter product name"
-                      required
-                    />
-                  </div>
+                  <h3>{isEditMode ? "Edit Product" : "Add New Product"}</h3>
+                  <p className="settings-description">
+                    {isEditMode
+                      ? "Update the product information below."
+                      : "Create a new product for your store. Fill in the required fields marked with *."}
+                  </p>
 
-                  <div className="form-group">
-                    <label htmlFor="product-flag">Product Type *</label>
-                    <select
-                      id="product-flag"
-                      name="flag"
-                      value={productFormData.flag}
-                      onChange={handleProductFormChange}
-                      required
+                  {isEditMode && (
+                    <div
+                      style={{
+                        marginBottom: "15px",
+                        padding: "10px",
+                        backgroundColor: "#fff3cd",
+                        borderRadius: "4px",
+                        borderLeft: "4px solid #ffc107",
+                      }}
                     >
-                      <option value="perfume">Perfume</option>
-                      <option value="freshner">Freshner</option>
-                      <option value="face_mist">Face Mist</option>
-                    </select>
-                  </div>
+                      <strong>Editing:</strong> {editingProduct?.name}
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        style={{
+                          marginLeft: "15px",
+                          padding: "5px 10px",
+                          backgroundColor: "#dc3545",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel Edit
+                      </button>
+                    </div>
+                  )}
 
-                  <div className="form-row">
+                  <form
+                    className="admin-form product-form"
+                    onSubmit={handleCreateProduct}
+                  >
+                    {/* Required Fields */}
                     <div className="form-group">
-                      <label htmlFor="product-price">Price *</label>
+                      <label htmlFor="product-name">Product Name *</label>
                       <input
-                        type="number"
-                        id="product-price"
-                        name="price"
-                        value={productFormData.price}
+                        type="text"
+                        id="product-name"
+                        name="name"
+                        value={productFormData.name}
                         onChange={handleProductFormChange}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
+                        placeholder="Enter product name"
                         required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-volume">Volume (ml)</label>
-                      <input
-                        type="text"
-                        id="product-volume"
-                        name="volume_ml"
-                        value={productFormData.volume_ml}
-                        onChange={handleProductFormChange}
-                        placeholder="e.g., 50ml, 100ml"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Optional Fields */}
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="product-scent">Scent</label>
-                      <input
-                        type="text"
-                        id="product-scent"
-                        name="scent"
-                        value={productFormData.scent}
-                        onChange={handleProductFormChange}
-                        placeholder="e.g., Floral, Woody"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="product-note">Note</label>
+                      <label htmlFor="product-flag">Product Type *</label>
                       <select
-                        id="product-note"
-                        name="note"
-                        value={productFormData.note}
+                        id="product-flag"
+                        name="flag"
+                        value={productFormData.flag}
                         onChange={handleProductFormChange}
+                        required
                       >
-                        <option value="">Select Note</option>
-                        <option value="sweet">Sweet</option>
-                        <option value="woody">Woody</option>
-                        <option value="floral">Floral</option>
-                        <option value="citrus">Citrus</option>
+                        <option value="perfume">Perfume</option>
+                        <option value="freshner">Freshner</option>
+                        <option value="face_mist">Face Mist</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div className="form-group">
-                    <label htmlFor="product-description">Description</label>
-                    <textarea
-                      id="product-description"
-                      name="Discription"
-                      value={productFormData.Discription}
-                      onChange={handleProductFormChange}
-                      placeholder="Enter product description"
-                      rows="3"
-                    />
-                  </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-price">Price *</label>
+                        <input
+                          type="number"
+                          id="product-price"
+                          name="price"
+                          value={productFormData.price}
+                          onChange={handleProductFormChange}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          required
+                        />
+                      </div>
 
-                  <div className="form-group">
-                    <label htmlFor="product-about">About Product</label>
-                    <textarea
-                      id="product-about"
-                      name="about_product"
-                      value={productFormData.about_product}
-                      onChange={handleProductFormChange}
-                      placeholder="Additional information about the product"
-                      rows="3"
-                    />
-                  </div>
+                      <div className="form-group">
+                        <label htmlFor="product-volume">Volume (ml)</label>
+                        <input
+                          type="text"
+                          id="product-volume"
+                          name="volume_ml"
+                          value={productFormData.volume_ml}
+                          onChange={handleProductFormChange}
+                          placeholder="e.g., 50ml, 100ml"
+                        />
+                      </div>
+                    </div>
 
-                  <div className="form-row">
+                    {/* Optional Fields */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-scent">Scent</label>
+                        <input
+                          type="text"
+                          id="product-scent"
+                          name="scent"
+                          value={productFormData.scent}
+                          onChange={handleProductFormChange}
+                          placeholder="e.g., Floral, Woody"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="product-note">Note</label>
+                        <select
+                          id="product-note"
+                          name="note"
+                          value={productFormData.note}
+                          onChange={handleProductFormChange}
+                        >
+                          <option value="">Select Note</option>
+                          <option value="sweet">Sweet</option>
+                          <option value="woody">Woody</option>
+                          <option value="floral">Floral</option>
+                          <option value="citrus">Citrus</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="form-group">
-                      <label htmlFor="product-original-price">
-                        Original Price
+                      <label htmlFor="product-description">Description</label>
+                      <textarea
+                        id="product-description"
+                        name="Discription"
+                        value={productFormData.Discription}
+                        onChange={handleProductFormChange}
+                        placeholder="Enter product description"
+                        rows="3"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-about">About Product</label>
+                      <textarea
+                        id="product-about"
+                        name="about_product"
+                        value={productFormData.about_product}
+                        onChange={handleProductFormChange}
+                        placeholder="Additional information about the product"
+                        rows="3"
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-original-price">
+                          Original Price
+                        </label>
+                        <input
+                          type="number"
+                          id="product-original-price"
+                          name="original_price"
+                          value={productFormData.original_price}
+                          onChange={handleProductFormChange}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="product-discount">
+                          Discount Amount
+                        </label>
+                        <input
+                          type="number"
+                          id="product-discount"
+                          name="discount_amount"
+                          value={productFormData.discount_amount}
+                          onChange={handleProductFormChange}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-delivery">
+                          Delivery Charge
+                        </label>
+                        <input
+                          type="number"
+                          id="product-delivery"
+                          name="delivery_charge"
+                          value={productFormData.delivery_charge}
+                          onChange={handleProductFormChange}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="product-quantity">
+                          Available Quantity
+                        </label>
+                        <input
+                          type="number"
+                          id="product-quantity"
+                          name="available_quantity"
+                          value={productFormData.available_quantity}
+                          onChange={handleProductFormChange}
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          name="is_discount_active"
+                          checked={productFormData.is_discount_active}
+                          onChange={handleProductFormChange}
+                        />
+                        <span>Discount Active</span>
                       </label>
-                      <input
-                        type="number"
-                        id="product-original-price"
-                        name="original_price"
-                        value={productFormData.original_price}
-                        onChange={handleProductFormChange}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                      />
                     </div>
 
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-brand">Brand</label>
+                        <input
+                          type="text"
+                          id="product-brand"
+                          name="brand"
+                          value={productFormData.brand}
+                          onChange={handleProductFormChange}
+                          placeholder="Enter brand name"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="product-colour">Colour</label>
+                        <input
+                          type="text"
+                          id="product-colour"
+                          name="colour"
+                          value={productFormData.colour}
+                          onChange={handleProductFormChange}
+                          placeholder="Enter colour"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Multiple Image Upload with Drag & Drop */}
                     <div className="form-group">
-                      <label htmlFor="product-discount">Discount Amount</label>
-                      <input
-                        type="number"
-                        id="product-discount"
-                        name="discount_amount"
-                        value={productFormData.discount_amount}
-                        onChange={handleProductFormChange}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
-                  </div>
+                      <label>Product Images *</label>
+                      <div
+                        className={`image-upload-container ${
+                          dragActive ? "drag-active" : ""
+                        }`}
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                      >
+                        <input
+                          type="file"
+                          id="product-images"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          style={{ display: "none" }}
+                        />
+                        <label
+                          htmlFor="product-images"
+                          className="upload-label"
+                        >
+                          <div className="upload-icon">📁</div>
+                          <p>
+                            <strong>Drag & drop images here</strong> or click to
+                            browse
+                          </p>
+                          <small>Supported formats: JPG, PNG, GIF, WebP</small>
+                        </label>
+                      </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="product-delivery">Delivery Charge</label>
-                      <input
-                        type="number"
-                        id="product-delivery"
-                        name="delivery_charge"
-                        value={productFormData.delivery_charge}
-                        onChange={handleProductFormChange}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="product-quantity">
-                        Available Quantity
-                      </label>
-                      <input
-                        type="number"
-                        id="product-quantity"
-                        name="available_quantity"
-                        value={productFormData.available_quantity}
-                        onChange={handleProductFormChange}
-                        placeholder="0"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group checkbox-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="is_discount_active"
-                        checked={productFormData.is_discount_active}
-                        onChange={handleProductFormChange}
-                      />
-                      <span>Discount Active</span>
-                    </label>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="product-brand">Brand</label>
-                      <input
-                        type="text"
-                        id="product-brand"
-                        name="brand"
-                        value={productFormData.brand}
-                        onChange={handleProductFormChange}
-                        placeholder="Enter brand name"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="product-colour">Colour</label>
-                      <input
-                        type="text"
-                        id="product-colour"
-                        name="colour"
-                        value={productFormData.colour}
-                        onChange={handleProductFormChange}
-                        placeholder="Enter colour"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Multiple Image Upload with Drag & Drop */}
-                  <div className="form-group">
-                    <label>Product Images *</label>
-                    <div
-                      className={`image-upload-container ${
-                        dragActive ? "drag-active" : ""
-                      }`}
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                    >
-                      <input
-                        type="file"
-                        id="product-images"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        style={{ display: "none" }}
-                      />
-                      <label htmlFor="product-images" className="upload-label">
-                        <div className="upload-icon">📁</div>
-                        <p>
-                          <strong>Drag & drop images here</strong> or click to
-                          browse
-                        </p>
-                        <small>Supported formats: JPG, PNG, GIF, WebP</small>
-                      </label>
-                    </div>
-
-                    {/* Image Preview Grid */}
-                    {productImages.length > 0 && (
-                      <div className="image-preview-grid">
-                        {productImages.map((img, index) => (
-                          <div key={img.id} className="image-preview-item">
-                            <img
-                              src={img.preview}
-                              alt={`Product ${index + 1}`}
-                            />
-                            <div className="image-preview-overlay">
-                              <span className="image-order">{index + 1}</span>
-                              <button
-                                type="button"
-                                className="remove-image-btn"
-                                onClick={() => handleRemoveImage(img.id)}
-                                title="Remove image"
-                              >
-                                ✕
-                              </button>
+                      {/* Image Preview Grid */}
+                      {productImages.length > 0 && (
+                        <div className="image-preview-grid">
+                          {productImages.map((img, index) => (
+                            <div key={img.id} className="image-preview-item">
+                              <img
+                                src={img.preview}
+                                alt={`Product ${index + 1}`}
+                              />
+                              <div className="image-preview-overlay">
+                                <span className="image-order">
+                                  {index === 0 ? "★ " : ""}
+                                  {index + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="remove-image-btn"
+                                  onClick={() => handleRemoveImage(img.id)}
+                                  title="Remove image"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              {index !== 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetAsPrimary(img.id)}
+                                  style={{
+                                    position: "absolute",
+                                    bottom: "35px",
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    backgroundColor: "#4CAF50",
+                                    color: "white",
+                                    border: "none",
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    cursor: "pointer",
+                                    opacity: 0,
+                                    transition: "opacity 0.2s",
+                                    whiteSpace: "nowrap",
+                                    zIndex: 10,
+                                  }}
+                                  className="set-primary-btn"
+                                  title="Set as first image"
+                                >
+                                  Set as First
+                                </button>
+                              )}
+                              <small className="image-name">{img.name}</small>
                             </div>
-                            <small className="image-name">{img.name}</small>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      )}
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: "10px",
+                          color: "#666",
+                        }}
+                      >
+                        First image will be the main product image. You can add
+                        multiple images.
+                      </small>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-image">
+                        Legacy Image Path (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="product-image"
+                        name="image"
+                        value={productFormData.image}
+                        onChange={handleProductFormChange}
+                        placeholder="e.g., products/perfume.jpg (for backward compatibility)"
+                        maxLength="255"
+                      />
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: "5px",
+                          color: "#666",
+                        }}
+                      >
+                        This field is optional if you upload images above.
+                      </small>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-ingredients">Ingredients</label>
+                      <textarea
+                        id="product-ingredients"
+                        name="ingredients"
+                        value={productFormData.ingredients}
+                        onChange={handleProductFormChange}
+                        placeholder="List ingredients"
+                        rows="2"
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="product-item-form">Item Form</label>
+                        <input
+                          type="text"
+                          id="product-item-form"
+                          name="item_form"
+                          value={productFormData.item_form}
+                          onChange={handleProductFormChange}
+                          placeholder="e.g., Spray, Roll-on, Stick"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="product-power-source">
+                          Power Source
+                        </label>
+                        <input
+                          type="text"
+                          id="product-power-source"
+                          name="power_source"
+                          value={productFormData.power_source}
+                          onChange={handleProductFormChange}
+                          placeholder="e.g., Manual, Battery"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="product-launch-date">Launch Date</label>
+                      <input
+                        type="date"
+                        id="product-launch-date"
+                        name="launch_date"
+                        value={productFormData.launch_date}
+                        onChange={handleProductFormChange}
+                      />
+                    </div>
+
+                    {productFormMessage && (
+                      <div
+                        className={`form-message ${
+                          productFormMessage.startsWith("✓")
+                            ? "success"
+                            : "error"
+                        }`}
+                      >
+                        {productFormMessage}
                       </div>
                     )}
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: "10px",
-                        color: "#666",
-                      }}
+
+                    <button
+                      type="submit"
+                      className="btn-create-admin"
+                      disabled={productFormLoading}
                     >
-                      First image will be the main product image. You can add
-                      multiple images.
-                    </small>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="product-image">
-                      Legacy Image Path (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      id="product-image"
-                      name="image"
-                      value={productFormData.image}
-                      onChange={handleProductFormChange}
-                      placeholder="e.g., products/perfume.jpg (for backward compatibility)"
-                      maxLength="255"
-                    />
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: "5px",
-                        color: "#666",
-                      }}
-                    >
-                      This field is optional if you upload images above.
-                    </small>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="product-ingredients">Ingredients</label>
-                    <textarea
-                      id="product-ingredients"
-                      name="ingredients"
-                      value={productFormData.ingredients}
-                      onChange={handleProductFormChange}
-                      placeholder="List ingredients"
-                      rows="2"
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="product-item-form">Item Form</label>
-                      <input
-                        type="text"
-                        id="product-item-form"
-                        name="item_form"
-                        value={productFormData.item_form}
-                        onChange={handleProductFormChange}
-                        placeholder="e.g., Spray, Roll-on, Stick"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="product-power-source">Power Source</label>
-                      <input
-                        type="text"
-                        id="product-power-source"
-                        name="power_source"
-                        value={productFormData.power_source}
-                        onChange={handleProductFormChange}
-                        placeholder="e.g., Manual, Battery"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="product-launch-date">Launch Date</label>
-                    <input
-                      type="date"
-                      id="product-launch-date"
-                      name="launch_date"
-                      value={productFormData.launch_date}
-                      onChange={handleProductFormChange}
-                    />
-                  </div>
-
-                  {productFormMessage && (
-                    <div
-                      className={`form-message ${
-                        productFormMessage.startsWith("✓") ? "success" : "error"
-                      }`}
-                    >
-                      {productFormMessage}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-create-admin"
-                    disabled={productFormLoading}
-                  >
-                    {productFormLoading ? "Creating..." : "Create Product"}
-                  </button>
-                </form>
-              </div>
+                      {productFormLoading
+                        ? isEditMode
+                          ? "Updating..."
+                          : "Creating..."
+                        : isEditMode
+                        ? "Update Product"
+                        : "Create Product"}
+                    </button>
+                  </form>
+                </div>
+              )}
 
               {/* Products List */}
-              <div className="settings-card admin-list">
-                <h3>All Products ({allProducts.length})</h3>
-                <p className="settings-description">
-                  List of all products in the system.
-                </p>
+              {productView === "list" && (
+                <div className="settings-card admin-list">
+                  <h3>All Products ({allProducts.length})</h3>
+                  <p className="settings-description">
+                    List of all products in the system.
+                  </p>
 
-                <div className="admin-list-container add-user-list-container">
-                  {productsLoading ? (
-                    <p className="no-admins">Loading products...</p>
-                  ) : allProducts.length === 0 ? (
-                    <p className="no-admins">No products found</p>
-                  ) : (
-                    <ul className="admin-items">
-                      {allProducts.map((product) => (
-                        <li
-                          key={product.id}
-                          className="admin-item product-item"
-                        >
-                          <div className="admin-item-header">
-                            <span className="admin-email product-name">
-                              {product.name}
-                            </span>
-                            <span className={`admin-badge ${product.flag}`}>
-                              {product.flag === "perfume"
-                                ? "Perfume"
-                                : product.flag === "freshner"
-                                ? "Freshner"
-                                : "Face Mist"}
-                            </span>
-                          </div>
-
-                          <div className="product-details">
-                            <span className="product-info">
-                              <i className="fas fa-tag"></i> Price: ₹
-                              {product.price}
-                            </span>
-                            {product.volume_ml && (
-                              <span className="product-info">
-                                <i className="fas fa-flask"></i>{" "}
-                                {product.volume_ml}
-                              </span>
-                            )}
-                            {product.available_quantity !== null && (
-                              <span className="product-info">
-                                <i className="fas fa-boxes"></i> Stock:{" "}
-                                {product.available_quantity}
-                              </span>
-                            )}
-                          </div>
-
-                          {product.scent && (
-                            <span className="product-scent">
-                              <i className="fas fa-leaf"></i> {product.scent}
-                            </span>
-                          )}
-
-                          <button
-                            className="delete-admin-btn"
-                            onClick={() =>
-                              handleDeleteProduct(product.id, product.name)
-                            }
-                            title="Delete product"
+                  <div className="admin-list-container add-user-list-container">
+                    {productsLoading ? (
+                      <p className="no-admins">Loading products...</p>
+                    ) : allProducts.length === 0 ? (
+                      <p className="no-admins">No products found</p>
+                    ) : (
+                      <ul className="admin-items">
+                        {allProducts.map((product) => (
+                          <li
+                            key={product.id}
+                            className="admin-item product-item"
                           >
-                            <i className="fas fa-trash"></i> Delete
-                          </button>
+                            <div className="product-card-layout">
+                              {/* Product Image */}
+                              <div className="product-card-image">
+                                {product.all_images &&
+                                product.all_images.length > 0 ? (
+                                  <img
+                                    src={product.all_images[0].url}
+                                    alt={product.name}
+                                    onError={(e) => {
+                                      e.target.src =
+                                        "https://via.placeholder.com/150x150?text=No+Image";
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="no-image-placeholder">
+                                    <i className="fas fa-image"></i>
+                                    <span>No Image</span>
+                                  </div>
+                                )}
+                                {product.all_images &&
+                                  product.all_images.length > 1 && (
+                                    <span className="image-count-badge">
+                                      <i className="fas fa-images"></i>{" "}
+                                      {product.all_images.length}
+                                    </span>
+                                  )}
+                              </div>
 
-                          <span className="admin-date">
-                            Created:{" "}
-                            {new Date(product.created_at).toLocaleDateString()}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                              {/* Product Info */}
+                              <div className="product-card-content">
+                                <div className="admin-item-header">
+                                  <span className="admin-email product-name">
+                                    {product.name}
+                                  </span>
+                                  <span
+                                    className={`admin-badge ${product.flag}`}
+                                  >
+                                    {product.flag === "perfume"
+                                      ? "Perfume"
+                                      : product.flag === "freshner"
+                                      ? "Freshner"
+                                      : "Face Mist"}
+                                  </span>
+                                </div>
+
+                                <div className="product-details">
+                                  <span className="product-info">
+                                    <i className="fas fa-tag"></i> Price: ₹
+                                    {product.price}
+                                  </span>
+                                  {product.volume_ml && (
+                                    <span className="product-info">
+                                      <i className="fas fa-flask"></i>{" "}
+                                      {product.volume_ml}
+                                    </span>
+                                  )}
+                                  {product.available_quantity !== null && (
+                                    <span className="product-info">
+                                      <i className="fas fa-boxes"></i> Stock:{" "}
+                                      {product.available_quantity}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {product.scent && (
+                                  <span className="product-scent">
+                                    <i className="fas fa-leaf"></i>{" "}
+                                    {product.scent}
+                                  </span>
+                                )}
+
+                                <div className="product-actions">
+                                  <button
+                                    className="product-edit-btn"
+                                    onClick={() => handleEditProduct(product)}
+                                    title="Edit product"
+                                  >
+                                    <i className="fas fa-edit"></i> Edit
+                                  </button>
+
+                                  <button
+                                    className="product-delete-btn"
+                                    onClick={() =>
+                                      handleDeleteProduct(
+                                        product.id,
+                                        product.name
+                                      )
+                                    }
+                                    title="Delete product"
+                                  >
+                                    <i className="fas fa-trash"></i> Delete
+                                  </button>
+                                </div>
+
+                                <span className="admin-date">
+                                  <i className="fas fa-calendar-alt"></i>{" "}
+                                  {new Date(
+                                    product.created_at
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </section>
         )}

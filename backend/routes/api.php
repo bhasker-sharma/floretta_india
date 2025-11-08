@@ -147,6 +147,8 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     // Product management
     Route::get('/products', [ProductController::class, 'adminGetAllProducts']);
     Route::post('/products', [ProductController::class, 'adminCreateProduct']);
+    Route::post('/products/{id}', [ProductController::class, 'adminUpdateProduct']); // POST with _method=PUT for FormData
+    Route::put('/products/{id}', [ProductController::class, 'adminUpdateProduct']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
 
     // User Enquiries management (with pagination)

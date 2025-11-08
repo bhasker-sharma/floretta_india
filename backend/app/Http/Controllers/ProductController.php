@@ -230,6 +230,156 @@ class ProductController extends Controller
         }
     }
 
+    // Admin: Update existing product
+    public function adminUpdateProduct(Request $request, $id)
+    {
+        // Verify admin authentication
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Find the product
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Product not found'
+            ], 404);
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'flag' => 'sometimes|required|in:perfume,freshner,face_mist',
+            'price' => 'sometimes|required|numeric|min:0',
+            'volume_ml' => 'nullable|string',
+            'scent' => 'nullable|string',
+            'note' => 'nullable|string',
+            'Discription' => 'nullable|string',
+            'about_product' => 'nullable|string',
+            'original_price' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'is_discount_active' => 'nullable|boolean',
+            'delivery_charge' => 'nullable|numeric|min:0',
+            'available_quantity' => 'nullable|integer|min:0',
+            'image' => 'nullable|string',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'existing_images_order' => 'nullable|string',
+            'ingredients' => 'nullable|string',
+            'brand' => 'nullable|string',
+            'colour' => 'nullable|string',
+            'item_form' => 'nullable|string',
+            'power_source' => 'nullable|string',
+            'launch_date' => 'nullable|date',
+        ]);
+
+        try {
+            // Handle existing images reordering
+            if ($request->has('existing_images_order')) {
+                $existingImagesOrder = json_decode($request->input('existing_images_order'), true);
+                
+                if (is_array($existingImagesOrder)) {
+                    foreach ($existingImagesOrder as $imageData) {
+                        $productImage = $product->images()->find($imageData['id']);
+                        if ($productImage) {
+                            $productImage->update([
+                                'sort_order' => $imageData['sort_order'],
+                                'is_primary' => $imageData['is_primary']
+                            ]);
+                        }
+                    }
+                    
+                    // Update the main product image to the first one in order
+                    if (!empty($existingImagesOrder)) {
+                        $firstImage = $product->images()->find($existingImagesOrder[0]['id']);
+                        if ($firstImage) {
+                            $validated['image'] = $firstImage->image_path;
+                        }
+                    }
+                }
+            }
+            
+            // Handle image uploads if new images provided
+            $uploadedImages = [];
+            
+            // Handle image uploads if new images provided
+            $uploadedImages = [];
+            
+            if ($request->hasFile('images')) {
+                // Get the count of existing images to continue sort_order
+                $existingImagesCount = $product->images()->count();
+                
+                foreach ($request->file('images') as $index => $image) {
+                    // Generate unique filename
+                    $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    
+                    // Store in public/storage/images directory
+                    $image->move(public_path('storage/images'), $filename);
+                    
+                    $uploadedImages[] = [
+                        'path' => 'images/' . $filename,
+                        'sort_order' => $existingImagesCount + $index,
+                        'is_primary' => false // New images are never primary unless they're the only ones
+                    ];
+                }
+                
+                // Update primary image only if this is the first image ever
+                if (!empty($uploadedImages) && $existingImagesCount === 0) {
+                    $validated['image'] = $uploadedImages[0]['path'];
+                    $uploadedImages[0]['is_primary'] = true;
+                }
+            }
+
+            // Map Discription to discription
+            if (isset($validated['Discription'])) {
+                $validated['discription'] = $validated['Discription'];
+                unset($validated['Discription']);
+            }
+
+            // Remove images array from validated data
+            unset($validated['images']);
+
+            // Update the product
+            $product->update($validated);
+
+            // Add new images to product_images table if provided
+            if (!empty($uploadedImages)) {
+                // Optional: You can choose to delete old images or keep them
+                // $product->images()->delete(); // Uncomment to replace all images
+                
+                foreach ($uploadedImages as $imageData) {
+                    $product->images()->create([
+                        'image_path' => $imageData['path'],
+                        'sort_order' => $imageData['sort_order'],
+                        'is_primary' => $imageData['is_primary']
+                    ]);
+                }
+            }
+
+            // Load images relationship for response
+            $product->load('images');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully',
+                'product' => $product
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // Admin: Delete product
     public function adminDeleteProduct($id)
     {

@@ -72,6 +72,7 @@ export const API_ENDPOINTS = {
   ADMIN_DELETE: (id) => `${API_URL}/api/admin/delete-admin/${id}`,
   ADMIN_USERS: `${API_URL}/api/admin/all-users`,
   ADMIN_PRODUCTS: `${API_URL}/api/admin/products`,
+  ADMIN_PRODUCT_UPDATE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_PRODUCT_DELETE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_ENQUIRY_CONTACT: `${API_URL}/api/admin/user-enquiry/contact`,
   ADMIN_ENQUIRY_BOOKINGS: `${API_URL}/api/admin/user-enquiry/bookings`,
