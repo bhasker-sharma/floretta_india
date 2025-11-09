@@ -6,7 +6,6 @@ import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import "../styles/userprofile.css";
-import Footer from "../components/footer";
 
 function UserProfile() {
   const [user, setUser] = useState(null);
