@@ -27,11 +27,10 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    // Get single product by ID (perfume only)
+    // Get single product by ID (all types)
     public function show($id)
     {
         $product = Product::where('id', $id)
-                         ->where('flag', 'perfume')
                          ->with('images')
                          ->first();
 
@@ -48,8 +47,10 @@ class ProductController extends Controller
         // Get freshners and mists from freshner_mists table
         $freshnerMists = FreshnerMist::whereIn('flag', ['freshner', 'face_mist'])->get();
 
-        // Get freshners and mists from products table
-        $products = Product::whereIn('flag', ['freshner', 'face_mist'])->get();
+        // Get freshners and mists from products table with images
+        $products = Product::whereIn('flag', ['freshner', 'face_mist'])
+            ->with('images')
+            ->get();
 
         // Merge both collections
         $all = $freshnerMists->merge($products);
@@ -63,10 +64,11 @@ class ProductController extends Controller
         // Try to find in freshner_mists table first
         $freshner = FreshnerMist::find($id);
 
-        // If not found, try products table
+        // If not found, try products table with images relationship
         if (!$freshner) {
             $freshner = Product::where('id', $id)
                 ->whereIn('flag', ['freshner', 'face_mist'])
+                ->with('images')
                 ->first();
         }
 
@@ -98,12 +100,51 @@ class ProductController extends Controller
         }
 
         try {
-            // Load products with their images
+            // Load products with their images from main products table
             $products = Product::with('images')->orderBy('created_at', 'desc')->get();
+
+            // Load products from old freshner_mist table
+            $freshnerMists = FreshnerMist::orderBy('created_at', 'desc')->get();
+
+            // Transform freshner_mist items to match products structure
+            $transformedFreshnerMists = $freshnerMists->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'flag' => $item->flag,
+                    'price' => $item->price,
+                    'original_price' => $item->original_price,
+                    'discount_amount' => $item->discount_amount,
+                    'is_discount_active' => $item->is_discount_active,
+                    'delivery_charge' => $item->delivery_charge,
+                    'available_quantity' => $item->available_quantity,
+                    'volume_ml' => $item->volume_ml,
+                    'scent' => $item->scent,
+                    'rating' => $item->rating,
+                    'reviews_count' => $item->reviews_count,
+                    'image' => $item->image_path,
+                    'image_path' => $item->image_path,
+                    'all_images' => $item->image_path ? [[
+                        'id' => 'legacy',
+                        'path' => $item->image_path,
+                        'url' => url('storage/' . $item->image_path),
+                        'sort_order' => 0,
+                        'is_primary' => true
+                    ]] : [],
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'source_table' => 'freshner_mist', // Flag to identify source
+                ];
+            });
+
+            // Merge both collections
+            $allProducts = $products->concat($transformedFreshnerMists)
+                ->sortByDesc('created_at')
+                ->values();
 
             return response()->json([
                 'success' => true,
-                'products' => $products
+                'products' => $allProducts
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -157,22 +198,31 @@ class ProductController extends Controller
             // Handle image uploads
             $imagePath = '';
             $uploadedImages = [];
-            
+
             if ($request->hasFile('images')) {
+                // Create product-specific folder
+                $productFolderName = $this->sanitizeProductName($validated['name']);
+                $productFolderPath = public_path('storage/images/' . $productFolderName);
+
+                // Create directory if it doesn't exist
+                if (!is_dir($productFolderPath)) {
+                    mkdir($productFolderPath, 0755, true);
+                }
+
                 foreach ($request->file('images') as $index => $image) {
                     // Generate unique filename
-                    $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                    
-                    // Store in public/storage/images directory (to match URL structure)
-                    $image->move(public_path('storage/images'), $filename);
-                    
+                    $filename = 'img' . ($index + 1) . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                    // Store in product-specific folder
+                    $image->move($productFolderPath, $filename);
+
                     $uploadedImages[] = [
-                        'path' => 'images/' . $filename,
+                        'path' => 'images/' . $productFolderName . '/' . $filename,
                         'sort_order' => $index,
                         'is_primary' => $index === 0 // First image is primary
                     ];
                 }
-                
+
                 // Use first image as primary image (for backward compatibility)
                 $imagePath = $uploadedImages[0]['path'] ?? '';
             } elseif (!empty($validated['image'])) {
@@ -230,7 +280,7 @@ class ProductController extends Controller
         }
     }
 
-    // Admin: Update existing product
+    // Admin: Update existing product (handles both tables)
     public function adminUpdateProduct(Request $request, $id)
     {
         // Verify admin authentication
@@ -243,7 +293,14 @@ class ProductController extends Controller
             ], 401);
         }
 
-        // Find the product
+        // Check if it's a legacy product (from freshner_mist table)
+        $isLegacy = $request->input('source_table') === 'freshner_mist';
+
+        if ($isLegacy) {
+            return $this->adminUpdateLegacyProduct($request, $id);
+        }
+
+        // Find the product in main products table
         $product = Product::find($id);
 
         if (!$product) {
@@ -308,28 +365,36 @@ class ProductController extends Controller
             
             // Handle image uploads if new images provided
             $uploadedImages = [];
-            
-            // Handle image uploads if new images provided
-            $uploadedImages = [];
-            
+
             if ($request->hasFile('images')) {
+                // Create product-specific folder based on current/updated product name
+                $productName = $validated['name'] ?? $product->name;
+                $productFolderName = $this->sanitizeProductName($productName);
+                $productFolderPath = public_path('storage/images/' . $productFolderName);
+
+                // Create directory if it doesn't exist
+                if (!is_dir($productFolderPath)) {
+                    mkdir($productFolderPath, 0755, true);
+                }
+
                 // Get the count of existing images to continue sort_order
                 $existingImagesCount = $product->images()->count();
-                
+
                 foreach ($request->file('images') as $index => $image) {
                     // Generate unique filename
-                    $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                    
-                    // Store in public/storage/images directory
-                    $image->move(public_path('storage/images'), $filename);
-                    
+                    $imageNumber = $existingImagesCount + $index + 1;
+                    $filename = 'img' . $imageNumber . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                    // Store in product-specific folder
+                    $image->move($productFolderPath, $filename);
+
                     $uploadedImages[] = [
-                        'path' => 'images/' . $filename,
+                        'path' => 'images/' . $productFolderName . '/' . $filename,
                         'sort_order' => $existingImagesCount + $index,
                         'is_primary' => false // New images are never primary unless they're the only ones
                     ];
                 }
-                
+
                 // Update primary image only if this is the first image ever
                 if (!empty($uploadedImages) && $existingImagesCount === 0) {
                     $validated['image'] = $uploadedImages[0]['path'];
@@ -380,7 +445,98 @@ class ProductController extends Controller
         }
     }
 
-    // Admin: Delete product
+    // Admin: Update legacy product (freshner_mist table)
+    private function adminUpdateLegacyProduct(Request $request, $id)
+    {
+        $freshnerMist = FreshnerMist::find($id);
+
+        if (!$freshnerMist) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Legacy product not found'
+            ], 404);
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'flag' => 'sometimes|required|in:perfume,freshner,face_mist',
+            'price' => 'sometimes|required|numeric|min:0',
+            'volume_ml' => 'nullable|string',
+            'scent' => 'nullable|string',
+            'original_price' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'is_discount_active' => 'nullable|boolean',
+            'delivery_charge' => 'nullable|numeric|min:0',
+            'available_quantity' => 'nullable|integer|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+        ]);
+
+        try {
+            // Handle single image upload for legacy products
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($freshnerMist->image_path) {
+                    $oldImagePath = public_path('storage/' . $freshnerMist->image_path);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+
+                // Upload new image to legacy location
+                $image = $request->file('image');
+                $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('storage/freshner'), $filename);
+                $validated['image_path'] = 'freshner/' . $filename;
+            }
+
+            // Update the legacy product
+            $freshnerMist->update($validated);
+
+            // Transform for response to match products structure
+            $response = [
+                'id' => $freshnerMist->id,
+                'name' => $freshnerMist->name,
+                'flag' => $freshnerMist->flag,
+                'price' => $freshnerMist->price,
+                'original_price' => $freshnerMist->original_price,
+                'discount_amount' => $freshnerMist->discount_amount,
+                'is_discount_active' => $freshnerMist->is_discount_active,
+                'delivery_charge' => $freshnerMist->delivery_charge,
+                'available_quantity' => $freshnerMist->available_quantity,
+                'volume_ml' => $freshnerMist->volume_ml,
+                'scent' => $freshnerMist->scent,
+                'rating' => $freshnerMist->rating,
+                'reviews_count' => $freshnerMist->reviews_count,
+                'image' => $freshnerMist->image_path,
+                'image_path' => $freshnerMist->image_path,
+                'all_images' => $freshnerMist->image_path ? [[
+                    'id' => 'legacy',
+                    'path' => $freshnerMist->image_path,
+                    'url' => url('storage/' . $freshnerMist->image_path),
+                    'sort_order' => 0,
+                    'is_primary' => true
+                ]] : [],
+                'created_at' => $freshnerMist->created_at,
+                'updated_at' => $freshnerMist->updated_at,
+                'source_table' => 'freshner_mist',
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Legacy product updated successfully',
+                'product' => $response
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update legacy product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Admin: Delete product (handles both tables)
     public function adminDeleteProduct($id)
     {
         // Verify admin authentication
@@ -394,7 +550,72 @@ class ProductController extends Controller
         }
 
         try {
+            // Check if it's in the main products table
             $product = Product::find($id);
+
+            if ($product) {
+                // Delete product folder if it exists
+                $folderPath = public_path('storage/images/' . $this->sanitizeProductName($product->name));
+                if (is_dir($folderPath)) {
+                    $this->deleteDirectory($folderPath);
+                }
+
+                $product->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product deleted successfully'
+                ]);
+            }
+
+            // If not found, check the legacy freshner_mist table
+            $freshnerMist = FreshnerMist::find($id);
+
+            if ($freshnerMist) {
+                // Delete image file if exists
+                if ($freshnerMist->image_path) {
+                    $imagePath = public_path('storage/' . $freshnerMist->image_path);
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
+                }
+
+                $freshnerMist->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product deleted successfully'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Product not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to delete product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Admin: Delete individual product image
+    public function adminDeleteProductImage($productId, $imageId)
+    {
+        // Verify admin authentication
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        try {
+            $product = Product::find($productId);
 
             if (!$product) {
                 return response()->json([
@@ -403,18 +624,73 @@ class ProductController extends Controller
                 ], 404);
             }
 
-            $product->delete();
+            $productImage = $product->images()->find($imageId);
+
+            if (!$productImage) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Image not found'
+                ], 404);
+            }
+
+            // Delete physical file
+            $imagePath = public_path('storage/' . $productImage->image_path);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+
+            // Delete from database
+            $productImage->delete();
+
+            // If this was the primary image, set another image as primary
+            if ($productImage->is_primary) {
+                $firstImage = $product->images()->orderBy('sort_order')->first();
+                if ($firstImage) {
+                    $firstImage->update(['is_primary' => true]);
+                    $product->update(['image' => $firstImage->image_path]);
+                } else {
+                    // No images left, clear the main image field
+                    $product->update(['image' => '']);
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product deleted successfully'
+                'message' => 'Image deleted successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to delete product',
+                'error' => 'Failed to delete image',
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    // Helper: Sanitize product name for folder creation
+    private function sanitizeProductName($name)
+    {
+        // Convert to lowercase, replace spaces with hyphens, remove special characters
+        $sanitized = strtolower($name);
+        $sanitized = preg_replace('/[^a-z0-9\s-]/', '', $sanitized);
+        $sanitized = preg_replace('/[\s-]+/', '-', $sanitized);
+        $sanitized = trim($sanitized, '-');
+        return $sanitized ?: 'product';
+    }
+
+    // Helper: Delete directory recursively
+    private function deleteDirectory($dir)
+    {
+        if (!is_dir($dir)) {
+            return false;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
+        }
+
+        return rmdir($dir);
     }
 }

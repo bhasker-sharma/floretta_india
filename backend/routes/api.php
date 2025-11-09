@@ -150,6 +150,7 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/products/{id}', [ProductController::class, 'adminUpdateProduct']); // POST with _method=PUT for FormData
     Route::put('/products/{id}', [ProductController::class, 'adminUpdateProduct']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
+    Route::delete('/products/{productId}/images/{imageId}', [ProductController::class, 'adminDeleteProductImage']);
 
     // User Enquiries management (with pagination)
     Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);

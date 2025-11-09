@@ -74,6 +74,7 @@ export const API_ENDPOINTS = {
   ADMIN_PRODUCTS: `${API_URL}/api/admin/products`,
   ADMIN_PRODUCT_UPDATE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_PRODUCT_DELETE: (id) => `${API_URL}/api/admin/products/${id}`,
+  ADMIN_PRODUCT_IMAGE_DELETE: (productId, imageId) => `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
   ADMIN_ENQUIRY_CONTACT: `${API_URL}/api/admin/user-enquiry/contact`,
   ADMIN_ENQUIRY_BOOKINGS: `${API_URL}/api/admin/user-enquiry/bookings`,
 
