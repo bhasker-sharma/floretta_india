@@ -135,6 +135,7 @@ function AdminDashboard() {
     item_form: "",
     power_source: "",
     launch_date: "",
+    source_table: "",
   });
   const [productImages, setProductImages] = useState([]);
   const [dragActive, setDragActive] = useState(false);
@@ -1205,9 +1206,37 @@ function AdminDashboard() {
   };
 
   // Remove image from list
-  const handleRemoveImage = (imageId) => {
+  const handleRemoveImage = async (imageId) => {
+    const imageToRemove = productImages.find((img) => img.id === imageId);
+
+    // If it's an existing image (from database), delete via API
+    if (imageToRemove && imageToRemove.isExisting && isEditMode && editingProduct) {
+      try {
+        // Extract actual database ID by removing 'existing-' prefix
+        const actualImageId = imageId.toString().replace("existing-", "");
+
+        const token = localStorage.getItem("adminToken");
+        const response = await axios.delete(
+          API_ENDPOINTS.ADMIN_PRODUCT_IMAGE_DELETE(editingProduct.id, actualImageId),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          console.log("Image deleted from database successfully");
+        }
+      } catch (error) {
+        console.error("Error deleting image from database:", error);
+        alert("Failed to delete image. Please try again.");
+        return; // Don't remove from UI if API call failed
+      }
+    }
+
+    // Remove from local state
     setProductImages((prev) => {
-      const imageToRemove = prev.find((img) => img.id === imageId);
       if (imageToRemove && !imageToRemove.isExisting) {
         // Only revoke blob URLs for new images, not existing ones
         URL.revokeObjectURL(imageToRemove.preview);
@@ -1263,24 +1292,39 @@ function AdminDashboard() {
         }
       });
 
-      // Add images
-      productImages.forEach((img, index) => {
-        // Only append new images (those with file objects), skip existing ones
-        if (img.file && !img.isExisting) {
-          formData.append(`images[]`, img.file);
-        }
-      });
+      // Handle images differently for legacy vs new products
+      const isLegacy = productFormData.source_table === "freshner_mist";
 
-      // Send existing images order for update mode
-      if (isEditMode && editingProduct) {
-        const imageOrder = productImages
-          .filter((img) => img.isExisting)
-          .map((img, index) => ({
-            id: img.id.replace("existing-", ""), // Remove 'existing-' prefix to get actual DB id
-            sort_order: index,
-            is_primary: index === 0,
-          }));
-        formData.append("existing_images_order", JSON.stringify(imageOrder));
+      if (isLegacy) {
+        // Legacy products: single image upload only
+        if (productImages.length > 0 && productImages[0].file) {
+          formData.append("image", productImages[0].file);
+        }
+      } else {
+        // New products: multiple images support
+        productImages.forEach((img, index) => {
+          // Only append new images (those with file objects), skip existing ones
+          if (img.file && !img.isExisting) {
+            formData.append(`images[]`, img.file);
+          }
+        });
+
+        // Send existing images order for update mode
+        if (isEditMode && editingProduct) {
+          const imageOrder = productImages
+            .filter((img) => img.isExisting)
+            .map((img, index) => ({
+              id: img.id.replace("existing-", ""), // Remove 'existing-' prefix to get actual DB id
+              sort_order: index,
+              is_primary: index === 0,
+            }));
+          formData.append("existing_images_order", JSON.stringify(imageOrder));
+        }
+      }
+
+      // Pass source_table for backend to route correctly
+      if (productFormData.source_table) {
+        formData.append("source_table", productFormData.source_table);
       }
 
       let response;
@@ -1348,6 +1392,7 @@ function AdminDashboard() {
           item_form: "",
           power_source: "",
           launch_date: "",
+          source_table: "",
         });
 
         // Clear images - only revoke blob URLs for new images
@@ -1377,10 +1422,31 @@ function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error saving product:", error);
-      const errorMsg =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        `Failed to ${isEditMode ? "update" : "create"} product`;
+
+      // Handle validation errors from Laravel
+      let errorMsg = "";
+
+      if (error.response?.data?.errors) {
+        // Laravel validation errors format: { field: ["error message"] }
+        const validationErrors = error.response.data.errors;
+        const errorMessages = [];
+
+        for (const [field, messages] of Object.entries(validationErrors)) {
+          const fieldName = field
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase());
+          errorMessages.push(`${fieldName}: ${messages[0]}`);
+        }
+
+        errorMsg = errorMessages.join("\n");
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else {
+        errorMsg = `Failed to ${isEditMode ? "update" : "create"} product`;
+      }
+
       setProductFormMessage("✗ " + errorMsg);
     } finally {
       setProductFormLoading(false);
@@ -1415,6 +1481,7 @@ function AdminDashboard() {
       item_form: product.item_form || "",
       power_source: product.power_source || "",
       launch_date: product.launch_date || "",
+      source_table: product.source_table || "", // Track if it's a legacy product
     });
 
     // Populate existing images for preview (if available)
@@ -1469,6 +1536,7 @@ function AdminDashboard() {
       item_form: "",
       power_source: "",
       launch_date: "",
+      source_table: "",
     });
     setProductImages([]);
   };
@@ -2714,7 +2782,38 @@ function AdminDashboard() {
 
                     {/* Multiple Image Upload with Drag & Drop */}
                     <div className="form-group">
-                      <label>Product Images *</label>
+                      <label>
+                        Product Images *
+                        {productFormData.source_table ===
+                          "freshner_mist" && (
+                          <span
+                            style={{
+                              marginLeft: "10px",
+                              fontSize: "12px",
+                              color: "#ff9800",
+                              fontWeight: "normal",
+                            }}
+                          >
+                            (Legacy: Single image only)
+                          </span>
+                        )}
+                      </label>
+                      {productFormData.source_table === "freshner_mist" && (
+                        <div
+                          style={{
+                            padding: "10px",
+                            backgroundColor: "#fff3e0",
+                            border: "1px solid #ff9800",
+                            borderRadius: "4px",
+                            marginBottom: "10px",
+                            fontSize: "13px",
+                          }}
+                        >
+                          ℹ️ This is a legacy product. Only single image upload
+                          is supported. To use multiple images, please create a
+                          new product.
+                        </div>
+                      )}
                       <div
                         className={`image-upload-container ${
                           dragActive ? "drag-active" : ""
@@ -2727,7 +2826,9 @@ function AdminDashboard() {
                         <input
                           type="file"
                           id="product-images"
-                          multiple
+                          multiple={
+                            productFormData.source_table !== "freshner_mist"
+                          }
                           accept="image/*"
                           onChange={handleImageSelect}
                           style={{ display: "none" }}
@@ -2970,15 +3071,30 @@ function AdminDashboard() {
                                   <span className="admin-email product-name">
                                     {product.name}
                                   </span>
-                                  <span
-                                    className={`admin-badge ${product.flag}`}
-                                  >
-                                    {product.flag === "perfume"
-                                      ? "Perfume"
-                                      : product.flag === "freshner"
-                                      ? "Freshner"
-                                      : "Face Mist"}
-                                  </span>
+                                  <div style={{ display: "flex", gap: "5px" }}>
+                                    <span
+                                      className={`admin-badge ${product.flag}`}
+                                    >
+                                      {product.flag === "perfume"
+                                        ? "Perfume"
+                                        : product.flag === "freshner"
+                                        ? "Freshner"
+                                        : "Face Mist"}
+                                    </span>
+                                    {product.source_table ===
+                                      "freshner_mist" && (
+                                      <span
+                                        className="admin-badge"
+                                        style={{
+                                          backgroundColor: "#ff9800",
+                                          fontSize: "10px",
+                                        }}
+                                        title="Old database table - editing disabled. Please recreate this product to enable full editing."
+                                      >
+                                        Legacy
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
 
                                 <div className="product-details">
@@ -3011,7 +3127,11 @@ function AdminDashboard() {
                                   <button
                                     className="product-edit-btn"
                                     onClick={() => handleEditProduct(product)}
-                                    title="Edit product"
+                                    title={
+                                      product.source_table === "freshner_mist"
+                                        ? "Edit legacy product (limited features)"
+                                        : "Edit product"
+                                    }
                                   >
                                     <i className="fas fa-edit"></i> Edit
                                   </button>

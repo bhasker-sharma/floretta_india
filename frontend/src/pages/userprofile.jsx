@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import Navbar from "../components/navbar";
-import "../styles/userprofile.css";
 import Footer from "../components/footer";
+import "../styles/userprofile.css";
 
 function UserProfile() {
   const [user, setUser] = useState(null);
