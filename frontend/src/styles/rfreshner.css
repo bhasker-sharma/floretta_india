@@ -2,13 +2,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 30px;
-  justify-content: flex-start; /* Align items to the left */
+  justify-content: center; /* Center items on all screens */
   align-items: flex-start;
   padding: 20px;
+  max-width: 100%;
 }
 
 .freshener-card {
   width: 310px;
+  max-width: 100%; /* Allow cards to shrink on small screens */
   border: 1px solid #ddd;
   border-radius: 12px;
   padding: 16px;
@@ -147,4 +149,79 @@
   color: red;
 }
 /* =========================================== */
+
+/* ========== Responsive Design ========== */
+
+/* Tablets and small laptops */
+@media (max-width: 1024px) {
+  .product-grid {
+    gap: 20px;
+    padding: 15px;
+  }
+
+  .freshener-card {
+    width: calc(50% - 10px);
+    min-width: 280px;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  .product-grid {
+    gap: 15px;
+    padding: 10px;
+    justify-content: center;
+  }
+
+  .freshener-card {
+    width: calc(100% - 20px);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .product-grid {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .freshener-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .freshener-card img {
+    height: 220px;
+  }
+
+  .freshener-card h3 {
+    font-size: 0.95rem;
+  }
+
+  .freshener-card p,
+  .freshener-card .rating {
+    font-size: 0.8rem;
+  }
+
+  .freshener-card .price {
+    font-size: 0.95rem;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+  }
+
+  .add-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
 

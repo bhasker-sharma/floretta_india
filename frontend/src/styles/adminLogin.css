@@ -144,3 +144,158 @@
     font-size: 24px;
   }
 }
+/* ========== Enhanced Mobile Responsive Design ========== */
+
+/* Tablets and mobile */
+@media (max-width: 768px) {
+  .admin-login-container {
+    padding: 16px;
+    min-height: 100vh;
+  }
+
+  .admin-login-card {
+    width: 95%;
+    max-width: 100%;
+    padding: 32px 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .admin-login-header h2 {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+
+  .admin-login-header p {
+    font-size: 15px;
+  }
+
+  .admin-login-form {
+    gap: 24px;
+  }
+
+  .form-group label {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .form-group input {
+    padding: 14px 18px;
+    font-size: 16px;
+    border-radius: 12px;
+    border-width: 2px;
+    min-height: 50px;
+  }
+
+  .form-group input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+  }
+
+  .login-button {
+    padding: 16px 24px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 12px;
+    min-height: 54px;
+    margin-top: 12px;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .login-button:active {
+    transform: scale(0.98);
+  }
+
+  .error-message {
+    padding: 14px 18px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  .admin-login-footer {
+    margin-top: 28px;
+    padding-top: 24px;
+  }
+
+  .admin-login-footer p {
+    font-size: 13px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .admin-login-container {
+    padding: 12px;
+  }
+
+  .admin-login-card {
+    width: 100%;
+    padding: 28px 20px;
+  }
+
+  .admin-login-header h2 {
+    font-size: 24px;
+  }
+
+  .admin-login-header p {
+    font-size: 14px;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .form-group input {
+    padding: 13px 16px;
+    font-size: 16px;
+  }
+
+  .login-button {
+    padding: 15px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (max-width: 900px) {
+  .admin-login-container {
+    padding: 12px;
+  }
+
+  .admin-login-card {
+    padding: 20px 18px;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .admin-login-header {
+    margin-bottom: 20px;
+  }
+
+  .admin-login-header h2 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .admin-login-header p {
+    font-size: 13px;
+  }
+
+  .admin-login-form {
+    gap: 16px;
+  }
+
+  .form-group input {
+    padding: 10px 14px;
+  }
+
+  .login-button {
+    padding: 12px 18px;
+    margin-top: 8px;
+  }
+
+  .admin-login-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+  }
+}

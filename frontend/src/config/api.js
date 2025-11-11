@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: `${API_URL}/api/products`,
   PRODUCT_DETAIL: (id) => `${API_URL}/api/products/${id}`,
   HOMEPAGE: `${API_URL}/api/homepage`,
+  FRESHNER_MIST_DETAIL: (id) => `${API_URL}/api/freshners-mist-all/${id}`,
   FRESHNERS_MIST_ALL: `${API_URL}/api/freshners-mist-all`,
 
   // Payment

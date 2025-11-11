@@ -31,7 +31,7 @@ const ProductDetail = () => {
     setLoading(true);
     setError(null);
 
-    const apiURL = API_ENDPOINTS.PRODUCT_DETAIL(id);
+    const apiURL = isFreshner ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(id) : API_ENDPOINTS.PRODUCT_DETAIL(id);
 
     axios
       .get(apiURL)

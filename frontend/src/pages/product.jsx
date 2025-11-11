@@ -77,9 +77,9 @@ const Product = () => {
         </div>
 
         <div className="product-grid">
-          {products.map((product, i) => (
+          {products.map((product) => (
             <ProductCard
-              key={i}
+              key={product.id}
               item={product}
               onClick={() => handleProductClick(product.id)}
             />

@@ -187,18 +187,216 @@
   text-decoration: underline;
 }
 
-/* Responsive Design */
+/* ========== Enhanced Mobile Responsive Design ========== */
+
+/* Tablets and mobile */
 @media (max-width: 768px) {
+  .verify-otp-page {
+    padding: 16px;
+  }
+
+  .verify-otp-container {
+    width: 95%;
+    max-width: 100%;
+  }
+
   .verify-otp-card {
-    padding: 30px 20px;
+    width: 100%;
+    padding: 32px 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .verify-otp-header {
+    margin-bottom: 24px;
+  }
+
+  .verify-otp-header h2 {
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+
+  .verify-otp-header p {
+    font-size: 15px;
+  }
+
+  .email-display {
+    font-size: 16px !important;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .form-group input {
+    padding: 14px 18px;
+    font-size: 16px;
+    border-radius: 12px;
+    border-width: 2px;
+    min-height: 50px;
+  }
+
+  .otp-input {
+    font-size: 22px !important;
+    letter-spacing: 6px;
+    padding: 16px 18px !important;
+    min-height: 60px !important;
+  }
+
+  .form-group input:focus {
+    border-color: #c06;
+    box-shadow: 0 0 0 4px rgba(204, 0, 102, 0.15);
+  }
+
+  .help-text {
+    font-size: 13px;
+    margin-top: 10px;
+  }
+
+  .alert {
+    padding: 14px 18px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  .submit-btn {
+    padding: 16px 24px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 12px;
+    min-height: 54px;
+    box-shadow: 0 6px 20px rgba(204, 0, 102, 0.4);
+  }
+
+  .submit-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .verify-otp-footer {
+    padding-top: 24px;
+    margin-top: 24px;
+  }
+
+  .verify-otp-footer p {
+    font-size: 15px;
+  }
+
+  .link-text {
+    font-size: 15px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .verify-otp-page {
+    padding: 12px;
+  }
+
+  .verify-otp-container {
+    width: 100%;
+  }
+
+  .verify-otp-card {
+    padding: 28px 20px;
   }
 
   .verify-otp-header h2 {
     font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .verify-otp-header p {
+    font-size: 14px;
+  }
+
+  .email-display {
+    font-size: 15px !important;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .form-group input {
+    padding: 13px 16px;
+    font-size: 16px;
   }
 
   .otp-input {
     font-size: 20px !important;
-    letter-spacing: 6px;
+    letter-spacing: 5px;
+    padding: 14px 16px !important;
+  }
+
+  .help-text {
+    font-size: 12px;
+  }
+
+  .submit-btn {
+    padding: 15px 20px;
+    font-size: 16px;
+  }
+
+  .verify-otp-footer p,
+  .link-text {
+    font-size: 14px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (max-width: 900px) {
+  .verify-otp-page {
+    padding: 12px;
+  }
+
+  .verify-otp-card {
+    padding: 20px 18px;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .verify-otp-header {
+    margin-bottom: 16px;
+  }
+
+  .verify-otp-header h2 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .verify-otp-header p {
+    font-size: 13px;
+  }
+
+  .email-display {
+    font-size: 14px !important;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group input {
+    padding: 10px 14px;
+  }
+
+  .otp-input {
+    font-size: 18px !important;
+    letter-spacing: 4px;
+    padding: 12px 14px !important;
+  }
+
+  .submit-btn {
+    padding: 12px 18px;
+  }
+
+  .verify-otp-footer {
+    margin-top: 16px;
+    padding-top: 16px;
   }
 }

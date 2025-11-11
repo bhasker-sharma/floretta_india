@@ -210,3 +210,167 @@ body {
   color: #007bff;
   text-decoration: none;
 }
+
+/* ========== Mobile Responsive Design ========== */
+
+/* Tablets and mobile */
+@media (max-width: 768px) {
+  .login-box {
+    width: 95%;
+    max-width: 100%;
+    padding: 30px 20px;
+    margin: 40px auto;
+    border-radius: 16px;
+  }
+
+  .login-box h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .login-box input[type="email"],
+  .login-box input[type="password"] {
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 12px;
+    margin: 12px 0;
+    border: 2px solid #ccc;
+    transition: border-color 0.2s ease;
+  }
+
+  .login-box input[type="email"]:focus,
+  .login-box input[type="password"]:focus {
+    border-color: #4caf50;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  }
+
+  .login-box input[type="submit"] {
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    min-height: 50px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+
+  .login-box input[type="submit"]:active {
+    transform: scale(0.98);
+  }
+
+  .social-btn {
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 12px;
+    min-height: 50px;
+    margin: 12px 0;
+  }
+
+  .social-btn.google {
+    height: 54px;
+    padding: 10px;
+  }
+
+  .register-link {
+    font-size: 15px;
+    margin-top: 24px;
+  }
+
+  .forgot-password-link {
+    font-size: 15px;
+    margin-top: 12px;
+  }
+
+  .register-container {
+    padding: 20px;
+  }
+
+  .register-form {
+    width: 95%;
+    max-width: 100%;
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .register-form h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .register-form input {
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 2px solid #ccc;
+  }
+
+  .register-form input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  }
+
+  .register-form button {
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    min-height: 50px;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  .register-form button:active {
+    transform: scale(0.98);
+  }
+
+  .register-form p {
+    font-size: 15px;
+    margin-top: 20px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .login-box {
+    width: 100%;
+    padding: 24px 16px;
+    margin: 20px auto;
+  }
+
+  .login-box h2 {
+    font-size: 22px;
+  }
+
+  .register-form {
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .register-form h2 {
+    font-size: 22px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (max-width: 900px) {
+  .login-box,
+  .register-form {
+    margin: 20px auto;
+    padding: 20px 16px;
+  }
+
+  .login-box h2,
+  .register-form h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .login-box input,
+  .register-form input,
+  .social-btn {
+    padding: 10px 14px;
+    margin: 8px 0;
+  }
+}
