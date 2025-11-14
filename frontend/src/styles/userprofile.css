@@ -257,3 +257,267 @@
 .order-id {
   color: #f37254;
 }
+
+/* ==================== RESPONSIVE MOBILE STYLES ==================== */
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .left-panel {
+    padding: 1rem;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .avatar-initial {
+    font-size: 36px;
+  }
+
+  .left-panel h3 {
+    font-size: 1.1rem;
+  }
+
+  .left-panel p {
+    font-size: 0.9rem;
+  }
+
+  .right-panel {
+    padding: 1rem;
+  }
+
+  .right-panel h4 {
+    font-size: 1rem;
+  }
+
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .action-grid button {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .settings-list li {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .modal-form {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .modal-form h2 {
+    font-size: 1.25rem;
+  }
+
+  .modal-form input {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .wishlist-card {
+    padding: 0.75rem;
+  }
+
+  .wishlist-card img {
+    width: 100%;
+    height: 100px;
+    object-fit: contain;
+  }
+
+  .wishlist-card h4 {
+    font-size: 0.85rem;
+    margin: 0.5rem 0 0.3rem;
+  }
+
+  .wishlist-card p {
+    font-size: 0.8rem;
+  }
+
+  .wishlist-card button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+    margin-top: 0.4rem;
+  }
+
+  .orders-modal {
+    width: 95%;
+    max-width: none;
+  }
+
+  .orders-list {
+    max-height: 70vh;
+  }
+
+  .order-card {
+    padding: 1rem;
+  }
+
+  .order-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .order-products {
+    gap: 0.5rem;
+  }
+
+  .order-product {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .order-product-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .product-name {
+    font-size: 0.85rem;
+  }
+
+  .order-info {
+    font-size: 0.8rem;
+  }
+
+  .order-total {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 0.75rem;
+  }
+
+  .left-panel,
+  .right-panel {
+    padding: 0.75rem;
+  }
+
+  .avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .avatar-initial {
+    font-size: 32px;
+  }
+
+  .left-panel h3 {
+    font-size: 1rem;
+  }
+
+  .left-panel p {
+    font-size: 0.85rem;
+  }
+
+  .right-panel h4 {
+    font-size: 0.95rem;
+  }
+
+  .action-grid button {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .settings-list li {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .modal-form {
+    padding: 1.25rem;
+  }
+
+  .modal-form h2 {
+    font-size: 1.1rem;
+  }
+
+  .modal-form input {
+    padding: 0.45rem;
+    font-size: 0.85rem;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .wishlist-grid {
+    gap: 0.4rem;
+  }
+
+  .wishlist-card {
+    padding: 0.6rem;
+  }
+
+  .wishlist-card img {
+    height: 90px;
+  }
+
+  .wishlist-card h4 {
+    font-size: 0.8rem;
+    margin: 0.4rem 0 0.25rem;
+  }
+
+  .wishlist-card p {
+    font-size: 0.75rem;
+  }
+
+  .wishlist-card button {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .order-card {
+    padding: 0.75rem;
+  }
+
+  .order-header {
+    font-size: 0.8rem;
+  }
+
+  .order-product {
+    padding: 0.4rem;
+  }
+
+  .order-product-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .product-name {
+    font-size: 0.8rem;
+  }
+
+  .order-info {
+    font-size: 0.75rem;
+  }
+
+  .order-total {
+    font-size: 0.9rem;
+  }
+}

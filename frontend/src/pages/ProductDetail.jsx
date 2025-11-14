@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_ENDPOINTS, STORAGE_URL } from "../config/api";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-import "../styles/products.css";
+import "../styles/productDetail.css";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -23,6 +23,9 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [buyingNow, setBuyingNow] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   const baseURL = `${STORAGE_URL}/`;
   const isFreshner = location.pathname.startsWith("/freshner-mist");
@@ -37,6 +40,7 @@ const ProductDetail = () => {
       .get(apiURL)
       .then((res) => {
         processProductData(res.data);
+        checkIfInWishlist(res.data.id);
       })
       .catch((err) => {
         console.error("Fetch error:", err);
@@ -44,6 +48,24 @@ const ProductDetail = () => {
         setLoading(false);
       });
   }, [id, location.pathname]);
+
+  const checkIfInWishlist = async (productId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await axios.get(API_ENDPOINTS.WISHLIST, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const wishlistItems = response.data;
+      const isInList = wishlistItems.some(
+        (item) => item.product_id === productId
+      );
+      setIsInWishlist(isInList);
+    } catch (error) {
+      console.error("Error checking wishlist:", error);
+    }
+  };
 
   const processProductData = (data) => {
     setProduct(data);
@@ -101,7 +123,7 @@ const ProductDetail = () => {
       .get(`${API_ENDPOINTS.PRODUCTS}?category=${encodeURIComponent(category)}`)
       .then((res) => {
         const related = res.data.filter((p) => p.id !== currentId);
-        setRelatedProducts(related);
+        setRelatedProducts(related.slice(0, 12));
       })
       .catch((err) => {
         console.error("Error fetching related products:", err);
@@ -121,7 +143,7 @@ const ProductDetail = () => {
 
     setZoomStyle({
       backgroundImage: `url(${selectedImage})`,
-      backgroundSize: "200%",
+      backgroundSize: "250%",
       backgroundPosition: `${backgroundPosX}% ${backgroundPosY}%`,
     });
   };
@@ -131,6 +153,24 @@ const ProductDetail = () => {
     if (value >= 1 && value <= 10) {
       setQuantity(value);
     }
+  };
+
+  // Image slider navigation
+  const handlePrevImage = () => {
+    const newIndex = currentImageIndex === 0 ? thumbnails.length - 1 : currentImageIndex - 1;
+    setCurrentImageIndex(newIndex);
+    setSelectedImage(thumbnails[newIndex]);
+  };
+
+  const handleNextImage = () => {
+    const newIndex = currentImageIndex === thumbnails.length - 1 ? 0 : currentImageIndex + 1;
+    setCurrentImageIndex(newIndex);
+    setSelectedImage(thumbnails[newIndex]);
+  };
+
+  const handleThumbnailClick = (img, index) => {
+    setSelectedImage(img);
+    setCurrentImageIndex(index);
   };
 
   const handleAddToCart = async () => {
@@ -244,183 +284,386 @@ const ProductDetail = () => {
     }
   };
 
-  if (loading) return <p className="loading">Loading item details...</p>;
-  if (error) return <p className="error-message">{error}</p>;
+  const handleAddToWishlist = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login to add items to your wishlist.");
+      navigate("/login");
+      return;
+    }
+
+    if (isInWishlist) {
+      // Remove from wishlist
+      try {
+        setAddingToWishlist(true);
+        await axios.delete(API_ENDPOINTS.WISHLIST_REMOVE(product.id), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setIsInWishlist(false);
+        alert("Removed from wishlist!");
+      } catch (error) {
+        console.error("Error removing from wishlist:", error);
+        alert(
+          error.response?.data?.message ||
+          "Failed to remove from wishlist. Please try again."
+        );
+      } finally {
+        setAddingToWishlist(false);
+      }
+    } else {
+      // Add to wishlist
+      try {
+        setAddingToWishlist(true);
+        await axios.post(
+          API_ENDPOINTS.WISHLIST_ADD,
+          { product_id: product.id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setIsInWishlist(true);
+        alert("Added to wishlist!");
+      } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        alert(
+          error.response?.data?.message ||
+          "Failed to add to wishlist. Please try again."
+        );
+      } finally {
+        setAddingToWishlist(false);
+      }
+    }
+  };
+
+  if (loading)
+    return (
+      <>
+        <Navbar />
+        <div className="amazon-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading...</p>
+        </div>
+        <Footer />
+      </>
+    );
+
+  if (error)
+    return (
+      <>
+        <Navbar />
+        <div className="amazon-error">
+          <p>{error}</p>
+          <button onClick={() => navigate(-1)}>Go Back</button>
+        </div>
+        <Footer />
+      </>
+    );
+
   if (!product) return null;
+
+  const discount = product.old_price
+    ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
+    : 0;
 
   return (
     <>
       <Navbar />
-      <div className="product-detail-wrapper">
-        <div className="thumbnail-column">
-          {thumbnails.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt={`Thumbnail ${i + 1}`}
-              className={`thumbnail ${selectedImage === img ? "active" : ""}`}
-              onClick={() => setSelectedImage(img)}
-              loading="lazy"
-            />
-          ))}
+      <div className="amazon-product-page">
+        {/* Breadcrumb */}
+        <div className="amazon-breadcrumb">
+          <span onClick={() => navigate("/")}>Home</span>
+          <span className="separator">›</span>
+          <span onClick={() => navigate("/products")}>Products</span>
+          <span className="separator">›</span>
+          <span className="current">{product.category || "Product"}</span>
         </div>
 
-        <div
-          className="main-image-column"
-          onMouseEnter={() => setShowZoom(true)}
-          onMouseLeave={() => setShowZoom(false)}
-          onMouseMove={handleMouseMove}
-        >
-          {selectedImage ? (
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="main-image"
-              ref={imageRef}
-              loading="lazy"
-            />
-          ) : (
-            <div className="no-image-placeholder">No image available</div>
-          )}
-          {showZoom && selectedImage && (
-            <div className="zoom-result" style={zoomStyle} />
-          )}
-        </div>
+        <div className="amazon-product-container">
+          {/* Left Section - Image Gallery */}
+          <div className="amazon-image-section">
+            <div className="amazon-thumbnail-column">
+              {thumbnails.map((img, i) => (
+                <div
+                  key={i}
+                  className={`amazon-thumbnail-wrapper ${
+                    currentImageIndex === i ? "active" : ""
+                  }`}
+                  onClick={() => handleThumbnailClick(img, i)}
+                >
+                  <img
+                    src={img}
+                    alt={`View ${i + 1}`}
+                    className="amazon-thumbnail"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
 
-        <div className="product-info">
-          <h2>{product.name}</h2>
-          <p className="product-description">
-            {product.description ||
-              product.Discription ||
-              "No description available."}
-          </p>
+            <div className="amazon-main-image-section">
+              {thumbnails.length > 1 && (
+                <button
+                  className="amazon-image-nav amazon-image-nav-left"
+                  onClick={handlePrevImage}
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+              )}
 
-          <div class="rating-review-row">
-            <span class="rating">★ 4.5</span>
-            <span class="review-count">(120 reviews)</span>
-          </div>
-
-          <div className="price-row">
-            <p className="discount">-42%</p>
-            <p className="final-price">₹{product.price}</p>
-            <p className="unit-price">(₹70 / 100ml)</p>
-          </div>
-
-          {product.old_price && (
-            <p className="old-price">M.R.P.: ₹{product.old_price}</p>
-          )}
-          <p className="tax-note">Inclusive of all taxes</p>
-
-          <div className="offer-box">
-            <p>
-              <strong>Save Extra:</strong> 2 offers available
-            </p>
-            <p>
-              <strong>Cashback:</strong> 5% with ICICI Bank Amazon Pay Card
-              (Prime only)
-            </p>
-            <p>
-              <strong>Business Offer:</strong> Save up to 28% with GST invoice
-            </p>
-          </div>
-
-          <hr className="section-line" />
-
-          <p>
-            <strong>Scent:</strong> {product.scent || "N/A"}
-          </p>
-          <p>
-            <strong>Colour:</strong> {product.colour || "N/A"}
-          </p>
-          <p>
-            <strong>Brand:</strong> {product.brand || "N/A"}
-          </p>
-          <p>
-            <strong>Item Form:</strong> {product.item_form || "N/A"}
-          </p>
-          <p>
-            <strong>Power Source:</strong> {product.power_source || "N/A"}
-          </p>
-          <p>
-            <strong>Launch Date:</strong>{" "}
-            {product.launch_date
-              ? new Date(product.launch_date).toDateString()
-              : "N/A"}
-          </p>
-          <p>
-            <strong>About Product:</strong> {product.about_product || "N/A"}
-          </p>
-
-          {/* <div className="button-row">
-            <button className="buy-now-btn">BUY NOW</button>
-            <button className="buy-now-btn">ADD TO CART</button>
-          </div> */}
-        </div>
-        <div className="right-box">
-          <p className="final-price-box">
-            ₹{product.price}.00{" "}
-            <span className="unit-price-box">(₹70.00 / 100ml)</span>
-          </p>
-          <p className="green-text">In stock</p>
-          <p className="small-text">
-            Ships from <strong>FLORETTA INDIA</strong>
-          </p>
-          <p className="small-text">
-            Sold by <strong>FLORETTA INDIA</strong>
-          </p>
-          <p className="small-text">
-            <a href="#">Secure transaction</a>
-          </p>
-
-          <label htmlFor="quantity-select" className="small-text">
-            Quantity:
-          </label>
-          <input
-            type="number"
-            id="quantity-select"
-            className="qty-select"
-            min={1}
-            max={10}
-            value={quantity}
-            onChange={handleQuantityChange}
-          />
-
-          <button
-            className="buy-btn"
-            onClick={handleAddToCart}
-            disabled={addingToCart}
-          >
-            {addingToCart ? "Adding..." : "Add to Cart"}
-          </button>
-          <button
-            className="buy-btn"
-            onClick={handleBuyNow}
-            disabled={buyingNow}
-          >
-            {buyingNow ? "Processing..." : "Buy Now"}
-          </button>
-        </div>
-      </div>
-
-      {relatedProducts.length > 0 && (
-        <div className="related-products-section">
-          <h3>Related Products</h3>
-          <div className="related-products-grid">
-            {relatedProducts.map((p) => (
-              <div key={p.id} className="related-product-card">
+              <div
+                className="amazon-main-image-container"
+                onMouseEnter={() => setShowZoom(true)}
+                onMouseLeave={() => setShowZoom(false)}
+                onMouseMove={handleMouseMove}
+              >
                 <img
-                  src={`${baseURL}${p.image}`}
-                  alt={p.name}
-                  className="related-product-image"
+                  src={selectedImage}
+                  alt={product.name}
+                  className="amazon-main-image"
+                  ref={imageRef}
                   loading="lazy"
                 />
-                <p>{p.name}</p>
-                <p>₹{p.price}</p>
+                {showZoom && selectedImage && (
+                  <div className="amazon-zoom-lens"></div>
+                )}
               </div>
-            ))}
+
+              {thumbnails.length > 1 && (
+                <button
+                  className="amazon-image-nav amazon-image-nav-right"
+                  onClick={handleNextImage}
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+              )}
+
+              {showZoom && selectedImage && (
+                <div className="amazon-zoom-result" style={zoomStyle}></div>
+              )}
+            </div>
+          </div>
+
+          {/* Center Section - Product Info */}
+          <div className="amazon-info-section">
+            <h1 className="amazon-product-title">{product.name}</h1>
+
+            <div className="amazon-subtitle">
+              {product.description ||
+                product.Discription ||
+                "Premium Quality Product"}
+            </div>
+
+            <div className="amazon-rating-section">
+              <div className="amazon-stars">
+                <span className="star-rating">★★★★☆</span>
+                <span className="rating-value">4.5</span>
+              </div>
+              <span className="amazon-rating-count">({product.reviews || 120} reviews)</span>
+            </div>
+
+            <hr className="amazon-divider" />
+
+            <div className="amazon-price-section">
+              {discount > 0 && (
+                <div className="amazon-discount-badge">-{discount}%</div>
+              )}
+              <div className="amazon-price-row">
+                <span className="amazon-currency">₹</span>
+                <span className="amazon-price">{product.price}.00</span>
+              </div>
+              <div className="amazon-price-per-unit">
+                (₹{Math.round(product.price / (product.volume || 8))} / 100ml)
+              </div>
+              {product.old_price && (
+                <div className="amazon-old-price-row">
+                  <span className="amazon-mrp-label">M.R.P.:</span>
+                  <span className="amazon-old-price">₹{product.old_price}.00</span>
+                </div>
+              )}
+              <div className="amazon-tax-info">Inclusive of all taxes</div>
+            </div>
+
+            <hr className="amazon-divider" />
+
+            {/* Offers Section */}
+            <div className="amazon-offers-section">
+              <div className="amazon-offers-title">Save Extra: 2 offers available</div>
+              <div className="amazon-offer-cards">
+                <div className="amazon-offer-card">
+                  <div className="amazon-offer-type">Cashback</div>
+                  <div className="amazon-offer-text">
+                    5% with ICICI Bank Amazon Pay Card (Prime only)
+                  </div>
+                </div>
+                <div className="amazon-offer-card">
+                  <div className="amazon-offer-type">Business Offer</div>
+                  <div className="amazon-offer-text">
+                    Save up to 28% with GST invoice
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr className="amazon-divider" />
+
+            {/* Product Details */}
+            <div className="amazon-details-table">
+              <table>
+                <tbody>
+                  {product.scent && (
+                    <tr>
+                      <td className="amazon-detail-label">Scent</td>
+                      <td className="amazon-detail-value">{product.scent}</td>
+                    </tr>
+                  )}
+                  {product.colour && (
+                    <tr>
+                      <td className="amazon-detail-label">Colour</td>
+                      <td className="amazon-detail-value">{product.colour}</td>
+                    </tr>
+                  )}
+                  {product.brand && (
+                    <tr>
+                      <td className="amazon-detail-label">Brand</td>
+                      <td className="amazon-detail-value">{product.brand}</td>
+                    </tr>
+                  )}
+                  {product.item_form && (
+                    <tr>
+                      <td className="amazon-detail-label">Item Form</td>
+                      <td className="amazon-detail-value">{product.item_form}</td>
+                    </tr>
+                  )}
+                  {product.power_source && (
+                    <tr>
+                      <td className="amazon-detail-label">Power Source</td>
+                      <td className="amazon-detail-value">{product.power_source}</td>
+                    </tr>
+                  )}
+                  {product.launch_date && (
+                    <tr>
+                      <td className="amazon-detail-label">Launch Date</td>
+                      <td className="amazon-detail-value">{new Date(product.launch_date).toDateString()}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <hr className="amazon-divider" />
+
+            {/* About Product */}
+            {product.about_product && (
+              <div className="amazon-about-section">
+                <h2 className="amazon-about-title">About Product</h2>
+                <p className="amazon-about-text">{product.about_product}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right Section - Buy Box */}
+          <div className="amazon-buy-box">
+            <div className="amazon-buy-price">
+              ₹{product.price}.00 (₹{Math.round(product.price / (product.volume || 8))}.00 / 100ml)
+            </div>
+
+            <div className="amazon-stock-status">In stock</div>
+
+            <div className="amazon-sold-by">
+              Ships from <strong>FLORETTA INDIA</strong>
+              <br />
+              Sold by <strong>FLORETTA INDIA</strong>
+            </div>
+
+            <div className="amazon-secure-transaction">
+              <i className="fas fa-lock"></i> Secure transaction
+            </div>
+
+            <div className="amazon-quantity-selector">
+              <label htmlFor="quantity">Quantity:</label>
+              <select
+                id="quantity"
+                value={quantity}
+                onChange={handleQuantityChange}
+                className="amazon-quantity-dropdown"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                  <option key={num} value={num}>
+                    {num}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              className="amazon-add-to-cart-btn"
+              onClick={handleAddToCart}
+              disabled={addingToCart}
+            >
+              {addingToCart ? "Adding..." : "Add to Cart"}
+            </button>
+
+            <button
+              className="amazon-buy-now-btn"
+              onClick={handleBuyNow}
+              disabled={buyingNow}
+            >
+              {buyingNow ? "Processing..." : "Buy Now"}
+            </button>
+
+            <hr className="amazon-divider-thin" />
+
+            <div className="amazon-add-to-list">
+              <button
+                className="amazon-list-btn"
+                onClick={handleAddToWishlist}
+                disabled={addingToWishlist}
+              >
+                <i className={isInWishlist ? "fas fa-heart" : "far fa-heart"}></i>{" "}
+                {addingToWishlist
+                  ? "Processing..."
+                  : isInWishlist
+                  ? "Remove from Wish List"
+                  : "Add to Wish List"}
+              </button>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="amazon-related-section">
+            <h2 className="amazon-related-title">
+              Products related to this item
+            </h2>
+            <div className="amazon-related-grid">
+              {relatedProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className="amazon-related-card"
+                  onClick={() => navigate(`/product/${p.id}`)}
+                >
+                  <img
+                    src={`${baseURL}${p.image}`}
+                    alt={p.name}
+                    className="amazon-related-image"
+                    loading="lazy"
+                  />
+                  <div className="amazon-related-info">
+                    <div className="amazon-related-name">{p.name}</div>
+                    <div className="amazon-related-rating">
+                      <span className="amazon-related-stars">★★★★☆</span>
+                      <span className="amazon-related-count">(1,234)</span>
+                    </div>
+                    <div className="amazon-related-price">₹{p.price}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <Footer />
     </>
   );

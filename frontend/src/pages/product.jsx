@@ -118,11 +118,11 @@ const Product = () => {
           </div>
 
           <div className="why-box">
-            <img
+            {/* <img
               src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"
               alt="Indian Flag"
-              className="india-flag"
-            />
+              className="india-flags"
+            /> */}
             <p className="why-label">MADE IN INDIA</p>
           </div>
         </div>

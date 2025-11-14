@@ -1,6 +1,6 @@
 /* ------------------------ Global Styles ------------------------ */
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   margin: 0;
   padding: 0;
   background-color: #fff;
@@ -21,9 +21,10 @@ body.modal-open {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
+
 .navbar-logo {
   font-size: 1.5rem;
-  color: #8C3F45;
+  color: #8c3f45;
   font-weight: bold;
 }
 
@@ -37,7 +38,7 @@ body.modal-open {
 
 .navbar-links a {
   text-decoration: none;
-  color: #8C3F45;
+  color: #8c3f45;
   font-weight: 500;
 }
 
@@ -46,7 +47,7 @@ body.modal-open {
   background-color: #f8e8eb;
   text-align: center;
   padding: 2rem 0;
-  color: #8C3F45;
+  color: #8c3f45;
   font-size: 1.25rem;
   font-weight: bold;
 }
@@ -57,29 +58,32 @@ body.modal-open {
   flex-wrap: wrap;
   gap: 16px;
   margin: 20px 0 32px;
-  justify-content: flex-start;
+  justify-content: center;
+  /* border-radius: 50px; */
 }
 
 .note-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 999px;
+  padding: 0.6rem 1.5rem;
+  border: 2px solid #b53c3c;
+  border-radius: 50px;
   font-size: 0.875rem;
   font-weight: 600;
   color: #b53c3c;
   background: white;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  text-transform: uppercase;
 }
 
 .note-btn:hover {
-  background: #f3f3f3;
+  background: #b53c3c;
+  color: white;
 }
 
 .note-btn.active {
   background-color: #b53c3c;
   color: white;
-  border: none;
+  border-color: #b53c3c;
 }
 
 /* ------------------------ Why Floretta ------------------------ */
@@ -109,8 +113,8 @@ body.modal-open {
 
 .why-box {
   flex: 1;
-  min-width: 200px;
-  max-width: 300px;
+  min-width: 30px;
+  max-width: 50px;
   text-align: center;
 }
 
@@ -149,8 +153,8 @@ body.modal-open {
 }
 
 .india-flag {
-  width: 60px;
-  height: auto;
+  width: 5px;
+  height: 5px;
   margin-bottom: 0.5rem;
 }
 
@@ -232,7 +236,14 @@ body.modal-open {
   display: flex;
   padding: 2rem;
   column-gap: 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Image slider section container */
+.image-slider-section {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
 .thumbnail-column {
@@ -257,13 +268,21 @@ body.modal-open {
   border-color: #f08804;
 }
 
+/* Main image container with slider controls */
+.main-image-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .main-image-column {
   display: flex;
-  align-items: flex-start; /* changed from center to remove top space */
+  align-items: flex-start;
   justify-content: center;
   position: relative;
   width: 400px;
-  margin-top: 0; /* ensures no top spacing */
+  margin-top: 0;
 }
 
 .main-image {
@@ -272,8 +291,72 @@ body.modal-open {
   object-fit: contain;
   border-radius: 10px;
   margin-left: 10px;
-  margin-top: 0; /* removed top space */
+  margin-top: 0;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Slider arrow buttons */
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider-arrow:hover {
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slider-arrow-left {
+  left: 10px;
+}
+
+.slider-arrow-right {
+  right: 10px;
+}
+
+/* Slider dots indicator */
+.slider-dots {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.slider-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.slider-dots .dot.active {
+  background-color: #f08804;
+  border-color: #f08804;
+  transform: scale(1.2);
+}
+
+.slider-dots .dot:hover {
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .zoom-result {
@@ -370,7 +453,7 @@ body.modal-open {
   color: #333333;
   line-height: 1.4;
   margin: 1rem 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -460,7 +543,7 @@ hr.section-line {
   padding: 16px;
   margin-left: 20px;
   font-family: Arial, sans-serif;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
   background-color: #fff;
 }
 
@@ -507,14 +590,179 @@ hr.section-line {
   background-color: #f7ca00;
 }
 
-
 /* ---------------------------------------------------------------- */
 
-.product-title{
-    text-align: left;
+html {
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.product-section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.product-title {
+  text-align: left;
   margin-left: 32px;
   font-size: 1.9rem;
   color: #b53c3c;
   margin-bottom: 1rem;
   text-align: center;
+}
+
+/* ========== Responsive Design for Small Screens ========== */
+
+@media (max-width: 768px) {
+  .product-section {
+    padding: 0 5px;
+  }
+
+  .product-title {
+    font-size: 1.3rem;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .note-buttons {
+    gap: 8px;
+    margin: 15px 10px 20px;
+    padding: 0 5px;
+  }
+
+  .note-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.65rem;
+    border-width: 1.5px;
+  }
+
+  .why-floretta {
+    padding: 1.5rem 0.8rem;
+    margin: 2rem auto;
+  }
+
+  .why-heading {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .why-content {
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .why-box {
+    min-width: 150px;
+    max-width: 200px;
+  }
+
+  .why-small {
+    font-size: 0.7rem;
+  }
+
+  .why-big {
+    font-size: 1.8rem;
+    margin: 0.1rem 0;
+  }
+
+  .why-label {
+    font-size: 0.75rem;
+  }
+
+  .clock-icon svg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .clock-label {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
+
+  /* .india-flag {
+    width: 5px;
+    height: 5px;
+  } */
+}
+
+@media (max-width: 480px) {
+  .product-section {
+    padding: 0 3px;
+  }
+
+  .product-title {
+    font-size: 1.1rem;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  .note-buttons {
+    gap: 6px;
+    margin: 10px 5px 15px;
+    padding: 0 3px;
+  }
+
+  .note-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.55rem;
+    border-width: 1px;
+  }
+
+  .why-floretta {
+    padding: 1rem 0.5rem;
+    margin: 1.5rem auto;
+  }
+
+  .why-heading {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .why-content {
+    gap: 0.8rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .why-box {
+    min-width: 120px;
+    max-width: 150px;
+  }
+
+  .why-small {
+    font-size: 0.65rem;
+  }
+
+  .why-big {
+    font-size: 1.5rem;
+    margin: 0.1rem 0;
+  }
+
+  .why-label {
+    font-size: 0.7rem;
+  }
+
+  .clock-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .clock-label {
+    font-size: 0.55rem;
+    padding: 1px 3px;
+    bottom: -8px;
+  }
+
+  /* .india-flag {
+    width: 5px;
+    height: 5px;
+  } */
 }

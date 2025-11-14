@@ -170,6 +170,16 @@ nav {
 @media (max-width: 767px) {
   .hamburger {
     display: block;
+    order: 3; /* Place hamburger at the end */
+  }
+
+  .icon-buttons {
+    order: 2; /* Place icons before hamburger */
+    margin-left: auto;
+  }
+
+  .logo-container {
+    order: 1; /* Keep logo at the start */
   }
 
   .mobile-nav {
@@ -178,6 +188,7 @@ nav {
     width: 100%;
     gap: 14px;
     margin-top: 12px;
+    order: 4; /* Menu content appears last */
   }
 
   .mobile-nav.open {
@@ -193,9 +204,5 @@ nav {
 
   .mobile-nav .nav-item.active::after {
     display: none;
-  }
-
-  .icon-buttons {
-    margin-left: auto;
   }
 }

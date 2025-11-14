@@ -25,32 +25,154 @@
   }
 }
 
-/* Responsive: 1 column for mobile */
+/* Responsive: 2 columns for mobile */
 @media (max-width: 600px) {
   .wishlist-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .wishlist-page {
+    padding: 10px;
+  }
+
+  .wishlist-page h2 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
+
+  /* Override ProductCard styles for 2-column layout */
+  .wishlist-grid .freshener-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 8px !important;
+    margin: 0 !important;
+    min-width: auto !important;
+  }
+
+  .wishlist-grid .freshener-card img {
+    height: 120px !important;
+    object-fit: contain;
+  }
+
+  .wishlist-grid .freshener-card h3 {
+    font-size: 0.7rem !important;
+    margin: 0.4rem 0 0.2rem !important;
+    line-height: 1.2;
+  }
+
+  .wishlist-grid .freshener-card p {
+    font-size: 0.65rem !important;
+    margin: 0.2rem 0 !important;
+  }
+
+  .wishlist-grid .freshener-card .price {
+    font-size: 0.75rem !important;
+    font-weight: 600;
+  }
+
+  .wishlist-grid .freshener-card .old-price {
+    font-size: 0.65rem !important;
+  }
+
+  .wishlist-grid .freshener-card .add-btn {
+    font-size: 0.6rem !important;
+    padding: 0.4rem 0.5rem !important;
+  }
+
+  .wishlist-grid .freshener-card .like-btn {
+    font-size: 0.9rem !important;
+    padding: 0.3rem 0.5rem !important;
+  }
+
+  .wishlist-delete-btn {
+    top: 3px;
+    right: 3px;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+}
+
+/* Extra small screens - even more compact */
+@media (max-width: 480px) {
+  .wishlist-grid {
+    gap: 6px;
+  }
+
+  .wishlist-page {
+    padding: 8px;
+  }
+
+  .wishlist-page h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+
+  .wishlist-grid .freshener-card {
+    padding: 6px !important;
+  }
+
+  .wishlist-grid .freshener-card img {
+    height: 100px !important;
+  }
+
+  .wishlist-grid .freshener-card h3 {
+    font-size: 0.65rem !important;
+    margin: 0.3rem 0 0.15rem !important;
+  }
+
+  .wishlist-grid .freshener-card p {
+    font-size: 0.6rem !important;
+    margin: 0.15rem 0 !important;
+  }
+
+  .wishlist-grid .freshener-card .price {
+    font-size: 0.7rem !important;
+  }
+
+  .wishlist-grid .freshener-card .old-price {
+    font-size: 0.6rem !important;
+  }
+
+  .wishlist-grid .freshener-card .add-btn {
+    font-size: 0.55rem !important;
+    padding: 0.35rem 0.4rem !important;
+  }
+
+  .wishlist-grid .freshener-card .like-btn {
+    font-size: 0.85rem !important;
+    padding: 0.25rem 0.4rem !important;
+  }
+
+  .wishlist-delete-btn {
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
   }
 }
 
 /* Delete button styling */
 .wishlist-delete-btn {
-  position: relative;
-  top: -460px;
-  right: -270px;
-  background-color: rgba(255, 255, 255, 0.9);
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: rgba(255, 255, 255, 0.95);
   border: 1px solid #ddd;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
   transition: all 0.2s ease;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .wishlist-delete-btn:hover {

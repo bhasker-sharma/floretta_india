@@ -25,18 +25,36 @@ function Footer() {
 
         {/* Newsletter */}
         <div className="footer-section newsletter">
-          <p className="newsletter-text">
-            Floretta Stay connected for exclusive offers and latest updates, delivered straight to your inbox.
+          <h3>Stay Connected</h3>
+          <p className="newsletter-description">
+            Subscribe to our newsletter for exclusive deals and updates.
           </p>
           <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
-            <input type="email" placeholder="ENTER EMAIL ADDRESS" required />
-            <button type="submit">SEND</button>
+            <div className="email-input-wrapper">
+              <input
+                type="email"
+                placeholder="Your email address"
+                className="newsletter-input"
+                required
+              />
+              <button type="submit" className="newsletter-btn">
+                Subscribe
+              </button>
+            </div>
           </form>
-          <p className="visit-us">VISIT US ON</p>
-          <div className="social-icons">
-            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-facebook"></i></a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-instagram"></i></a>
-            <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-twitter"></i></a>
+          <div className="social-section">
+            <p className="social-title">Follow Us</p>
+            <div className="social-icons">
+              <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <i className="fab fa-facebook"></i>
+              </a>
+              <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <i className="fab fa-instagram"></i>
+              </a>
+              <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <i className="fab fa-twitter"></i>
+              </a>
+            </div>
           </div>
         </div>
 
