@@ -1280,10 +1280,37 @@ function AdminDashboard() {
       // Create FormData for file upload
       const formData = new FormData();
 
+      // Required fields that must always have a value (not NULL)
+      const requiredFields = ['name', 'flag', 'price'];
+
+      // Fields that need default values when empty (DB doesn't allow NULL and has no default)
+      const fieldsWithDefaults = {
+        'about_product': 'N/A',
+        'note': 'none'  // Backend converts empty string to NULL, so use 'none'
+      };
+
       // Add all product data
       Object.entries(productFormData).forEach(([key, value]) => {
-        if (typeof value === "string" && value.trim() !== "") {
-          formData.append(key, value);
+        if (typeof value === "string") {
+          let processedValue = value;
+
+          // Remove "ml" from volume_ml field before sending (case-insensitive)
+          if (key === "volume_ml" && value) {
+            processedValue = value.replace(/ml/gi, "").trim();
+          }
+
+          // Special handling for fields that need defaults
+          if (fieldsWithDefaults.hasOwnProperty(key)) {
+            formData.append(key, processedValue && processedValue.trim() !== "" ? processedValue : fieldsWithDefaults[key]);
+          }
+          // For other required fields, always send the value
+          else if (requiredFields.includes(key)) {
+            formData.append(key, processedValue || "");
+          }
+          // For optional fields, only send if not empty (backend will set to NULL)
+          else if (processedValue && processedValue.trim() !== "") {
+            formData.append(key, processedValue);
+          }
         } else if (typeof value === "boolean") {
           // Convert boolean to 1 or 0 for Laravel validation
           formData.append(key, value ? "1" : "0");
@@ -1422,6 +1449,7 @@ function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error saving product:", error);
+      console.log("Full error response:", error.response?.data);
 
       // Handle validation errors from Laravel
       let errorMsg = "";
@@ -1435,16 +1463,75 @@ function AdminDashboard() {
           const fieldName = field
             .replace(/_/g, " ")
             .replace(/\b\w/g, (l) => l.toUpperCase());
-          errorMessages.push(`${fieldName}: ${messages[0]}`);
+          errorMessages.push(`⚠️ ${fieldName}: ${messages[0]}`);
         }
 
-        errorMsg = errorMessages.join("\n");
+        errorMsg = errorMessages.length > 1
+          ? "Please fix the following errors:\n" + errorMessages.join("\n")
+          : errorMessages[0];
       } else if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
+        const dbError = error.response.data.message;
+        console.log("DB Error message:", dbError);
+
+        // Try to extract field name from any SQL error pattern
+        let fieldName = null;
+
+        // Pattern 1: Column 'field_name' cannot be null
+        let match = dbError.match(/Column '(\w+)' cannot be null/i);
+        if (match) {
+          fieldName = match[1];
+        }
+
+        // Pattern 2: Field 'field_name' doesn't have a default value
+        if (!fieldName) {
+          match = dbError.match(/Field '(\w+)' doesn't have a default value/i);
+          if (match) fieldName = match[1];
+        }
+
+        // Pattern 3: Data too long for column 'field_name'
+        if (!fieldName) {
+          match = dbError.match(/Data too long for column '(\w+)'/i);
+          if (match) fieldName = match[1];
+        }
+
+        // Pattern 4: Any other "Column 'field_name'" or "Field 'field_name'" pattern
+        if (!fieldName) {
+          match = dbError.match(/(?:Column|Field) '(\w+)'/i);
+          if (match) fieldName = match[1];
+        }
+
+        // If we found a field name, format it nicely
+        if (fieldName) {
+          const formattedFieldName = fieldName
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase());
+
+          // Determine the error type and show appropriate message
+          if (dbError.includes("cannot be null") || dbError.includes("doesn't have a default value")) {
+            errorMsg = `⚠️ Field Required: "${formattedFieldName}" cannot be empty`;
+          } else if (dbError.includes("Data too long")) {
+            errorMsg = `⚠️ Field Error: "${formattedFieldName}" value is too long`;
+          } else if (dbError.includes("Duplicate entry")) {
+            errorMsg = `⚠️ Duplicate Error: "${formattedFieldName}" value already exists`;
+          } else {
+            errorMsg = `⚠️ Field Error: "${formattedFieldName}" has an issue`;
+          }
+        } else if (dbError.includes("Duplicate entry")) {
+          // Handle duplicate without field name
+          const dupMatch = dbError.match(/Duplicate entry '([^']+)'/);
+          if (dupMatch) {
+            errorMsg = `⚠️ Duplicate Error: The value "${dupMatch[1]}" already exists`;
+          } else {
+            errorMsg = "⚠️ Duplicate Error: This product already exists";
+          }
+        } else {
+          // Generic fallback
+          errorMsg = "⚠️ Database Error: Unable to save the product. Please check all required fields.";
+        }
       } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
+        errorMsg = "⚠️ " + error.response.data.error;
       } else {
-        errorMsg = `Failed to ${isEditMode ? "update" : "create"} product`;
+        errorMsg = `Failed to ${isEditMode ? "update" : "create"} product.\n\nPlease check all required fields are filled correctly.`;
       }
 
       setProductFormMessage("✗ " + errorMsg);
@@ -1846,16 +1933,24 @@ function AdminDashboard() {
             <span></span>
             <span></span>
           </button>
-          <h1>Dashboard</h1>
-          {activeSection === "orders" && (
-            <h2 className="admin-header-center desktop-only">
-              All Orders ({filteredOrders.length})
-            </h2>
-          )}
+          <h1>
+            {activeSection === "orders" && `Orders (${filteredOrders.length})`}
+            {activeSection === "newOrders" && "New Orders"}
+            {activeSection === "products" && "Products"}
+            {activeSection === "customers" && "Customers"}
+            {activeSection === "analytics" && "Analytics"}
+            {activeSection === "addUser" && "Add User"}
+            {activeSection === "admins" && "Admin Management"}
+            {activeSection === "enquiries" && "Enquiries"}
+            {activeSection === "settings" && "Settings"}
+            {!["orders", "newOrders", "products", "customers", "analytics", "addUser", "admins", "enquiries", "settings"].includes(activeSection) && "Dashboard"}
+          </h1>
           <div className="admin-header-right">
-            <span className="admin-user">Welcome, Admin</span>
+            <span className="admin-user">
+              Welcome, {adminInfo?.email ? adminInfo.email.split('@')[0] : 'Admin'}
+            </span>
             <img
-              src="https://ui-avatars.com/api/?name=Admin"
+              src={`https://ui-avatars.com/api/?name=${adminInfo?.email ? adminInfo.email.split('@')[0] : 'Admin'}`}
               alt="Admin Avatar"
               className="admin-avatar"
             />
@@ -2564,7 +2659,13 @@ function AdminDashboard() {
                   >
                     {/* Required Fields */}
                     <div className="form-group">
-                      <label htmlFor="product-name">Product Name *</label>
+                      <label htmlFor="product-name">
+                        Product Name *
+                        <span className="required-indicator">Required</span>
+                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          ({productFormData.name?.length || 0}/255)
+                        </span>
+                      </label>
                       <input
                         type="text"
                         id="product-name"
@@ -2572,12 +2673,16 @@ function AdminDashboard() {
                         value={productFormData.name}
                         onChange={handleProductFormChange}
                         placeholder="Enter product name"
+                        maxLength={255}
                         required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-flag">Product Type *</label>
+                      <label htmlFor="product-flag">
+                        Product Type *
+                        <span className="required-indicator">Required</span>
+                      </label>
                       <select
                         id="product-flag"
                         name="flag"
@@ -2593,7 +2698,10 @@ function AdminDashboard() {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label htmlFor="product-price">Price *</label>
+                        <label htmlFor="product-price">
+                          Price *
+                          <span className="required-indicator">Required</span>
+                        </label>
                         <input
                           type="number"
                           id="product-price"
@@ -2608,7 +2716,12 @@ function AdminDashboard() {
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor="product-volume">Volume (ml)</label>
+                        <label htmlFor="product-volume">
+                          Volume (ml)
+                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                            ({productFormData.volume_ml?.length || 0}/10)
+                          </span>
+                        </label>
                         <input
                           type="text"
                           id="product-volume"
@@ -2616,6 +2729,7 @@ function AdminDashboard() {
                           value={productFormData.volume_ml}
                           onChange={handleProductFormChange}
                           placeholder="e.g., 50ml, 100ml"
+                          maxLength={10}
                         />
                       </div>
                     </div>
@@ -2623,7 +2737,12 @@ function AdminDashboard() {
                     {/* Optional Fields */}
                     <div className="form-row">
                       <div className="form-group">
-                        <label htmlFor="product-scent">Scent</label>
+                        <label htmlFor="product-scent">
+                          Scent
+                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                            ({productFormData.scent?.length || 0}/100)
+                          </span>
+                        </label>
                         <input
                           type="text"
                           id="product-scent"
@@ -2631,6 +2750,7 @@ function AdminDashboard() {
                           value={productFormData.scent}
                           onChange={handleProductFormChange}
                           placeholder="e.g., Floral, Woody"
+                          maxLength={100}
                         />
                       </div>
 
@@ -2652,7 +2772,12 @@ function AdminDashboard() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-description">Description</label>
+                      <label htmlFor="product-description">
+                        Description
+                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          ({productFormData.Discription?.length || 0}/1000)
+                        </span>
+                      </label>
                       <textarea
                         id="product-description"
                         name="Discription"
@@ -2660,11 +2785,17 @@ function AdminDashboard() {
                         onChange={handleProductFormChange}
                         placeholder="Enter product description"
                         rows="3"
+                        maxLength={1000}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="product-about">About Product</label>
+                      <label htmlFor="product-about">
+                        About Product
+                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          ({productFormData.about_product?.length || 0}/2000)
+                        </span>
+                      </label>
                       <textarea
                         id="product-about"
                         name="about_product"
@@ -2672,6 +2803,7 @@ function AdminDashboard() {
                         onChange={handleProductFormChange}
                         placeholder="Additional information about the product"
                         rows="3"
+                        maxLength={2000}
                       />
                     </div>
 
@@ -2756,7 +2888,12 @@ function AdminDashboard() {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label htmlFor="product-brand">Brand</label>
+                        <label htmlFor="product-brand">
+                          Brand
+                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                            ({productFormData.brand?.length || 0}/100)
+                          </span>
+                        </label>
                         <input
                           type="text"
                           id="product-brand"
@@ -2764,11 +2901,17 @@ function AdminDashboard() {
                           value={productFormData.brand}
                           onChange={handleProductFormChange}
                           placeholder="Enter brand name"
+                          maxLength={100}
                         />
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor="product-colour">Colour</label>
+                        <label htmlFor="product-colour">
+                          Colour
+                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                            ({productFormData.colour?.length || 0}/50)
+                          </span>
+                        </label>
                         <input
                           type="text"
                           id="product-colour"
@@ -2776,6 +2919,7 @@ function AdminDashboard() {
                           value={productFormData.colour}
                           onChange={handleProductFormChange}
                           placeholder="Enter colour"
+                          maxLength={50}
                         />
                       </div>
                     </div>
