@@ -54,8 +54,15 @@
 }
 
 .action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.action-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
@@ -67,20 +74,32 @@
   color: #c06;
   cursor: pointer;
   font-size: 14px;
+  width: 100%;
 }
 
 .settings-list {
   margin-top: 15px;
   list-style: none;
   padding: 0;
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.settings-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .settings-list li {
   border: 1px solid #c06;
   padding: 10px;
   border-radius: 4px;
-  margin-bottom: 10px;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
 }
 
 /* -------------------------------------------------------------------- */
@@ -115,10 +134,11 @@
 }
 
 .modal-form input {
-  padding: 0.6rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #ccc;
   border-radius: 0.5rem;
   width: 100%;
+  font-size: 14px;
 }
 
 .submit-btn {
@@ -296,7 +316,11 @@
   }
 
   .action-grid {
-    grid-template-columns: 1fr;
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
+  .action-column {
     gap: 0.5rem;
   }
 
@@ -311,17 +335,29 @@
   }
 
   .modal-form {
-    padding: 1.5rem;
+    padding: 1rem;
     width: 95%;
+    max-width: 600px;
   }
 
   .modal-form h2 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .modal-form input {
-    padding: 0.5rem;
-    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  /* 2-column grid for form fields on tablet/medium screens */
+  .modal-form > div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .modal-form > div > input {
+    width: 100%;
   }
 
   .submit-btn,
@@ -437,6 +473,15 @@
     font-size: 0.95rem;
   }
 
+  .action-grid {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .action-column {
+    gap: 0.4rem;
+  }
+
   .action-grid button {
     padding: 0.6rem;
     font-size: 0.85rem;
@@ -448,16 +493,27 @@
   }
 
   .modal-form {
-    padding: 1.25rem;
+    padding: 0.75rem;
   }
 
   .modal-form h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .modal-form input {
-    padding: 0.45rem;
-    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* 2-column grid for form fields on small mobile screens */
+  .modal-form > div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .modal-form > div > input {
+    width: 100%;
   }
 
   .submit-btn,

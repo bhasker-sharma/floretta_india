@@ -134,6 +134,9 @@
 .amazon-main-image-section {
   position: relative;
   flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .amazon-main-image-container {
@@ -148,6 +151,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .amazon-main-image {
@@ -160,7 +164,7 @@
 /* Image Navigation Arrows */
 .amazon-image-nav {
   position: absolute;
-  top: 50%;
+  top: 250px;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid #ddd;
@@ -183,11 +187,11 @@
 }
 
 .amazon-image-nav-left {
-  left: 10px;
+  left: 0;
 }
 
 .amazon-image-nav-right {
-  right: 10px;
+  right: 0;
 }
 
 /* Zoom Lens (Optional Visual Indicator) */

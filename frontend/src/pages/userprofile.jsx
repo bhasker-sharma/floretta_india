@@ -519,18 +519,26 @@ function UserProfile() {
 
         <div className="right-panel">
           <div className="action-grid">
-            <button onClick={() => setShowOrders(true)}>🛍️ Orders</button>
-            <button onClick={() => navigate("/wishlist")}>❤️ Wishlist</button>
-            <button>🏷️ Coupons</button>
-            <button>🆘 Help Centre</button>
+            <div className="action-column">
+              <button onClick={() => setShowOrders(true)}>🛍️ Orders</button>
+              <button onClick={() => navigate("/wishlist")}>❤️ Wishlist</button>
+            </div>
+            <div className="action-column">
+              <button>🏷️ Coupons</button>
+              <button>🆘 Help Centre</button>
+            </div>
           </div>
 
           <h4>Account Settings</h4>
           <ul className="settings-list">
-            <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
-            <li onClick={handleLogout} className="logout-btn">
-              🚪 Logout
-            </li>
+            <div className="settings-column">
+              <li onClick={() => setEditMode(true)}>👤 Edit Profile</li>
+            </div>
+            <div className="settings-column">
+              <li onClick={handleLogout} className="logout-btn">
+                🚪 Logout
+              </li>
+            </div>
           </ul>
         </div>
       </div>

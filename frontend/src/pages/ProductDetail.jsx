@@ -372,9 +372,9 @@ const ProductDetail = () => {
         <div className="amazon-breadcrumb">
           <span onClick={() => navigate("/")}>Home</span>
           <span className="separator">›</span>
-          <span onClick={() => navigate("/products")}>Products</span>
+          <span onClick={() => navigate("/product")}>Products</span>
           <span className="separator">›</span>
-          <span className="current">{product.category || "Product"}</span>
+          <span className="current">{product.name || "Product"}</span>
         </div>
 
         <div className="amazon-product-container">

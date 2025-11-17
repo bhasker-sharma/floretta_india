@@ -8,6 +8,7 @@ import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Footer from '../components/footer';
 import Rfreshner from '../components/rfreshner';
+import '../styles/products.css';
 
 // Static slider images (make sure these exist in /public/slider/)
 const staticSliderImages = [
@@ -96,16 +97,16 @@ const Product = () => {
 
       <Rfreshner />
 
-      <div className="why-floretta">
+      {/* <div className="why-floretta">
         <h2 className="why-heading">WHY FLORETTA PERFUMES ARE BETTER</h2>
-        <div className="why-content">
-          <div className="why-box">
+        <div className="why-content"> */}
+          {/* <div className="why-box">
             <p className="why-small">UPTO</p>
             <h1 className="why-big">30%</h1>
             <p className="why-label">PERFUME OIL CONCENTRATION</p>
-          </div>
+          </div> */}
 
-          <div className="why-box">
+          {/* <div className="why-box">
             <div className="clock-icon">
               <svg width="70" height="70" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="#a23b45" strokeWidth="2" />
@@ -115,18 +116,18 @@ const Product = () => {
               <div className="clock-label">24 Hrs</div>
             </div>
             <p className="why-label">LONG LASTING</p>
-          </div>
+          </div> */}
 
-          <div className="why-box">
+          {/* <div className="why-box"> */}
             {/* <img
               src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"
               alt="Indian Flag"
               className="india-flags"
             /> */}
-            <p className="why-label">MADE IN INDIA</p>
-          </div>
-        </div>
-      </div>
+            {/* <p className="why-label">MADE IN INDIA</p> */}
+          {/* </div> */}
+        {/* </div>
+      </div> */}
 
       <Footer />
     </>

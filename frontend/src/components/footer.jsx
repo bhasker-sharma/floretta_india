@@ -42,20 +42,6 @@ function Footer() {
               </button>
             </div>
           </form>
-          <div className="social-section">
-            <p className="social-title">Follow Us</p>
-            <div className="social-icons">
-              <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                <i className="fab fa-facebook"></i>
-              </a>
-              <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <i className="fab fa-instagram"></i>
-              </a>
-              <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-                <i className="fab fa-twitter"></i>
-              </a>
-            </div>
-          </div>
         </div>
 
         {/* Support */}
@@ -67,6 +53,22 @@ function Footer() {
             <li><a href="/refund-policy">Refund & Return Policy</a></li>
             <li><a href="/terms-and-conditions">Terms & Conditions</a></li>
           </ul>
+        </div>
+
+        {/* Social Section - Full Width Bottom */}
+        <div className="social-section">
+          <p className="social-title">Follow Us</p>
+          <div className="social-icons">
+            <a href="https://facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <i className="fab fa-facebook"></i>
+            </a>
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <i className="fab fa-instagram"></i>
+            </a>
+            <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <i className="fab fa-twitter"></i>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

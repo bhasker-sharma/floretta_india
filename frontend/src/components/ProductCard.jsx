@@ -109,8 +109,19 @@ const ProductCard = ({ item, onClick }) => {
     <div
       className="freshener-card"
       onClick={onClick}
-      style={{ cursor: onClick ? "pointer" : "default" }}
+      style={{ cursor: onClick ? "pointer" : "default", position: "relative" }}
     >
+      {/* Wishlist button for small/medium screens - bottom right */}
+      <div className="card-actions-bottom-right">
+        <button
+          className={`like-btn ${liked ? "liked" : ""}`}
+          onClick={handleLikeProduct}
+          title="Add to Wishlist"
+        >
+          {liked ? "❤️" : "🤍"}
+        </button>
+      </div>
+
       <img
         loading="lazy"
         className="hover-fade-img"
@@ -149,13 +160,15 @@ const ProductCard = ({ item, onClick }) => {
         )}
       </p>
 
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+      {/* Add to Cart + Wishlist for large screens - bottom inline */}
+      <div className="card-bottom-actions">
         <button
-          className={`add-btn ${added ? "added" : ""}`}
+          className={`add-to-cart-icon-btn ${added ? "added" : ""}`}
           onClick={handleAddToCart}
           disabled={added || loading}
+          title={added ? "Added to Cart" : "Add to Cart"}
         >
-          {added ? "✔ ADDED TO CART" : loading ? "ADDING..." : "ADD TO CART"}
+          {added ? "Added" : loading ? "..." : "Add to Cart"}
         </button>
 
         <button
