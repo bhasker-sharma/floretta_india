@@ -20,6 +20,8 @@ class Product extends Model
         'original_price',
         'discount_amount',
         'is_discount_active',
+        'is_bestseller',
+        'bestseller_order',
         'delivery_charge',
         'available_quantity',
         'rating',
@@ -48,6 +50,7 @@ class Product extends Model
     protected $casts = [
         'extra_images' => 'array',
         'is_discount_active' => 'boolean',
+        'is_bestseller' => 'boolean',
         'launch_date' => 'date',
     ];
 

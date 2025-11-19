@@ -143,7 +143,43 @@ function AdminDashboard() {
   const [productFormMessage, setProductFormMessage] = useState("");
   const [editingProduct, setEditingProduct] = useState(null); // Track which product is being edited
   const [isEditMode, setIsEditMode] = useState(false); // Track if we're in edit mode
-  const [productView, setProductView] = useState("list"); // "list" or "add" - toggle between product list and add form
+  const [productView, setProductView] = useState("list"); // "list", "add", or "bestsellers"
+  const [bestsellers, setBestsellers] = useState([]); // Bestseller products
+  const [bestsellerMessage, setBestsellerMessage] = useState("");
+
+  // Sliders state
+  const [allSliders, setAllSliders] = useState([]);
+  const [slidersLoading, setSlidersLoading] = useState(false);
+  const [selectedSliderPage, setSelectedSliderPage] = useState("home");
+  const [sliderUploadFile, setSliderUploadFile] = useState(null);
+  const [sliderUploadLoading, setSliderUploadLoading] = useState(false);
+  const [sliderMessage, setSliderMessage] = useState("");
+
+  // Uproducts state
+  const [uproducts, setUproducts] = useState([]);
+  const [uproductsLoading, setUproductsLoading] = useState(false);
+  const [uproductImageFile, setUproductImageFile] = useState(null);
+  const [uproductHoverImageFile, setUproductHoverImageFile] = useState(null);
+  const [uproductUploadLoading, setUproductUploadLoading] = useState(false);
+  const [uproductMessage, setUproductMessage] = useState("");
+  const [isEditingUproduct, setIsEditingUproduct] = useState(false);
+  const [editingUproductId, setEditingUproductId] = useState(null);
+
+  // How It Works state
+  const [howItWorks, setHowItWorks] = useState([]);
+  const [howItWorksLoading, setHowItWorksLoading] = useState(false);
+  const [howItWorksFormData, setHowItWorksFormData] = useState({
+    id: null,
+    title: "",
+    subtitle: "",
+    image: null,
+  });
+  const [howItWorksUploadLoading, setHowItWorksUploadLoading] = useState(false);
+  const [howItWorksMessage, setHowItWorksMessage] = useState("");
+  const [isEditingHowItWorks, setIsEditingHowItWorks] = useState(false);
+
+  // Settings view state (slider, ourproducts, howitworks)
+  const [settingsView, setSettingsView] = useState("slider");
 
   // Load admin info from localStorage
   useEffect(() => {
@@ -324,6 +360,13 @@ function AdminDashboard() {
     fetchProducts();
   }, [activeSection]);
 
+  // Fetch bestsellers when bestsellers view is active
+  useEffect(() => {
+    if (productView === "bestsellers") {
+      fetchBestsellers();
+    }
+  }, [productView]);
+
   // Fetch enquiries when enquiries section is active
   useEffect(() => {
     const fetchEnquiries = async () => {
@@ -387,6 +430,15 @@ function AdminDashboard() {
 
     fetchEnquiries();
   }, [activeSection, enquiryFilters]);
+
+  // Fetch sliders, uproducts, and how_it_works when settings section is active
+  useEffect(() => {
+    if (activeSection === "settings") {
+      fetchSliders();
+      fetchUproducts();
+      fetchHowItWorks();
+    }
+  }, [activeSection]);
 
   // Helper to update enquiry filters
   const updateEnquiryFilter = (key, value) => {
@@ -1081,6 +1133,476 @@ function AdminDashboard() {
     }
   };
 
+  // Fetch all sliders
+  const fetchSliders = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      setSlidersLoading(true);
+      const response = await axios.get(API_ENDPOINTS.ADMIN_SLIDERS, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setAllSliders(response.data.sliders);
+      }
+    } catch (error) {
+      console.error("Error fetching sliders:", error);
+      setSliderMessage("✗ Failed to fetch sliders");
+      setTimeout(() => setSliderMessage(""), 5000);
+    } finally {
+      setSlidersLoading(false);
+    }
+  };
+
+  // Handle slider image upload
+  const handleSliderUpload = async (e) => {
+    e.preventDefault();
+
+    if (!sliderUploadFile) {
+      setSliderMessage("✗ Please select an image file");
+      setTimeout(() => setSliderMessage(""), 5000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      setSliderUploadLoading(true);
+      setSliderMessage("");
+
+      const formData = new FormData();
+      formData.append("page", selectedSliderPage);
+      formData.append("image", sliderUploadFile);
+
+      // Debug: Log what we're sending
+      console.log("Uploading slider:");
+      console.log("- Page:", selectedSliderPage);
+      console.log("- File:", sliderUploadFile);
+      console.log("- File name:", sliderUploadFile?.name);
+      console.log("- File size:", sliderUploadFile?.size);
+      console.log("- File type:", sliderUploadFile?.type);
+
+      const response = await axios.post(
+        API_ENDPOINTS.ADMIN_SLIDERS_UPLOAD,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSliderMessage("✓ Slider uploaded successfully!");
+        setSliderUploadFile(null);
+        // Reset file input
+        const fileInput = document.getElementById("slider-upload-input");
+        if (fileInput) fileInput.value = "";
+        // Refresh sliders
+        fetchSliders();
+        setTimeout(() => setSliderMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error uploading slider:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Validation errors:", error.response?.data?.errors);
+
+      let errorMsg = "Failed to upload slider";
+
+      // Handle validation errors
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        console.error("Detailed errors:", errors);
+        // Log each error field individually
+        Object.keys(errors).forEach(field => {
+          console.error(`Field '${field}':`, errors[field]);
+        });
+        errorMsg = Object.values(errors).flat().join(", ");
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      }
+
+      setSliderMessage("✗ " + errorMsg);
+      setTimeout(() => setSliderMessage(""), 10000);
+    } finally {
+      setSliderUploadLoading(false);
+    }
+  };
+
+  // Handle slider deletion
+  const handleDeleteSlider = async (sliderId, sliderPage) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this slider from ${sliderPage} page?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_SLIDERS_DELETE(sliderId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSliderMessage("✓ Slider deleted successfully!");
+        fetchSliders();
+        setTimeout(() => setSliderMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error deleting slider:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to delete slider";
+      setSliderMessage("✗ " + errorMsg);
+      setTimeout(() => setSliderMessage(""), 5000);
+    }
+  };
+
+  // Handle slider reordering (move up/down)
+  const handleReorderSlider = async (page, currentIndex, direction) => {
+    const pageSliders = allSliders.filter((s) => s.page === page);
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Validate bounds
+    if (newIndex < 0 || newIndex >= pageSliders.length) return;
+
+    // Create new order array by swapping positions
+    const reorderedSliders = [...pageSliders];
+    [reorderedSliders[currentIndex], reorderedSliders[newIndex]] =
+      [reorderedSliders[newIndex], reorderedSliders[currentIndex]];
+
+    // Extract slider IDs in new order
+    const sliderIds = reorderedSliders.map(slider => slider.id);
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.post(
+        API_ENDPOINTS.ADMIN_SLIDERS_REORDER,
+        {
+          page: page,
+          slider_ids: sliderIds
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSliderMessage("✓ Slider order updated successfully!");
+        fetchSliders();
+        setTimeout(() => setSliderMessage(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error reordering slider:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to reorder slider";
+      setSliderMessage("✗ " + errorMsg);
+      setTimeout(() => setSliderMessage(""), 5000);
+    }
+  };
+
+  // Fetch all uproducts
+  const fetchUproducts = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      setUproductsLoading(true);
+      const response = await axios.get(API_ENDPOINTS.ADMIN_UPRODUCTS, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setUproducts(response.data.uproducts);
+      }
+    } catch (error) {
+      console.error("Error fetching uproducts:", error);
+      setUproductMessage("✗ Failed to fetch uproducts");
+      setTimeout(() => setUproductMessage(""), 5000);
+    } finally {
+      setUproductsLoading(false);
+    }
+  };
+
+  // Handle uproduct upload/update
+  const handleUproductUpload = async (e) => {
+    e.preventDefault();
+
+    if (!isEditingUproduct && !uproductImageFile) {
+      setUproductMessage("✗ Please select a main image");
+      setTimeout(() => setUproductMessage(""), 5000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      setUproductUploadLoading(true);
+      setUproductMessage("");
+
+      const formData = new FormData();
+      if (uproductImageFile) {
+        formData.append("image", uproductImageFile);
+      }
+      if (uproductHoverImageFile) {
+        formData.append("hover_image", uproductHoverImageFile);
+      }
+
+      const url = isEditingUproduct
+        ? API_ENDPOINTS.ADMIN_UPRODUCTS_UPDATE(editingUproductId)
+        : API_ENDPOINTS.ADMIN_UPRODUCTS_UPLOAD;
+
+      const response = await axios.post(url, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setUproductMessage(
+          `✓ Uproduct ${isEditingUproduct ? "updated" : "uploaded"} successfully!`
+        );
+        setUproductImageFile(null);
+        setUproductHoverImageFile(null);
+        setIsEditingUproduct(false);
+        setEditingUproductId(null);
+        // Reset file inputs
+        const imageInput = document.getElementById("uproduct-image-input");
+        const hoverInput = document.getElementById("uproduct-hover-image-input");
+        if (imageInput) imageInput.value = "";
+        if (hoverInput) hoverInput.value = "";
+        fetchUproducts();
+        setTimeout(() => setUproductMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error saving uproduct:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        `Failed to ${isEditingUproduct ? "update" : "upload"} uproduct`;
+      setUproductMessage("✗ " + errorMsg);
+      setTimeout(() => setUproductMessage(""), 5000);
+    } finally {
+      setUproductUploadLoading(false);
+    }
+  };
+
+  // Handle editing uproduct
+  const handleEditUproduct = (uproduct) => {
+    setIsEditingUproduct(true);
+    setEditingUproductId(uproduct.id);
+    setUproductImageFile(null);
+    setUproductHoverImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Cancel editing uproduct
+  const handleCancelEditUproduct = () => {
+    setIsEditingUproduct(false);
+    setEditingUproductId(null);
+    setUproductImageFile(null);
+    setUproductHoverImageFile(null);
+    const imageInput = document.getElementById("uproduct-image-input");
+    const hoverInput = document.getElementById("uproduct-hover-image-input");
+    if (imageInput) imageInput.value = "";
+    if (hoverInput) hoverInput.value = "";
+  };
+
+  // Handle uproduct deletion
+  const handleDeleteUproduct = async (uproductId) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this product image?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_UPRODUCTS_DELETE(uproductId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setUproductMessage("✓ Uproduct deleted successfully!");
+        fetchUproducts();
+        setTimeout(() => setUproductMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error deleting uproduct:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to delete uproduct";
+      setUproductMessage("✗ " + errorMsg);
+      setTimeout(() => setUproductMessage(""), 5000);
+    }
+  };
+
+  // Fetch all how_it_works items
+  const fetchHowItWorks = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      setHowItWorksLoading(true);
+      const response = await axios.get(API_ENDPOINTS.ADMIN_HOW_IT_WORKS, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setHowItWorks(response.data.items);
+      }
+    } catch (error) {
+      console.error("Error fetching how it works:", error);
+      setHowItWorksMessage("✗ Failed to fetch how it works items");
+      setTimeout(() => setHowItWorksMessage(""), 5000);
+    } finally {
+      setHowItWorksLoading(false);
+    }
+  };
+
+  // Handle how_it_works form submission
+  const handleHowItWorksSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!howItWorksFormData.title || !howItWorksFormData.subtitle) {
+      setHowItWorksMessage("✗ Please fill in all fields");
+      setTimeout(() => setHowItWorksMessage(""), 5000);
+      return;
+    }
+
+    if (!isEditingHowItWorks && !howItWorksFormData.image) {
+      setHowItWorksMessage("✗ Please select an image");
+      setTimeout(() => setHowItWorksMessage(""), 5000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      setHowItWorksUploadLoading(true);
+      setHowItWorksMessage("");
+
+      const formData = new FormData();
+      formData.append("title", howItWorksFormData.title);
+      formData.append("subtitle", howItWorksFormData.subtitle);
+      if (howItWorksFormData.image) {
+        formData.append("image", howItWorksFormData.image);
+      }
+
+      const url = isEditingHowItWorks
+        ? API_ENDPOINTS.ADMIN_HOW_IT_WORKS_UPDATE(howItWorksFormData.id)
+        : API_ENDPOINTS.ADMIN_HOW_IT_WORKS_CREATE;
+
+      const response = await axios.post(url, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setHowItWorksMessage(
+          `✓ How It Works item ${isEditingHowItWorks ? "updated" : "created"} successfully!`
+        );
+        setHowItWorksFormData({
+          id: null,
+          title: "",
+          subtitle: "",
+          image: null,
+        });
+        setIsEditingHowItWorks(false);
+        document.getElementById("how-it-works-image-input").value = "";
+        fetchHowItWorks();
+        setTimeout(() => setHowItWorksMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error saving how it works:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to save item";
+      setHowItWorksMessage("✗ " + errorMsg);
+      setTimeout(() => setHowItWorksMessage(""), 5000);
+    } finally {
+      setHowItWorksUploadLoading(false);
+    }
+  };
+
+  // Handle editing how_it_works item
+  const handleEditHowItWorks = (item) => {
+    setHowItWorksFormData({
+      id: item.id,
+      title: item.title,
+      subtitle: item.subtitle,
+      image: null,
+    });
+    setIsEditingHowItWorks(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Handle deleting how_it_works item
+  const handleDeleteHowItWorks = async (itemId) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this How It Works item?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_HOW_IT_WORKS_DELETE(itemId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setHowItWorksMessage("✓ How It Works item deleted successfully!");
+        fetchHowItWorks();
+        setTimeout(() => setHowItWorksMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error deleting how it works:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to delete item";
+      setHowItWorksMessage("✗ " + errorMsg);
+      setTimeout(() => setHowItWorksMessage(""), 5000);
+    }
+  };
+
+  // Cancel editing how_it_works
+  const handleCancelEditHowItWorks = () => {
+    setHowItWorksFormData({
+      id: null,
+      title: "",
+      subtitle: "",
+      image: null,
+    });
+    setIsEditingHowItWorks(false);
+    document.getElementById("how-it-works-image-input").value = "";
+  };
+
   // Handle viewing user details
   const handleViewUser = (user) => {
     setSelectedUser(user);
@@ -1629,7 +2151,7 @@ function AdminDashboard() {
   };
 
   // Handle deleting a product
-  const handleDeleteProduct = async (productId, productName) => {
+  const handleDeleteProduct = async (productId, productName, sourceTable = null) => {
     const confirmDelete = window.confirm(
       `Are you sure you want to delete product: ${productName}?\n\nThis action cannot be undone.`
     );
@@ -1638,14 +2160,18 @@ function AdminDashboard() {
 
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await axios.delete(
-        API_ENDPOINTS.ADMIN_PRODUCT_DELETE(productId),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+
+      // Build URL with query parameter for source_table
+      let deleteUrl = API_ENDPOINTS.ADMIN_PRODUCT_DELETE(productId);
+      if (sourceTable) {
+        deleteUrl += `?source_table=${sourceTable}`;
+      }
+
+      const response = await axios.delete(deleteUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
         setProductFormMessage("✓ Product deleted successfully!");
@@ -1669,6 +2195,135 @@ function AdminDashboard() {
         error.response?.data?.error ||
         "Failed to delete product";
       setProductFormMessage("✗ " + errorMsg);
+    }
+  };
+
+  // Handle toggling bestseller status
+  const handleToggleBestseller = async (productId, currentStatus) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const newStatus = !currentStatus; // Toggle boolean value
+
+      console.log('Toggling bestseller for product', productId, 'from', currentStatus, 'to', newStatus);
+
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_PRODUCT_UPDATE(productId),
+        { is_bestseller: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Bestseller update response:', response.data);
+
+      if (response.data.success) {
+        setProductFormMessage(
+          newStatus ? "✓ Product marked as bestseller!" : "✓ Removed from bestsellers!"
+        );
+
+        // Refresh products list
+        const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (productsResponse.data.success) {
+          setAllProducts(productsResponse.data.products);
+        }
+
+        // Also refresh bestsellers if on bestsellers view
+        if (productView === "bestsellers") {
+          fetchBestsellers();
+        }
+
+        setTimeout(() => setProductFormMessage(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error updating bestseller status:", error);
+      console.error("Error response:", error.response?.data);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to update bestseller status";
+      setProductFormMessage("✗ " + errorMsg);
+      setTimeout(() => setProductFormMessage(""), 5000);
+    }
+  };
+
+  // Fetch bestsellers for management
+  const fetchBestsellers = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        const bestsellerProducts = response.data.products
+          .filter(p => p.is_bestseller)
+          .sort((a, b) => (a.bestseller_order || 999) - (b.bestseller_order || 999));
+
+        setBestsellers(bestsellerProducts);
+      }
+    } catch (error) {
+      console.error("Error fetching bestsellers:", error);
+    }
+  };
+
+  // Move item up in the list
+  const handleMoveUp = (index) => {
+    if (index === 0) return; // Already at top
+
+    const items = Array.from(bestsellers);
+    // Swap with previous item
+    [items[index - 1], items[index]] = [items[index], items[index - 1]];
+    setBestsellers(items);
+  };
+
+  // Move item down in the list
+  const handleMoveDown = (index) => {
+    if (index === bestsellers.length - 1) return; // Already at bottom
+
+    const items = Array.from(bestsellers);
+    // Swap with next item
+    [items[index], items[index + 1]] = [items[index + 1], items[index]];
+    setBestsellers(items);
+  };
+
+  // Save bestseller order
+  const saveBestsellerOrder = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+
+      const bestsellerData = bestsellers.map((product, index) => ({
+        id: product.id,
+        order: index
+      }));
+
+      const response = await axios.post(
+        API_ENDPOINTS.ADMIN_BESTSELLERS_REORDER,
+        { bestsellers: bestsellerData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setBestsellerMessage("✓ Bestseller order saved successfully!");
+        setTimeout(() => setBestsellerMessage(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error saving bestseller order:", error);
+      setBestsellerMessage("✗ Failed to save bestseller order");
+      setTimeout(() => setBestsellerMessage(""), 5000);
     }
   };
 
@@ -2607,6 +3262,14 @@ function AdminDashboard() {
                 >
                   <i className="fas fa-list"></i> All Products
                 </button>
+                <button
+                  className={`toggle-btn ${
+                    productView === "bestsellers" ? "active" : ""
+                  }`}
+                  onClick={() => setProductView("bestsellers")}
+                >
+                  <i className="fas fa-star"></i> Manage Bestsellers
+                </button>
               </div>
             </div>
 
@@ -2883,6 +3546,18 @@ function AdminDashboard() {
                           onChange={handleProductFormChange}
                         />
                         <span>Discount Active</span>
+                      </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          name="is_bestseller"
+                          checked={productFormData.is_bestseller}
+                          onChange={handleProductFormChange}
+                        />
+                        <span>Mark as Bestseller</span>
                       </label>
                     </div>
 
@@ -3190,8 +3865,7 @@ function AdminDashboard() {
                                     src={product.all_images[0].url}
                                     alt={product.name}
                                     onError={(e) => {
-                                      e.target.src =
-                                        "https://via.placeholder.com/150x150?text=No+Image";
+                                      e.target.src = "/fallback.jpg";
                                     }}
                                   />
                                 ) : (
@@ -3267,6 +3941,22 @@ function AdminDashboard() {
                                   </span>
                                 )}
 
+                                <div className="product-bestseller-toggle">
+                                  <label className="toggle-label">
+                                    <span className="toggle-text">
+                                      <i className="fas fa-star"></i> Bestseller
+                                    </span>
+                                    <div className="toggle-switch">
+                                      <input
+                                        type="checkbox"
+                                        checked={product.is_bestseller || false}
+                                        onChange={() => handleToggleBestseller(product.id, product.is_bestseller)}
+                                      />
+                                      <span className="toggle-slider"></span>
+                                    </div>
+                                  </label>
+                                </div>
+
                                 <div className="product-actions">
                                   <button
                                     className="product-edit-btn"
@@ -3285,7 +3975,8 @@ function AdminDashboard() {
                                     onClick={() =>
                                       handleDeleteProduct(
                                         product.id,
-                                        product.name
+                                        product.name,
+                                        product.source_table
                                       )
                                     }
                                     title="Delete product"
@@ -3305,6 +3996,135 @@ function AdminDashboard() {
                           </li>
                         ))}
                       </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Bestseller Management */}
+              {productView === "bestsellers" && (
+                <div className="settings-card admin-list">
+                  <h3>
+                    <i className="fas fa-star"></i> Manage Bestsellers
+                  </h3>
+                  <p className="settings-description">
+                    Use the up/down arrows to reorder bestseller products. Position #1 will appear as the featured product on the homepage, and positions #2-5 will appear in the bestseller grid.
+                  </p>
+
+                  {bestsellerMessage && (
+                    <div className="success-message" style={{ marginBottom: "20px" }}>
+                      {bestsellerMessage}
+                    </div>
+                  )}
+
+                  <div className="bestseller-management">
+                    {bestsellers.length === 0 ? (
+                      <div className="no-bestsellers">
+                        <i className="fas fa-star" style={{ fontSize: "48px", color: "#ccc", marginBottom: "10px" }}></i>
+                        <p>No bestseller products yet</p>
+                        <p style={{ fontSize: "14px", color: "#666" }}>
+                          Go to "All Products" and toggle the bestseller switch to add products
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="bestseller-list">
+                          {bestsellers.map((product, index) => (
+                            <div
+                              key={product.id}
+                              className="bestseller-item"
+                            >
+                              <div className="bestseller-order-controls">
+                                <button
+                                  className="order-btn order-btn-up"
+                                  onClick={() => handleMoveUp(index)}
+                                  disabled={index === 0}
+                                  title="Move up"
+                                >
+                                  <i className="fas fa-chevron-up"></i>
+                                </button>
+                                <span className="order-number">#{index + 1}</span>
+                                <button
+                                  className="order-btn order-btn-down"
+                                  onClick={() => handleMoveDown(index)}
+                                  disabled={index === bestsellers.length - 1}
+                                  title="Move down"
+                                >
+                                  <i className="fas fa-chevron-down"></i>
+                                </button>
+                              </div>
+
+                              <div className="bestseller-position">
+                                <span className={`position-badge ${index === 0 ? 'featured' : index < 5 ? 'grid' : 'extra'}`}>
+                                  {index === 0 ? (
+                                    <>
+                                      <i className="fas fa-crown"></i> Featured
+                                    </>
+                                  ) : index < 5 ? (
+                                    <>
+                                      <i className="fas fa-th"></i> Grid #{index}
+                                    </>
+                                  ) : (
+                                    <>Extra #{index + 1}</>
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="bestseller-image">
+                                {product.all_images && product.all_images.length > 0 ? (
+                                  <img
+                                    src={product.all_images[0].url}
+                                    alt={product.name}
+                                    onError={(e) => {
+                                      e.target.src = "/fallback.jpg";
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="no-image-small">
+                                    <i className="fas fa-image"></i>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="bestseller-info">
+                                <h4>{product.name}</h4>
+                                <div className="bestseller-meta">
+                                  <span className="bestseller-price">
+                                    <i className="fas fa-tag"></i> ₹{product.price}
+                                  </span>
+                                  {product.volume_ml && (
+                                    <span className="bestseller-volume">
+                                      <i className="fas fa-flask"></i> {product.volume_ml}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="bestseller-actions">
+                                <button
+                                  className="bestseller-remove-btn"
+                                  onClick={() => handleToggleBestseller(product.id, true)}
+                                  title="Remove from bestsellers"
+                                >
+                                  <i className="fas fa-times"></i>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="bestseller-save-section">
+                          <button
+                            className="btn-primary save-order-btn"
+                            onClick={saveBestsellerOrder}
+                          >
+                            <i className="fas fa-save"></i> Save Order
+                          </button>
+                          <p className="save-hint">
+                            <i className="fas fa-info-circle"></i> Remember to save after reordering
+                          </p>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -3861,6 +4681,784 @@ function AdminDashboard() {
                   </p>
                 </div>
               </div>
+
+              {/* Settings Navigation Buttons */}
+              <div className="settings-card">
+                <h3>Manage Content</h3>
+                <p className="settings-description">
+                  Select a section to manage images and content for your website.
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "15px",
+                    marginTop: "20px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    onClick={() => setSettingsView("slider")}
+                    style={{
+                      flex: 1,
+                      minWidth: "150px",
+                      padding: "15px 20px",
+                      background: settingsView === "slider" ? "#232946" : "#f8f9fa",
+                      color: settingsView === "slider" ? "white" : "#232946",
+                      border: settingsView === "slider" ? "2px solid #232946" : "2px solid #ddd",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <i className="fas fa-images"></i> Sliders
+                  </button>
+                  <button
+                    onClick={() => setSettingsView("ourproducts")}
+                    style={{
+                      flex: 1,
+                      minWidth: "150px",
+                      padding: "15px 20px",
+                      background: settingsView === "ourproducts" ? "#232946" : "#f8f9fa",
+                      color: settingsView === "ourproducts" ? "white" : "#232946",
+                      border: settingsView === "ourproducts" ? "2px solid #232946" : "2px solid #ddd",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <i className="fas fa-box-open"></i> Our Products
+                  </button>
+                  <button
+                    onClick={() => setSettingsView("howitworks")}
+                    style={{
+                      flex: 1,
+                      minWidth: "150px",
+                      padding: "15px 20px",
+                      background: settingsView === "howitworks" ? "#232946" : "#f8f9fa",
+                      color: settingsView === "howitworks" ? "white" : "#232946",
+                      border: settingsView === "howitworks" ? "2px solid #232946" : "2px solid #ddd",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <i className="fas fa-lightbulb"></i> How It Works
+                  </button>
+                </div>
+              </div>
+
+              {/* Slider Management */}
+              {settingsView === "slider" && (
+              <div className="settings-card">
+                <h3>Slider Management</h3>
+                <p className="settings-description">
+                  Upload and manage slider images for different pages of your website.
+                </p>
+
+                {/* Upload Form */}
+                <form onSubmit={handleSliderUpload} style={{ marginBottom: "30px" }}>
+                  <div className="form-group">
+                    <label htmlFor="slider-page">Select Page</label>
+                    <select
+                      id="slider-page"
+                      value={selectedSliderPage}
+                      onChange={(e) => setSelectedSliderPage(e.target.value)}
+                      style={{
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                        width: "100%",
+                        marginBottom: "15px",
+                      }}
+                    >
+                      <option value="home">Home</option>
+                      <option value="products">Products</option>
+                      <option value="liveperfume">Live Perfume Bar</option>
+                      <option value="hotelamenities">Hotel Amenities</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="slider-upload-input">Upload Slider Image</label>
+                    <input
+                      type="file"
+                      id="slider-upload-input"
+                      accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                      onChange={(e) => setSliderUploadFile(e.target.files[0])}
+                      style={{
+                        padding: "10px",
+                        borderRadius: "5px",
+                        border: "1px solid #ccc",
+                        width: "100%",
+                        marginBottom: "15px",
+                      }}
+                    />
+                    {sliderUploadFile && (
+                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
+                        Selected: {sliderUploadFile.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {sliderMessage && (
+                    <div
+                      className={`form-message ${
+                        sliderMessage.startsWith("✓") ? "success" : "error"
+                      }`}
+                      style={{ marginBottom: "15px" }}
+                    >
+                      {sliderMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-create-admin"
+                    disabled={sliderUploadLoading || !sliderUploadFile}
+                    style={{
+                      opacity: sliderUploadLoading || !sliderUploadFile ? 0.6 : 1,
+                      cursor: sliderUploadLoading || !sliderUploadFile ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {sliderUploadLoading ? "Uploading..." : "Upload Slider"}
+                  </button>
+                </form>
+
+                {/* Sliders List */}
+                <div className="sliders-list">
+                  <h4>Existing Sliders</h4>
+                  {slidersLoading ? (
+                    <p>Loading sliders...</p>
+                  ) : (
+                    <div>
+                      {["home", "products", "liveperfume", "hotelamenities"].map(
+                        (page) => {
+                          const pageSliders = allSliders.filter(
+                            (s) => s.page === page
+                          );
+
+                          return (
+                            <div key={page} style={{ marginBottom: "30px" }}>
+                              <h5
+                                style={{
+                                  textTransform: "capitalize",
+                                  marginBottom: "15px",
+                                  color: "#232946",
+                                }}
+                              >
+                                {page === "liveperfume"
+                                  ? "Live Perfume Bar"
+                                  : page === "hotelamenities"
+                                  ? "Hotel Amenities"
+                                  : page.charAt(0).toUpperCase() + page.slice(1)}{" "}
+                                ({pageSliders.length})
+                              </h5>
+                              {pageSliders.length === 0 ? (
+                                <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
+                                  No sliders uploaded yet. Use the form above to add sliders for this page.
+                                </p>
+                              ) : (
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns:
+                                      "repeat(auto-fill, minmax(200px, 1fr))",
+                                    gap: "15px",
+                                  }}
+                                >
+                                  {pageSliders.map((slider, index) => (
+                                    <div
+                                      key={slider.id}
+                                      style={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        overflow: "hidden",
+                                        position: "relative",
+                                      }}
+                                    >
+                                      <img
+                                        src={slider.image_url}
+                                        alt={`Slider ${slider.id}`}
+                                        style={{
+                                          width: "100%",
+                                          height: "150px",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteSlider(slider.id, slider.page)
+                                        }
+                                        style={{
+                                          position: "absolute",
+                                          top: "5px",
+                                          right: "5px",
+                                          background: "rgba(220, 53, 69, 0.9)",
+                                          color: "white",
+                                          border: "none",
+                                          borderRadius: "5px",
+                                          padding: "5px 10px",
+                                          cursor: "pointer",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        <i className="fas fa-trash"></i> Delete
+                                      </button>
+                                      <div
+                                        style={{
+                                          padding: "10px",
+                                          background: "#f8f9fa",
+                                          fontSize: "12px",
+                                          color: "#666",
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <span>Order: {slider.order + 1}</span>
+                                        <div style={{ display: "flex", gap: "5px" }}>
+                                          <button
+                                            onClick={() =>
+                                              handleReorderSlider(page, index, "up")
+                                            }
+                                            disabled={index === 0}
+                                            style={{
+                                              background: index === 0 ? "#ccc" : "#007bff",
+                                              color: "white",
+                                              border: "none",
+                                              borderRadius: "3px",
+                                              padding: "3px 8px",
+                                              cursor: index === 0 ? "not-allowed" : "pointer",
+                                              fontSize: "12px",
+                                            }}
+                                            title="Move up"
+                                          >
+                                            <i className="fas fa-arrow-up"></i>
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleReorderSlider(page, index, "down")
+                                            }
+                                            disabled={index === pageSliders.length - 1}
+                                            style={{
+                                              background:
+                                                index === pageSliders.length - 1
+                                                  ? "#ccc"
+                                                  : "#007bff",
+                                              color: "white",
+                                              border: "none",
+                                              borderRadius: "3px",
+                                              padding: "3px 8px",
+                                              cursor:
+                                                index === pageSliders.length - 1
+                                                  ? "not-allowed"
+                                                  : "pointer",
+                                              fontSize: "12px",
+                                            }}
+                                            title="Move down"
+                                          >
+                                            <i className="fas fa-arrow-down"></i>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              )}
+
+              {/* Our Products (Uproducts) Management */}
+              {settingsView === "ourproducts" && (
+              <div className="settings-card">
+                <h3>Our Products Section (Homepage)</h3>
+                <p className="settings-description">
+                  Upload and manage product images displayed in the "Our Products" section on the homepage.
+                </p>
+
+                {/* Upload Form */}
+                <form onSubmit={handleUproductUpload} style={{ marginBottom: "30px" }}>
+                  {isEditingUproduct && (
+                    <div
+                      style={{
+                        background: "#fff3cd",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span style={{ color: "#856404" }}>
+                        <i className="fas fa-edit"></i> Editing product (ID: {editingUproductId})...
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCancelEditUproduct}
+                        style={{
+                          background: "#856404",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "3px",
+                          padding: "5px 10px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Cancel Edit
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="uproduct-image">
+                      Main Image {isEditingUproduct ? "(Optional - leave empty to keep current)" : "*"}
+                    </label>
+                    <input
+                      type="file"
+                      id="uproduct-image-input"
+                      accept="image/*"
+                      onChange={(e) => setUproductImageFile(e.target.files[0])}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                      }}
+                    />
+                    {uproductImageFile && (
+                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
+                        Selected: {uproductImageFile.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="uproduct-hover-image">Hover Image (Optional)</label>
+                    <input
+                      type="file"
+                      id="uproduct-hover-image-input"
+                      accept="image/*"
+                      onChange={(e) => setUproductHoverImageFile(e.target.files[0])}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                      }}
+                    />
+                    {uproductHoverImageFile && (
+                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
+                        Selected: {uproductHoverImageFile.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {uproductMessage && (
+                    <div
+                      className={`form-message ${
+                        uproductMessage.startsWith("✓") ? "success" : "error"
+                      }`}
+                      style={{ marginBottom: "15px" }}
+                    >
+                      {uproductMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-create-admin"
+                    disabled={uproductUploadLoading || (!isEditingUproduct && !uproductImageFile)}
+                    style={{
+                      opacity: uproductUploadLoading || (!isEditingUproduct && !uproductImageFile) ? 0.6 : 1,
+                      cursor: uproductUploadLoading || (!isEditingUproduct && !uproductImageFile) ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {uproductUploadLoading
+                      ? "Saving..."
+                      : isEditingUproduct
+                      ? "Update Product"
+                      : "Upload Product Image"}
+                  </button>
+                </form>
+
+                {/* Display Uploaded Uproducts */}
+                <div>
+                  <h4 style={{ marginTop: "30px", marginBottom: "15px", color: "#232946" }}>
+                    Uploaded Product Images ({uproducts.length})
+                  </h4>
+                  {uproductsLoading ? (
+                    <p style={{ color: "#999", fontStyle: "italic" }}>Loading...</p>
+                  ) : uproducts.length === 0 ? (
+                    <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
+                      No product images uploaded yet. Use the form above to add images.
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                        gap: "15px",
+                      }}
+                    >
+                      {uproducts.map((uproduct) => (
+                        <div
+                          key={uproduct.id}
+                          style={{
+                            border: "1px solid #ddd",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            position: "relative",
+                          }}
+                        >
+                          <div style={{ position: "relative", height: "150px" }}>
+                            <img
+                              src={uproduct.image_url}
+                              alt="Main"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                              }}
+                            />
+                            {uproduct.hover_image_url && (
+                              <img
+                                src={uproduct.hover_image_url}
+                                alt="Hover"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  position: "absolute",
+                                  top: 0,
+                                  left: 0,
+                                  opacity: 0,
+                                  transition: "opacity 0.3s ease",
+                                }}
+                                onMouseEnter={(e) => e.target.style.opacity = 1}
+                                onMouseLeave={(e) => e.target.style.opacity = 0}
+                              />
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              padding: "10px 15px",
+                              background: "#f8f9fa",
+                              display: "flex",
+                              gap: "10px",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span style={{ fontSize: "12px", color: "#666" }}>
+                              ID: {uproduct.id}
+                            </span>
+                            <div style={{ display: "flex", gap: "5px" }}>
+                              <button
+                                onClick={() => handleEditUproduct(uproduct)}
+                                style={{
+                                  background: "#007bff",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "5px",
+                                  padding: "5px 10px",
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                <i className="fas fa-edit"></i> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUproduct(uproduct.id)}
+                                style={{
+                                  background: "#dc3545",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "5px",
+                                  padding: "5px 10px",
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                <i className="fas fa-trash"></i> Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              )}
+
+              {/* How It Works Management */}
+              {settingsView === "howitworks" && (
+              <div className="settings-card">
+                <h3>How It Works (Live Perfume Page)</h3>
+                <p className="settings-description">
+                  Manage the "How It Works" section items displayed on the Live Perfume Bar page.
+                </p>
+
+                {/* Form */}
+                <form onSubmit={handleHowItWorksSubmit} style={{ marginBottom: "30px" }}>
+                  {isEditingHowItWorks && (
+                    <div
+                      style={{
+                        background: "#fff3cd",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span style={{ color: "#856404" }}>
+                        <i className="fas fa-edit"></i> Editing item...
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCancelEditHowItWorks}
+                        style={{
+                          background: "#856404",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "3px",
+                          padding: "5px 10px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Cancel Edit
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="how-it-works-title">Title *</label>
+                    <input
+                      type="text"
+                      id="how-it-works-title"
+                      value={howItWorksFormData.title}
+                      onChange={(e) =>
+                        setHowItWorksFormData({
+                          ...howItWorksFormData,
+                          title: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Step 1: Choose Your Scent"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="how-it-works-subtitle">Description *</label>
+                    <textarea
+                      id="how-it-works-subtitle"
+                      value={howItWorksFormData.subtitle}
+                      onChange={(e) =>
+                        setHowItWorksFormData({
+                          ...howItWorksFormData,
+                          subtitle: e.target.value,
+                        })
+                      }
+                      placeholder="Enter detailed description..."
+                      rows="4"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                        resize: "vertical",
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="how-it-works-image">
+                      Image {isEditingHowItWorks ? "(Optional - leave empty to keep current)" : "*"}
+                    </label>
+                    <input
+                      type="file"
+                      id="how-it-works-image-input"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setHowItWorksFormData({
+                          ...howItWorksFormData,
+                          image: e.target.files[0],
+                        })
+                      }
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #ddd",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                      }}
+                    />
+                    {howItWorksFormData.image && (
+                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
+                        Selected: {howItWorksFormData.image.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {howItWorksMessage && (
+                    <div
+                      className={`form-message ${
+                        howItWorksMessage.startsWith("✓") ? "success" : "error"
+                      }`}
+                      style={{ marginBottom: "15px" }}
+                    >
+                      {howItWorksMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-create-admin"
+                    disabled={howItWorksUploadLoading}
+                    style={{
+                      opacity: howItWorksUploadLoading ? 0.6 : 1,
+                      cursor: howItWorksUploadLoading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {howItWorksUploadLoading
+                      ? "Saving..."
+                      : isEditingHowItWorks
+                      ? "Update Item"
+                      : "Create Item"}
+                  </button>
+                </form>
+
+                {/* Display How It Works Items */}
+                <div>
+                  <h4 style={{ marginTop: "30px", marginBottom: "15px", color: "#232946" }}>
+                    Existing Items ({howItWorks.length})
+                  </h4>
+                  {howItWorksLoading ? (
+                    <p style={{ color: "#999", fontStyle: "italic" }}>Loading...</p>
+                  ) : howItWorks.length === 0 ? (
+                    <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
+                      No items created yet. Use the form above to add items.
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+                        gap: "15px",
+                      }}
+                    >
+                      {howItWorks.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            border: "1px solid #ddd",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            position: "relative",
+                          }}
+                        >
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            style={{
+                              width: "100%",
+                              height: "150px",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div style={{ padding: "15px" }}>
+                            <h5 style={{ margin: "0 0 10px 0", color: "#232946" }}>
+                              {item.title}
+                            </h5>
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                color: "#666",
+                                margin: 0,
+                                lineHeight: "1.5",
+                              }}
+                            >
+                              {item.subtitle.substring(0, 100)}
+                              {item.subtitle.length > 100 && "..."}
+                            </p>
+                          </div>
+                          <div
+                            style={{
+                              padding: "10px 15px",
+                              background: "#f8f9fa",
+                              display: "flex",
+                              gap: "10px",
+                            }}
+                          >
+                            <button
+                              onClick={() => handleEditHowItWorks(item)}
+                              style={{
+                                flex: 1,
+                                background: "#007bff",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "5px",
+                                padding: "8px",
+                                cursor: "pointer",
+                                fontSize: "12px",
+                              }}
+                            >
+                              <i className="fas fa-edit"></i> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteHowItWorks(item.id)}
+                              style={{
+                                flex: 1,
+                                background: "#dc3545",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "5px",
+                                padding: "8px",
+                                cursor: "pointer",
+                                fontSize: "12px",
+                              }}
+                            >
+                              <i className="fas fa-trash"></i> Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              )}
             </div>
           </section>
         )}

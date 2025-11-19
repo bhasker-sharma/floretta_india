@@ -53,7 +53,7 @@ function HotelAmenities() {
   return (
     <>
       <Navbar />
-      <Slider fetchUrl={API_ENDPOINTS.HOMEPAGE} interval={4000} />
+      <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('hotelamenities')} interval={4000} />
 
       {/* Room Freshener Section */}
       <div className="rfv-container">

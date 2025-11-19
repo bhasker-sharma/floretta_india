@@ -20,15 +20,6 @@ const LivePerfume = () => {
 
   const [formStatus, setFormStatus] = useState('');
 
-  // Static slider images (ensure they're in public/slider/)
-  const staticSliderImages = [
-    '/slider/slide6.png',
-    '/slider/slide7.png',
-    '/slider/slide8.png',
-    '/slider/slide9.png',
-    '/slider/slide10.png',
-  ];
-
   useEffect(() => {
     fetch(API_ENDPOINTS.LIVEPERFUME)
       .then((res) => res.json())
@@ -94,8 +85,8 @@ const LivePerfume = () => {
     <>
       <Navbar />
 
-      {/* Static image slider */}
-      <Slider images={staticSliderImages} />
+      {/* Slider from API */}
+      <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('liveperfume')} interval={4000} />
 
       <div className="live-bar-container">
         <h2 className="live-bar-heading">FLORETTA LIVE PERFUME BAR</h2>

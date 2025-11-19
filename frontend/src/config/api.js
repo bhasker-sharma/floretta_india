@@ -76,6 +76,7 @@ export const API_ENDPOINTS = {
   ADMIN_PRODUCT_UPDATE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_PRODUCT_DELETE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_PRODUCT_IMAGE_DELETE: (productId, imageId) => `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
+  ADMIN_BESTSELLERS_REORDER: `${API_URL}/api/admin/bestsellers/reorder`,
   ADMIN_ENQUIRY_CONTACT: `${API_URL}/api/admin/user-enquiry/contact`,
   ADMIN_ENQUIRY_BOOKINGS: `${API_URL}/api/admin/user-enquiry/bookings`,
 
@@ -86,6 +87,25 @@ export const API_ENDPOINTS = {
   // Live Perfume Bar
   LIVEPERFUME: `${API_URL}/api/liveperfume`,
   BOOKINGS: `${API_URL}/api/bookings`,
+
+  // Sliders
+  SLIDERS_BY_PAGE: (page) => `${API_URL}/api/sliders/${page}`,
+  ADMIN_SLIDERS: `${API_URL}/api/admin/sliders`,
+  ADMIN_SLIDERS_UPLOAD: `${API_URL}/api/admin/sliders`,
+  ADMIN_SLIDERS_DELETE: (id) => `${API_URL}/api/admin/sliders/${id}`,
+  ADMIN_SLIDERS_REORDER: `${API_URL}/api/admin/sliders/reorder`,
+
+  // Uproducts (Our Products section on homepage)
+  ADMIN_UPRODUCTS: `${API_URL}/api/admin/uproducts`,
+  ADMIN_UPRODUCTS_UPLOAD: `${API_URL}/api/admin/uproducts`,
+  ADMIN_UPRODUCTS_UPDATE: (id) => `${API_URL}/api/admin/uproducts/${id}`,
+  ADMIN_UPRODUCTS_DELETE: (id) => `${API_URL}/api/admin/uproducts/${id}`,
+
+  // How It Works (Live Perfume page)
+  ADMIN_HOW_IT_WORKS: `${API_URL}/api/admin/how-it-works`,
+  ADMIN_HOW_IT_WORKS_CREATE: `${API_URL}/api/admin/how-it-works`,
+  ADMIN_HOW_IT_WORKS_UPDATE: (id) => `${API_URL}/api/admin/how-it-works/${id}`,
+  ADMIN_HOW_IT_WORKS_DELETE: (id) => `${API_URL}/api/admin/how-it-works/${id}`,
 };
 
 // Storage URLs (for images, files, etc.)

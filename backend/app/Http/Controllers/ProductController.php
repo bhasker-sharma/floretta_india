@@ -202,7 +202,7 @@ class ProductController extends Controller
             if ($request->hasFile('images')) {
                 // Create product-specific folder
                 $productFolderName = $this->sanitizeProductName($validated['name']);
-                $productFolderPath = public_path('storage/images/' . $productFolderName);
+                $productFolderPath = public_path('storage/images/uproducts/' . $productFolderName);
 
                 // Create directory if it doesn't exist
                 if (!is_dir($productFolderPath)) {
@@ -217,7 +217,7 @@ class ProductController extends Controller
                     $image->move($productFolderPath, $filename);
 
                     $uploadedImages[] = [
-                        'path' => 'images/' . $productFolderName . '/' . $filename,
+                        'path' => 'images/uproducts/' . $productFolderName . '/' . $filename,
                         'sort_order' => $index,
                         'is_primary' => $index === 0 // First image is primary
                     ];
@@ -323,6 +323,8 @@ class ProductController extends Controller
             'original_price' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'is_discount_active' => 'nullable|boolean',
+            'is_bestseller' => 'nullable|boolean',
+            'bestseller_order' => 'nullable|integer|min:0',
             'delivery_charge' => 'nullable|numeric|min:0',
             'available_quantity' => 'nullable|integer|min:0',
             'image' => 'nullable|string',
@@ -370,7 +372,7 @@ class ProductController extends Controller
                 // Create product-specific folder based on current/updated product name
                 $productName = $validated['name'] ?? $product->name;
                 $productFolderName = $this->sanitizeProductName($productName);
-                $productFolderPath = public_path('storage/images/' . $productFolderName);
+                $productFolderPath = public_path('storage/images/uproducts/' . $productFolderName);
 
                 // Create directory if it doesn't exist
                 if (!is_dir($productFolderPath)) {
@@ -389,7 +391,7 @@ class ProductController extends Controller
                     $image->move($productFolderPath, $filename);
 
                     $uploadedImages[] = [
-                        'path' => 'images/' . $productFolderName . '/' . $filename,
+                        'path' => 'images/uproducts/' . $productFolderName . '/' . $filename,
                         'sort_order' => $existingImagesCount + $index,
                         'is_primary' => false // New images are never primary unless they're the only ones
                     ];
@@ -486,8 +488,8 @@ class ProductController extends Controller
                 // Upload new image to legacy location
                 $image = $request->file('image');
                 $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('storage/freshner'), $filename);
-                $validated['image_path'] = 'freshner/' . $filename;
+                $image->move(public_path('storage/images/freshner'), $filename);
+                $validated['image_path'] = 'images/freshner/' . $filename;
             }
 
             // Update the legacy product
@@ -537,7 +539,7 @@ class ProductController extends Controller
     }
 
     // Admin: Delete product (handles both tables)
-    public function adminDeleteProduct($id)
+    public function adminDeleteProduct($id, Request $request)
     {
         // Verify admin authentication
         $currentAdmin = auth('admin')->user();
@@ -550,12 +552,42 @@ class ProductController extends Controller
         }
 
         try {
-            // Check if it's in the main products table
+            // Check if source_table is provided as query parameter
+            $sourceTable = $request->query('source_table');
+
+            // If source_table is explicitly set to 'freshner_mist', delete from legacy table
+            if ($sourceTable === 'freshner_mist') {
+                $freshnerMist = FreshnerMist::find($id);
+
+                if ($freshnerMist) {
+                    // Delete image file if exists
+                    if ($freshnerMist->image_path) {
+                        $imagePath = public_path('storage/' . $freshnerMist->image_path);
+                        if (file_exists($imagePath)) {
+                            unlink($imagePath);
+                        }
+                    }
+
+                    $freshnerMist->delete();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Legacy product deleted successfully'
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Legacy product not found'
+                ], 404);
+            }
+
+            // Otherwise, check the main products table first
             $product = Product::find($id);
 
             if ($product) {
                 // Delete product folder if it exists
-                $folderPath = public_path('storage/images/' . $this->sanitizeProductName($product->name));
+                $folderPath = public_path('storage/images/uproducts/' . $this->sanitizeProductName($product->name));
                 if (is_dir($folderPath)) {
                     $this->deleteDirectory($folderPath);
                 }
@@ -568,7 +600,7 @@ class ProductController extends Controller
                 ]);
             }
 
-            // If not found, check the legacy freshner_mist table
+            // Fallback: If not found in products table and no source_table specified, check legacy table
             $freshnerMist = FreshnerMist::find($id);
 
             if ($freshnerMist) {
@@ -692,5 +724,47 @@ class ProductController extends Controller
         }
 
         return rmdir($dir);
+    }
+
+    /**
+     * Reorder bestseller products
+     */
+    public function reorderBestsellers(Request $request)
+    {
+        // Verify admin authentication
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'bestsellers' => 'required|array',
+            'bestsellers.*.id' => 'required|integer|exists:products,id',
+            'bestsellers.*.order' => 'required|integer|min:0',
+        ]);
+
+        try {
+            foreach ($validated['bestsellers'] as $item) {
+                Product::where('id', $item['id'])->update([
+                    'bestseller_order' => $item['order'],
+                    'is_bestseller' => true, // Ensure it's marked as bestseller
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bestseller order updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update bestseller order',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

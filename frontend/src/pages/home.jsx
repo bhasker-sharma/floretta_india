@@ -26,16 +26,23 @@ const Home = () => {
   };
 
   useEffect(() => {
-    // Load home products
-    fetch(`${API_ENDPOINTS.PRODUCTS}?note=all`)
+    // Load bestseller products from homepage API
+    fetch(API_ENDPOINTS.HOMEPAGE)
       .then((res) => res.json())
       .then((data) => {
-        const perfumes = data.filter((p) => p.flag === 'perfume');
-        setHomeProducts(perfumes.slice(0, 4)); // best sellers
-        if (perfumes.length > 0) {
-          setFeaturedProduct(perfumes[0]);
-          setSelectedImage(perfumes[0].image);
+        // Use bestsellers from the API response
+        const bestsellers = data.bestsellers || [];
+
+        // First product (index 0) = Featured product only
+        if (bestsellers.length > 0) {
+          setFeaturedProduct(bestsellers[0]);
+          // Use all_images if available, otherwise fall back to image
+          const firstImage = bestsellers[0].all_images?.[0]?.url || bestsellers[0].image;
+          setSelectedImage(firstImage);
         }
+
+        // Products 2-5 (indices 1-4) = Bestseller grid only
+        setHomeProducts(bestsellers.slice(1, 5)); // Skip first, show next 4
       })
       .catch((err) => {
         console.error('Fetch error:', err);
@@ -88,7 +95,7 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      <Slider fetchUrl={API_ENDPOINTS.HOMEPAGE} interval={4000} />
+      <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('home')} interval={4000} />
 
       {/* === HOME PRODUCTS === */}
       <div className="homep-product-list">

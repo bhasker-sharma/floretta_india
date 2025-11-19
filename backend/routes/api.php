@@ -14,7 +14,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\PasswordResetController;
-use Faker\Provider\ar_EG\Payment;
+use App\Http\Controllers\SliderController;
+use App\Http\Controllers\UproductController;
+use App\Http\Controllers\HowItWorksController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +73,9 @@ Route::get('/how-it-works', [LivePerfumeController::class, 'index']);
 
 // 🌐 Bookings (with rate limiting to prevent form spam)
 Route::middleware('throttle:3,1')->post('/bookings', [LivePerfumeController::class, 'submitBooking']);
+
+// 🌐 Sliders (Public - get sliders by page)
+Route::get('/sliders/{page}', [SliderController::class, 'getSlidersByPage']);
 
 /*
 |--------------------------------------------------------------------------
@@ -151,6 +156,27 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::put('/products/{id}', [ProductController::class, 'adminUpdateProduct']);
     Route::delete('/products/{id}', [ProductController::class, 'adminDeleteProduct']);
     Route::delete('/products/{productId}/images/{imageId}', [ProductController::class, 'adminDeleteProductImage']);
+
+    // Bestseller management
+    Route::post('/bestsellers/reorder', [ProductController::class, 'reorderBestsellers']);
+
+    // Slider management
+    Route::get('/sliders', [SliderController::class, 'adminGetAllSliders']);
+    Route::post('/sliders', [SliderController::class, 'adminUploadSlider']);
+    Route::delete('/sliders/{id}', [SliderController::class, 'adminDeleteSlider']);
+    Route::post('/sliders/reorder', [SliderController::class, 'adminReorderSliders']);
+
+    // Uproducts management (Our Products section on homepage)
+    Route::get('/uproducts', [UproductController::class, 'index']);
+    Route::post('/uproducts', [UproductController::class, 'store']);
+    Route::post('/uproducts/{id}', [UproductController::class, 'update']);
+    Route::delete('/uproducts/{id}', [UproductController::class, 'destroy']);
+
+    // How It Works management (Live Perfume page)
+    Route::get('/how-it-works', [HowItWorksController::class, 'index']);
+    Route::post('/how-it-works', [HowItWorksController::class, 'store']);
+    Route::post('/how-it-works/{id}', [HowItWorksController::class, 'update']);
+    Route::delete('/how-it-works/{id}', [HowItWorksController::class, 'destroy']);
 
     // User Enquiries management (with pagination)
     Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);

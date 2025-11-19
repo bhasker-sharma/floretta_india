@@ -10,15 +10,6 @@ import Footer from '../components/footer';
 import Rfreshner from '../components/rfreshner';
 import '../styles/products.css';
 
-// Static slider images (make sure these exist in /public/slider/)
-const staticSliderImages = [
-  '/slider/slide1.png',
-  '/slider/slide2.png',
-  '/slider/slide3.png',
-  '/slider/slide4.png',
-  '/slider/slide5.png',
-];
-
 const notes = ['All', 'Sweet', 'Woody', 'Floral', 'Citrus'];
 
 const Product = () => {
@@ -59,8 +50,8 @@ const Product = () => {
     <>
       <Navbar />
 
-      {/* Static slider images passed here */}
-      <Slider images={staticSliderImages} />
+      {/* Slider from API */}
+      <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('products')} interval={4000} />
 
       <div className="product-section">
         <h2 className="product-title">Shop By Perfume Notes</h2>
