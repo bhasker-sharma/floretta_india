@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/home';
 import Product from './pages/product';
@@ -21,8 +21,14 @@ import ForgotPassword from './pages/ForgotPassword';
 import VerifyOTP from './pages/VerifyOTP';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import { initializeAuth } from './utils/axiosInterceptor';
 
 const App = () => {
+  // Initialize axios interceptors on app load
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   return (
     <Router>
       <Routes>

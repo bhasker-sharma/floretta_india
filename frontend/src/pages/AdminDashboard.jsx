@@ -1156,6 +1156,35 @@ function AdminDashboard() {
     }
   };
 
+  // Validate slider image dimensions
+  const validateSliderImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const width = img.width;
+        const height = img.height;
+
+        if (width < 1400 || height < 450) {
+          reject(
+            `Image dimensions ${width}x${height}px are too small. Minimum required: 1400x450px`
+          );
+        } else {
+          resolve({ width, height });
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject("Failed to load image");
+      };
+
+      img.src = url;
+    });
+  };
+
   // Handle slider image upload
   const handleSliderUpload = async (e) => {
     e.preventDefault();
@@ -1166,10 +1195,23 @@ function AdminDashboard() {
       return;
     }
 
+    // Validate image dimensions before upload
+    try {
+      setSliderUploadLoading(true);
+      setSliderMessage("⏳ Validating image dimensions...");
+
+      const dimensions = await validateSliderImageDimensions(sliderUploadFile);
+      console.log(`Image dimensions: ${dimensions.width}x${dimensions.height}px`);
+    } catch (error) {
+      setSliderUploadLoading(false);
+      setSliderMessage("✗ " + error);
+      setTimeout(() => setSliderMessage(""), 7000);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("adminToken");
-      setSliderUploadLoading(true);
-      setSliderMessage("");
+      setSliderMessage("⏳ Uploading slider...");
 
       const formData = new FormData();
       formData.append("page", selectedSliderPage);
@@ -1337,6 +1379,35 @@ function AdminDashboard() {
     }
   };
 
+  // Validate uproduct image dimensions
+  const validateUproductImageDimensions = (file, imageType = "Main") => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const width = img.width;
+        const height = img.height;
+
+        if (width < 350 || height < 450) {
+          reject(
+            `${imageType} image dimensions ${width}x${height}px are too small. Minimum required: 350x450px`
+          );
+        } else {
+          resolve({ width, height });
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(`Failed to load ${imageType.toLowerCase()} image`);
+      };
+
+      img.src = url;
+    });
+  };
+
   // Handle uproduct upload/update
   const handleUproductUpload = async (e) => {
     e.preventDefault();
@@ -1347,10 +1418,32 @@ function AdminDashboard() {
       return;
     }
 
+    // Validate image dimensions before upload
+    try {
+      setUproductUploadLoading(true);
+      setUproductMessage("⏳ Validating image dimensions...");
+
+      // Validate main image if provided
+      if (uproductImageFile) {
+        const dimensions = await validateUproductImageDimensions(uproductImageFile, "Main");
+        console.log(`Main image dimensions: ${dimensions.width}x${dimensions.height}px`);
+      }
+
+      // Validate hover image if provided
+      if (uproductHoverImageFile) {
+        const hoverDimensions = await validateUproductImageDimensions(uproductHoverImageFile, "Hover");
+        console.log(`Hover image dimensions: ${hoverDimensions.width}x${hoverDimensions.height}px`);
+      }
+    } catch (error) {
+      setUproductUploadLoading(false);
+      setUproductMessage("✗ " + error);
+      setTimeout(() => setUproductMessage(""), 7000);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("adminToken");
-      setUproductUploadLoading(true);
-      setUproductMessage("");
+      setUproductMessage("⏳ Uploading product image...");
 
       const formData = new FormData();
       if (uproductImageFile) {
@@ -1455,6 +1548,35 @@ function AdminDashboard() {
     }
   };
 
+  // Validate How It Works image dimensions (350x400px minimum)
+  const validateHowItWorksImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const width = img.width;
+        const height = img.height;
+
+        if (width < 350 || height < 400) {
+          reject(
+            `Image dimensions ${width}x${height}px are too small. Minimum required: 350x400px`
+          );
+        } else {
+          resolve({ width, height });
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject("Failed to load image for validation");
+      };
+
+      img.src = url;
+    });
+  };
+
   // Fetch all how_it_works items
   const fetchHowItWorks = async () => {
     try {
@@ -1492,6 +1614,18 @@ function AdminDashboard() {
       setHowItWorksMessage("✗ Please select an image");
       setTimeout(() => setHowItWorksMessage(""), 5000);
       return;
+    }
+
+    // Validate image dimensions if image is provided
+    if (howItWorksFormData.image) {
+      try {
+        setHowItWorksMessage("⏳ Validating image dimensions...");
+        await validateHowItWorksImageDimensions(howItWorksFormData.image);
+      } catch (error) {
+        setHowItWorksMessage("✗ " + error);
+        setTimeout(() => setHowItWorksMessage(""), 7000);
+        return;
+      }
     }
 
     try {
@@ -1601,6 +1735,35 @@ function AdminDashboard() {
     });
     setIsEditingHowItWorks(false);
     document.getElementById("how-it-works-image-input").value = "";
+  };
+
+  // Validate Product image dimensions (1020x1020px minimum)
+  const validateProductImageDimensions = (file, imageName = "Image") => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const width = img.width;
+        const height = img.height;
+
+        if (width < 1020 || height < 1020) {
+          reject(
+            `${imageName} dimensions ${width}x${height}px are too small. Minimum required: 1020x1020px`
+          );
+        } else {
+          resolve({ width, height });
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject("Failed to load image for validation");
+      };
+
+      img.src = url;
+    });
   };
 
   // Handle viewing user details
@@ -1795,6 +1958,24 @@ function AdminDashboard() {
     e.preventDefault();
     setProductFormLoading(true);
     setProductFormMessage("");
+
+    // Validate image dimensions before proceeding
+    const imagesToValidate = productImages.filter(img => img.file && !img.isExisting);
+    if (imagesToValidate.length > 0) {
+      try {
+        setProductFormMessage("⏳ Validating image dimensions...");
+        for (let i = 0; i < imagesToValidate.length; i++) {
+          const img = imagesToValidate[i];
+          await validateProductImageDimensions(img.file, `Image ${i + 1}`);
+        }
+        setProductFormMessage(""); // Clear validation message
+      } catch (error) {
+        setProductFormMessage("✗ " + error);
+        setProductFormLoading(false);
+        setTimeout(() => setProductFormMessage(""), 7000);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem("adminToken");
@@ -2318,11 +2499,12 @@ function AdminDashboard() {
 
       if (response.data.success) {
         setBestsellerMessage("✓ Bestseller order saved successfully!");
-        setTimeout(() => setBestsellerMessage(""), 3000);
+        setTimeout(() => setBestsellerMessage(""), 4000);
       }
     } catch (error) {
       console.error("Error saving bestseller order:", error);
-      setBestsellerMessage("✗ Failed to save bestseller order");
+      const errorMsg = error.response?.data?.message || "Failed to save bestseller order";
+      setBestsellerMessage("✗ " + errorMsg);
       setTimeout(() => setBestsellerMessage(""), 5000);
     }
   };
@@ -3617,6 +3799,29 @@ function AdminDashboard() {
                           </span>
                         )}
                       </label>
+
+                      {/* Helper text with image requirements */}
+                      <div
+                        style={{
+                          background: "#e8f4fd",
+                          border: "1px solid #b3d9f2",
+                          borderRadius: "5px",
+                          padding: "10px",
+                          marginBottom: "10px",
+                          fontSize: "13px",
+                          color: "#0066cc",
+                        }}
+                      >
+                        <strong>📐 Image Requirements:</strong>
+                        <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                          <li>Minimum resolution: <strong>1020 x 1020 pixels</strong></li>
+                          <li>Aspect ratio: 1:1 (square)</li>
+                          <li>Format: JPEG, PNG, GIF, WebP</li>
+                          <li>Max file size: 5MB per image</li>
+                          <li>Multiple images supported (first image will be primary)</li>
+                        </ul>
+                      </div>
+
                       {productFormData.source_table === "freshner_mist" && (
                         <div
                           style={{
@@ -4012,7 +4217,20 @@ function AdminDashboard() {
                   </p>
 
                   {bestsellerMessage && (
-                    <div className="success-message" style={{ marginBottom: "20px" }}>
+                    <div
+                      className={`form-message ${
+                        bestsellerMessage.startsWith("✓") ? "success" : "error"
+                      }`}
+                      style={{
+                        marginBottom: "20px",
+                        padding: "15px",
+                        borderRadius: "8px",
+                        fontSize: "15px",
+                        fontWeight: "500",
+                        textAlign: "center",
+                        animation: "fadeIn 0.3s ease-in",
+                      }}
+                    >
                       {bestsellerMessage}
                     </div>
                   )}
@@ -4123,6 +4341,26 @@ function AdminDashboard() {
                           <p className="save-hint">
                             <i className="fas fa-info-circle"></i> Remember to save after reordering
                           </p>
+
+                          {/* Message display near save button */}
+                          {bestsellerMessage && (
+                            <div
+                              style={{
+                                marginTop: "15px",
+                                padding: "12px 20px",
+                                borderRadius: "6px",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                textAlign: "center",
+                                backgroundColor: bestsellerMessage.startsWith("✓") ? "#d4edda" : "#f8d7da",
+                                color: bestsellerMessage.startsWith("✓") ? "#155724" : "#721c24",
+                                border: `1px solid ${bestsellerMessage.startsWith("✓") ? "#c3e6cb" : "#f5c6cb"}`,
+                                animation: "fadeIn 0.3s ease-in",
+                              }}
+                            >
+                              {bestsellerMessage}
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
@@ -4787,6 +5025,25 @@ function AdminDashboard() {
 
                   <div className="form-group">
                     <label htmlFor="slider-upload-input">Upload Slider Image</label>
+                    <div
+                      style={{
+                        background: "#e8f4fd",
+                        border: "1px solid #b3d9f2",
+                        borderRadius: "5px",
+                        padding: "10px",
+                        marginBottom: "10px",
+                        fontSize: "13px",
+                        color: "#0066cc",
+                      }}
+                    >
+                      <strong>📐 Image Requirements:</strong>
+                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                        <li>Minimum resolution: <strong>1400 x 450 pixels</strong></li>
+                        <li>Recommended: <strong>1920 x 500 pixels</strong> (Full HD)</li>
+                        <li>Format: JPEG, PNG, WebP</li>
+                        <li>Max file size: 5MB</li>
+                      </ul>
+                    </div>
                     <input
                       type="file"
                       id="slider-upload-input"
@@ -5029,6 +5286,26 @@ function AdminDashboard() {
                     <label htmlFor="uproduct-image">
                       Main Image {isEditingUproduct ? "(Optional - leave empty to keep current)" : "*"}
                     </label>
+                    <div
+                      style={{
+                        background: "#e8f4fd",
+                        border: "1px solid #b3d9f2",
+                        borderRadius: "5px",
+                        padding: "10px",
+                        marginBottom: "10px",
+                        fontSize: "13px",
+                        color: "#0066cc",
+                      }}
+                    >
+                      <strong>📐 Image Requirements:</strong>
+                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                        <li>Minimum resolution: <strong>350 x 450 pixels</strong></li>
+                        <li>Aspect ratio: 7:9 (portrait)</li>
+                        <li>Format: JPEG, PNG, WebP</li>
+                        <li>Max file size: 5MB</li>
+                        <li>Both images should have same dimensions</li>
+                      </ul>
+                    </div>
                     <input
                       type="file"
                       id="uproduct-image-input"
@@ -5306,6 +5583,29 @@ function AdminDashboard() {
                     <label htmlFor="how-it-works-image">
                       Image {isEditingHowItWorks ? "(Optional - leave empty to keep current)" : "*"}
                     </label>
+
+                    {/* Helper text with image requirements */}
+                    <div
+                      style={{
+                        background: "#e8f4fd",
+                        border: "1px solid #b3d9f2",
+                        borderRadius: "5px",
+                        padding: "10px",
+                        marginBottom: "10px",
+                        fontSize: "13px",
+                        color: "#0066cc",
+                      }}
+                    >
+                      <strong>📐 Image Requirements:</strong>
+                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                        <li>Minimum resolution: <strong>350 x 400 pixels</strong></li>
+                        <li>Aspect ratio: 7:8 (portrait)</li>
+                        <li>Format: JPEG, PNG, WebP</li>
+                        <li>Max file size: 5MB</li>
+                        <li>Image will be displayed in "How It Works" section</li>
+                      </ul>
+                    </div>
+
                     <input
                       type="file"
                       id="how-it-works-image-input"
