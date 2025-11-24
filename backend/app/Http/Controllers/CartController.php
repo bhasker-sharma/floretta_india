@@ -22,10 +22,13 @@ class CartController extends Controller
             'type'       => 'required|in:freshner,face_mist,perfume',
         ]);
 
-        $product = match ($validated['type']) {
-            'perfume' => Product::find($validated['product_id']),
-            default   => FreshnerMist::find($validated['product_id']),
-        };
+        // First try to find in products table (all types: perfume, freshner, face_mist)
+        $product = Product::find($validated['product_id']);
+
+        // If not found in products table, try FreshnerMist table (legacy)
+        if (!$product) {
+            $product = FreshnerMist::find($validated['product_id']);
+        }
 
         if (!$product) {
             return response()->json(['message' => 'Product not found.'], 404);
