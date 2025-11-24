@@ -553,6 +553,14 @@ const ProductDetail = () => {
 
             <hr className="amazon-divider" />
 
+            {/* Ingredients */}
+            {product.ingredients && (
+              <div className="amazon-about-section">
+                <h2 className="amazon-about-title">Ingredients</h2>
+                <p className="amazon-about-text">{product.ingredients}</p>
+              </div>
+            )}
+
             {/* About Product */}
             {product.about_product && (
               <div className="amazon-about-section">

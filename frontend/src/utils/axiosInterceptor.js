@@ -16,6 +16,17 @@ export const setupAxiosInterceptors = () => {
     (error) => {
       // Check if error is due to authentication (401 Unauthorized or 403 Forbidden)
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        // IMPORTANT: Don't intercept OAuth/Google login errors
+        // Let those be handled by their respective components
+        const isOAuthError = error.config?.url?.includes('/auth/') ||
+                            error.config?.url?.includes('google') ||
+                            error.config?.url?.includes('oauth');
+
+        if (isOAuthError) {
+          // Don't intercept OAuth errors, pass them through
+          return Promise.reject(error);
+        }
+
         // Prevent multiple redirects
         if (!isRedirecting) {
           isRedirecting = true;
@@ -23,7 +34,6 @@ export const setupAxiosInterceptors = () => {
           // Check which type of user is logged out
           const isAdminRoute = window.location.pathname.includes('/admin');
           const hasAdminToken = localStorage.getItem('adminToken');
-          const hasUserToken = localStorage.getItem('token');
 
           let message = '';
           let redirectPath = '';
