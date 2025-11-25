@@ -26,6 +26,8 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   const baseURL = `${STORAGE_URL}/`;
   const isFreshner = location.pathname.startsWith("/freshner-mist");
@@ -171,6 +173,32 @@ const ProductDetail = () => {
   const handleThumbnailClick = (img, index) => {
     setSelectedImage(img);
     setCurrentImageIndex(index);
+  };
+
+  // Touch handlers for swipe navigation
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentImageIndex < thumbnails.length - 1) {
+      handleNextImage();
+    }
+    if (isRightSwipe && currentImageIndex > 0) {
+      handlePrevImage();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
   };
 
   const handleAddToCart = async () => {
@@ -400,7 +428,7 @@ const ProductDetail = () => {
             </div>
 
             <div className="amazon-main-image-section">
-              {thumbnails.length > 1 && (
+              {/* {thumbnails.length > 1 && (
                 <button
                   className="amazon-image-nav amazon-image-nav-left"
                   onClick={handlePrevImage}
@@ -408,13 +436,16 @@ const ProductDetail = () => {
                 >
                   ‹
                 </button>
-              )}
+              )} */}
 
               <div
                 className="amazon-main-image-container"
                 onMouseEnter={() => setShowZoom(true)}
                 onMouseLeave={() => setShowZoom(false)}
                 onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
                 <img
                   src={selectedImage}
@@ -428,7 +459,23 @@ const ProductDetail = () => {
                 )}
               </div>
 
+              {/* Dot Navigation for Mobile/Tablet */}
               {thumbnails.length > 1 && (
+                <div className="amazon-image-dots">
+                  {thumbnails.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`amazon-dot ${
+                        currentImageIndex === index ? "active" : ""
+                      }`}
+                      onClick={() => handleThumbnailClick(thumbnails[index], index)}
+                      aria-label={`Go to image ${index + 0.5}`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* {thumbnails.length > 1 && (
                 <button
                   className="amazon-image-nav amazon-image-nav-right"
                   onClick={handleNextImage}
@@ -436,7 +483,7 @@ const ProductDetail = () => {
                 >
                   ›
                 </button>
-              )}
+              )} */}
 
               {showZoom && selectedImage && (
                 <div className="amazon-zoom-result" style={zoomStyle}></div>

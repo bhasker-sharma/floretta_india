@@ -68,12 +68,12 @@ useEffect(() => {
       </div>
 
       {/* Navigation Arrows */}
-      <button className="carousel-arrow carousel-arrow-left" onClick={handlePrev}>
+      {/* <button className="carousel-arrow carousel-arrow-left" onClick={handlePrev}>
         <i className="fas fa-chevron-left"></i>
       </button>
       <button className="carousel-arrow carousel-arrow-right" onClick={handleNext}>
         <i className="fas fa-chevron-right"></i>
-      </button>
+      </button> */}
 
       <div className="carousel-dots">
         {slides.map((_, i) => (

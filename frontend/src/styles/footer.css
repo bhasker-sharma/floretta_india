@@ -160,6 +160,47 @@
   transform: translateY(-2px);
 }
 
+/* Large Screens (1200px+) */
+@media (min-width: 1200px) {
+  .footer-section h3 {
+    font-size: 20px;
+  }
+
+  .footer-section ul li a {
+    font-size: 17px;
+  }
+
+  .footer-section p {
+    font-size: 17px;
+  }
+
+  .newsletter h3 {
+    font-size: 22px;
+  }
+
+  .newsletter-description {
+    font-size: 17px;
+  }
+
+  .newsletter-input {
+    font-size: 16px;
+  }
+
+  .newsletter-btn {
+    font-size: 16px;
+  }
+
+  .social-title {
+    font-size: 20px;
+  }
+
+  .social-icons a {
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
 /* Responsive - Tablet/Medium screens */
 @media (min-width: 481px) and (max-width: 768px) {
   .footer {

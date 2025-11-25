@@ -105,8 +105,8 @@
 }
 
 .amazon-thumbnail-wrapper {
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   border: 1px solid #ddd;
   border-radius: 4px;
   overflow: hidden;
@@ -144,21 +144,21 @@
   width: 100%;
   max-width: 500px;
   height: 500px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
   background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   margin: 0 auto;
+  padding: 0;
 }
 
 .amazon-main-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   cursor: crosshair;
+  display: block;
 }
 
 /* Image Navigation Arrows */
@@ -216,6 +216,38 @@
   background-repeat: no-repeat;
   z-index: 100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dot Navigation - Clean minimal design */
+.amazon-image-dots {
+  display: none;
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 0.3rem;
+  z-index: 15;
+  padding: 0;
+}
+
+.amazon-dot {
+  width: 26px;
+  height: 26px;
+  background-color: rgba(244, 87, 87, 0.5);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.amazon-dot:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.amazon-dot.active {
+  background-color: #cf4b4b;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
 }
 
 /* ==================== CENTER SECTION - PRODUCT INFO ==================== */
@@ -807,6 +839,24 @@
     justify-content: center;
   }
 
+  .amazon-main-image-container {
+    max-width: 800px;
+    height: 800px;
+  }
+
+  .amazon-main-image-section {
+    position: relative;
+  }
+
+  /* Hide thumbnail column and show dots on tablet */
+  .amazon-thumbnail-column {
+    display: none;
+  }
+
+  .amazon-image-dots {
+    display: flex;
+  }
+
   .amazon-buy-box {
     max-width: 100%;
     position: static;
@@ -832,15 +882,32 @@
     align-items: center;
   }
 
+  /* Hide thumbnail column and show dots on mobile */
   .amazon-thumbnail-column {
-    flex-direction: row;
-    overflow-x: auto;
-    width: 100%;
-    justify-content: flex-start;
+    display: none;
+  }
+
+  .amazon-image-dots {
+    display: flex !important;
+    gap: 0.5rem !important;
+  }
+
+  .amazon-dot {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+  }
+
+  .amazon-main-image-section {
+    position: relative;
   }
 
   .amazon-main-image-container {
-    height: 350px;
+    max-width: 90vw;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
   }
 
   .amazon-image-nav {
@@ -897,7 +964,21 @@
 
 @media (max-width: 480px) {
   .amazon-main-image-container {
-    height: 280px;
+    max-width: 95vw;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .amazon-dot {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+  }
+
+  .amazon-image-dots {
+    gap: 0.5rem !important;
   }
 
   .amazon-product-title {
@@ -938,3 +1019,17 @@
     margin-bottom: 0.75rem;
   }
 }
+
+/* Small phones - iPhone SE, etc. */
+@media (max-width: 390px) {
+  .amazon-dot {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+  }
+
+  .amazon-image-dots {
+    gap: 0.5rem !important;
+  }
+} 

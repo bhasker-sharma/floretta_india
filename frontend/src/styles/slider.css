@@ -5,6 +5,8 @@
     max-width: 100%;
     margin: 0;
     padding: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .carousel-track {
@@ -18,18 +20,19 @@
     max-width: 100%;
     min-width: 100%;
     width: 100%;
-    height: 450px;
+    height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    overflow: hidden;
   }
 
   .carousel-image {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    object-fit: contain;
     display: block;
   }
 
@@ -101,21 +104,39 @@
   /* Large Desktops (1400px+) */
   @media (min-width: 1400px) {
     .carousel-slide {
-      height: 500px;
+      height: auto;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
   }
 
   /* Medium Desktops (1200px - 1400px) */
   @media (max-width: 1400px) {
     .carousel-slide {
-      height: 450px;
+      height: auto;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
   }
 
   /* Small Desktops and Large Tablets (1024px - 1200px) */
   @media (max-width: 1200px) {
     .carousel-slide {
-      height: 420px;
+      height: auto;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
 
     .carousel-dots {
@@ -131,7 +152,7 @@
   /* Tablets (768px - 1024px) */
   @media (max-width: 1024px) {
     .carousel-slide {
-      height: 400px;
+      height: auto;
     }
 
     .carousel-container {
@@ -139,6 +160,8 @@
     }
 
     .carousel-image {
+      width: 100%;
+      height: auto;
       object-fit: contain;
     }
   }
@@ -146,11 +169,24 @@
   /* Large Mobile Landscape and Small Tablets (640px - 768px) */
   @media (max-width: 768px) {
     .carousel-slide {
-      height: 350px;
+      height: auto;
+      overflow: hidden;
     }
 
     .carousel-container {
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
 
     .carousel-arrow {
@@ -182,11 +218,24 @@
   /* Mobile Landscape (480px - 640px) */
   @media (max-width: 640px) {
     .carousel-slide {
-      height: 300px;
+      height: auto;
+      overflow: hidden;
     }
 
     .carousel-container {
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
 
     .carousel-arrow {
@@ -207,7 +256,24 @@
   /* Mobile Portrait (375px - 480px) */
   @media (max-width: 480px) {
     .carousel-slide {
-      height: 250px;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .carousel-container {
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
 
     .carousel-arrow {
@@ -231,7 +297,24 @@
   /* Small Mobile (320px - 375px) */
   @media (max-width: 375px) {
     .carousel-slide {
-      height: 220px;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .carousel-container {
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
 
     .carousel-dots {
@@ -249,7 +332,24 @@
   /* Very Small Mobile (< 320px) */
   @media (max-width: 320px) {
     .carousel-slide {
-      height: 200px;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .carousel-container {
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
   }
   
