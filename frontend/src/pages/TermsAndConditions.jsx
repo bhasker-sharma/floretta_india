@@ -1,12 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import '../styles/policies.css';
 
 const TermsAndConditions = () => {
+  const [openSections, setOpenSections] = useState({});
+  const [expandAll, setExpandAll] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const toggleExpandAll = () => {
+    const newExpandAll = !expandAll;
+    setExpandAll(newExpandAll);
+
+    const allSections = {};
+    for (let i = 1; i <= 10; i++) {
+      allSections[`section${i}`] = newExpandAll;
+    }
+    setOpenSections(allSections);
+  };
+
+  const AccordionItem = ({ id, title, children }) => {
+    const isOpen = openSections[id] || false;
+
+    return (
+      <div className="accordion-item">
+        <button
+          className={`accordion-header ${isOpen ? 'active' : ''}`}
+          onClick={() => toggleSection(id)}
+        >
+          <h2 className="accordion-title">{title}</h2>
+          <span className={`accordion-icon ${isOpen ? 'rotate' : ''}`}>▼</span>
+        </button>
+        <div className={`accordion-content ${isOpen ? 'open' : ''}`}>
+          {children}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="policy-page">
@@ -27,32 +67,28 @@ const TermsAndConditions = () => {
             </p>
           </div>
 
-          {/* Section 1 */}
-          <div className="policy-section">
-            <h2>1. Use of Website</h2>
+          <div className="expand-all-container">
+            <button className="expand-all-btn" onClick={toggleExpandAll}>
+              {expandAll ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+
+          <AccordionItem id="section1" title="1. Use of Website">
             <ul>
               <li>You must be 18+ to make a purchase.</li>
               <li>You agree not to misuse the website or engage in harmful activities.</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 2 */}
-          <div className="policy-section">
-            <h2>2. Products</h2>
+          <AccordionItem id="section2" title="2. Products">
             <ul>
               <li>We offer perfumes, fragrances, and related products.</li>
               <li>Product colors and packaging may slightly vary due to lighting and screen settings.</li>
               <li>All products are for personal use only—not for resale unless approved.</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 3 */}
-          <div className="policy-section">
-            <h2>3. Orders & Payments</h2>
+          <AccordionItem id="section3" title="3. Orders & Payments">
             <ul>
               <li>Orders are confirmed only after successful payment.</li>
               <li>We reserve the right to cancel any order due to stock issues or suspicious activity.</li>
@@ -64,24 +100,16 @@ const TermsAndConditions = () => {
                 are securely processed by our payment partners.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 4 */}
-          <div className="policy-section">
-            <h2>4. Pricing</h2>
+          <AccordionItem id="section4" title="4. Pricing">
             <ul>
               <li>All prices are listed in INR (Indian Rupees).</li>
               <li>Prices may change anytime without prior notice.</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 5 */}
-          <div className="policy-section">
-            <h2>5. Intellectual Property</h2>
+          <AccordionItem id="section5" title="5. Intellectual Property">
             <ul>
               <li>All content, product images, and branding belong to Floretta India.</li>
               <li>Copying or using our visuals/content without permission is prohibited.</li>
@@ -91,13 +119,9 @@ const TermsAndConditions = () => {
                 Unauthorized use of our brand assets, images, or content may result in legal action.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 6 */}
-          <div className="policy-section">
-            <h2>6. Limitation of Liability</h2>
+          <AccordionItem id="section6" title="6. Limitation of Liability">
             <p>We are not responsible for:</p>
             <ul>
               <li>Any allergic reactions (always patch test before full use).</li>
@@ -110,53 +134,37 @@ const TermsAndConditions = () => {
                 for allergies or skin sensitivities.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 7 */}
-          <div className="policy-section">
-            <h2>7. Governing Law</h2>
+          <AccordionItem id="section7" title="7. Governing Law">
             <p>
               These terms are governed by the laws of India. Any disputes arising from the use
               of our website or products will be subject to the jurisdiction of Indian courts.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 8 */}
-          <div className="policy-section">
-            <h2>8. Modifications to Terms</h2>
+          <AccordionItem id="section8" title="8. Modifications to Terms">
             <p>
               Floretta India reserves the right to modify these Terms & Conditions at any time.
               Changes will be effective immediately upon posting on this page. Your continued use
               of the website after such changes constitutes acceptance of the new terms.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 9 */}
-          <div className="policy-section">
-            <h2>9. User Accounts</h2>
+          <AccordionItem id="section9" title="9. User Accounts">
             <ul>
               <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
               <li>You agree to accept responsibility for all activities that occur under your account.</li>
               <li>We reserve the right to suspend or terminate accounts that violate our terms.</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Contact Section */}
-          <div className="policy-contact">
-            <h2>10. Contact Us</h2>
+          <AccordionItem id="section10" title="10. Contact Us">
             <p>If you have any questions about these Terms & Conditions, please contact us:</p>
             <p><strong>Floretta India</strong></p>
             <p>Email: <a href="mailto:support@florettaindia.com">support@florettaindia.com</a></p>
             <p>Phone: +91-9639970148</p>
-          </div>
+          </AccordionItem>
         </div>
       </div>
 

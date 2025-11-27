@@ -1,12 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import '../styles/policies.css';
 
 const ShippingPolicy = () => {
+  const [openSections, setOpenSections] = useState({});
+  const [expandAll, setExpandAll] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const toggleExpandAll = () => {
+    const newExpandAll = !expandAll;
+    setExpandAll(newExpandAll);
+
+    const allSections = {};
+    for (let i = 1; i <= 9; i++) {
+      allSections[`section${i}`] = newExpandAll;
+    }
+    setOpenSections(allSections);
+  };
+
+  const AccordionItem = ({ id, title, children }) => {
+    const isOpen = openSections[id] || false;
+
+    return (
+      <div className="accordion-item">
+        <button
+          className={`accordion-header ${isOpen ? 'active' : ''}`}
+          onClick={() => toggleSection(id)}
+        >
+          <h2 className="accordion-title">{title}</h2>
+          <span className={`accordion-icon ${isOpen ? 'rotate' : ''}`}>▼</span>
+        </button>
+        <div className={`accordion-content ${isOpen ? 'open' : ''}`}>
+          {children}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="policy-page">
@@ -27,21 +67,21 @@ const ShippingPolicy = () => {
             </p>
           </div>
 
-          {/* Section 1 */}
-          <div className="policy-section">
-            <h2>1. Shipping Locations</h2>
+          <div className="expand-all-container">
+            <button className="expand-all-btn" onClick={toggleExpandAll}>
+              {expandAll ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
+
+          <AccordionItem id="section1" title="1. Shipping Locations">
             <p>
               We ship across India. Currently, we do not ship internationally. If you are
               located outside India and wish to purchase our products, please contact us
               for special arrangements.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 2 */}
-          <div className="policy-section">
-            <h2>2. Shipping Time</h2>
+          <AccordionItem id="section2" title="2. Shipping Time">
             <ul>
               <li>Orders are dispatched within <strong>1–3 working days</strong> after order confirmation.</li>
               <li>Delivery takes <strong>3–7 working days</strong>, depending on your location.</li>
@@ -52,13 +92,9 @@ const ShippingPolicy = () => {
                 or in case of unforeseen circumstances. Remote locations may experience slight delays.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 3 */}
-          <div className="policy-section">
-            <h2>3. Shipping Charges</h2>
+          <AccordionItem id="section3" title="3. Shipping Charges">
             <ul>
               <li>Standard shipping charges apply based on pin code and courier partner.</li>
               <li>Free shipping may be available on special offers or orders above a certain amount.</li>
@@ -69,16 +105,10 @@ const ShippingPolicy = () => {
                 including free shipping campaigns.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 4 */}
-          <div className="policy-section">
-            <h2>4. Order Tracking</h2>
-            <p>
-              Once your order is shipped, you will receive a tracking link via:
-            </p>
+          <AccordionItem id="section4" title="4. Order Tracking">
+            <p>Once your order is shipped, you will receive a tracking link via:</p>
             <ul>
               <li>SMS</li>
               <li>Email</li>
@@ -87,13 +117,9 @@ const ShippingPolicy = () => {
             <p>
               You can use this tracking link to monitor your order's delivery status in real-time.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 5 */}
-          <div className="policy-section">
-            <h2>5. Packaging</h2>
+          <AccordionItem id="section5" title="5. Packaging">
             <p>
               All products are securely packed to avoid leakage or breakage during transit. We use:
             </p>
@@ -108,16 +134,10 @@ const ShippingPolicy = () => {
                 immediately for assistance.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 6 */}
-          <div className="policy-section">
-            <h2>6. Delays</h2>
-            <p>
-              We are not responsible for delays caused by:
-            </p>
+          <AccordionItem id="section6" title="6. Delays">
+            <p>We are not responsible for delays caused by:</p>
             <ul>
               <li>Weather conditions</li>
               <li>Political issues or strikes</li>
@@ -130,16 +150,10 @@ const ShippingPolicy = () => {
                 Please ensure your shipping address is complete and accurate to avoid delivery delays.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 7 */}
-          <div className="policy-section">
-            <h2>7. Failed Delivery Attempts</h2>
-            <p>
-              If the courier is unable to deliver your order due to:
-            </p>
+          <AccordionItem id="section7" title="7. Failed Delivery Attempts">
+            <p>If the courier is unable to deliver your order due to:</p>
             <ul>
               <li>Incorrect or incomplete address</li>
               <li>Recipient unavailable</li>
@@ -149,30 +163,22 @@ const ShippingPolicy = () => {
               The package will be returned to our warehouse. In such cases, additional shipping
               charges may apply for re-delivery. Please contact our support team for assistance.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Section 8 */}
-          <div className="policy-section">
-            <h2>8. Address Changes</h2>
+          <AccordionItem id="section8" title="8. Address Changes">
             <p>
               Once an order is dispatched, we cannot modify the delivery address. Please ensure
               your shipping details are correct before confirming your order.
             </p>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* Contact Section */}
-          <div className="policy-contact">
-            <h2>9. Contact Us</h2>
+          <AccordionItem id="section9" title="9. Contact Us">
             <p>For any shipping-related queries, please contact us:</p>
             <p><strong>Floretta India</strong></p>
             <p>Email: <a href="mailto:support@florettaindia.com">support@florettaindia.com</a></p>
             <p>Phone: +91-9639970148</p>
             <p>Our customer support team is available to help you with any concerns.</p>
-          </div>
+          </AccordionItem>
         </div>
       </div>
 

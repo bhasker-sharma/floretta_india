@@ -1,12 +1,52 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import '../styles/policies.css';
 
 const RefundReturnPolicy = () => {
+  const [openSections, setOpenSections] = useState({});
+  const [expandAll, setExpandAll] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const toggleExpandAll = () => {
+    const newExpandAll = !expandAll;
+    setExpandAll(newExpandAll);
+
+    const allSections = {};
+    for (let i = 1; i <= 4; i++) {
+      allSections[`section${i}`] = newExpandAll;
+    }
+    setOpenSections(allSections);
+  };
+
+  const AccordionItem = ({ id, title, children }) => {
+    const isOpen = openSections[id] || false;
+
+    return (
+      <div className="accordion-item">
+        <button
+          className={`accordion-header ${isOpen ? 'active' : ''}`}
+          onClick={() => toggleSection(id)}
+        >
+          <h2 className="accordion-title">{title}</h2>
+          <span className={`accordion-icon ${isOpen ? 'rotate' : ''}`}>▼</span>
+        </button>
+        <div className={`accordion-content ${isOpen ? 'open' : ''}`}>
+          {children}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="policy-page">
@@ -27,10 +67,13 @@ const RefundReturnPolicy = () => {
             </p>
           </div>
 
-          {/* CANCELLATION POLICY */}
-          <div className="policy-section">
-            <h2>Cancellation Policy</h2>
+          <div className="expand-all-container">
+            <button className="expand-all-btn" onClick={toggleExpandAll}>
+              {expandAll ? 'Collapse All' : 'Expand All'}
+            </button>
+          </div>
 
+          <AccordionItem id="section1" title="Cancellation Policy">
             <h3>1. Order Cancellation</h3>
             <ul>
               <li>You can cancel your order within <strong>2 hours</strong> of placing it.</li>
@@ -44,22 +87,15 @@ const RefundReturnPolicy = () => {
             </div>
 
             <h3>2. How to Cancel</h3>
-            <p>
-              Contact us within 2 hours of order placement with:
-            </p>
+            <p>Contact us within 2 hours of order placement with:</p>
             <ul>
               <li>Your order number</li>
               <li>Registered email address or phone number</li>
               <li>Reason for cancellation</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* REFUND POLICY */}
-          <div className="policy-section">
-            <h2>Refund Policy</h2>
-
+          <AccordionItem id="section2" title="Refund Policy">
             <h3>1. Refund Eligibility</h3>
             <p>Refunds are issued only if:</p>
             <ul>
@@ -99,14 +135,9 @@ const RefundReturnPolicy = () => {
               <li>Sale items or clearance products</li>
               <li>Products without proper documentation (unboxing video and photos)</li>
             </ul>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* RETURN & EXCHANGE POLICY */}
-          <div className="policy-section">
-            <h2>Return & Exchange Policy</h2>
-
+          <AccordionItem id="section3" title="Return & Exchange Policy">
             <h3>1. Returns</h3>
             <div className="policy-important">
               <p>
@@ -145,9 +176,7 @@ const RefundReturnPolicy = () => {
             </ul>
 
             <h3>5. Exchange Process</h3>
-            <p>
-              Once your exchange request is approved, we will arrange for:
-            </p>
+            <p>Once your exchange request is approved, we will arrange for:</p>
             <ul>
               <li>Pickup of the incorrect/damaged product</li>
               <li>Delivery of the replacement product</li>
@@ -158,32 +187,28 @@ const RefundReturnPolicy = () => {
                 and your location.
               </p>
             </div>
-          </div>
+          </AccordionItem>
 
-          <hr className="policy-divider" />
-
-          {/* IMPORTANT NOTES */}
-          <div className="policy-section">
-            <h2>Important Notes</h2>
+          <AccordionItem id="section4" title="Important Notes & Contact">
+            <h3>Important Notes</h3>
             <ul>
               <li>Always record an unboxing video when you receive your order. This is crucial for processing any claims.</li>
               <li>Inspect your order immediately upon delivery and report any issues within 24 hours.</li>
               <li>Keep the original packaging and invoice until you are satisfied with the product.</li>
               <li>We reserve the right to reject refund/exchange requests that do not meet our policy requirements.</li>
             </ul>
-          </div>
 
-          <hr className="policy-divider" />
+            <hr className="policy-divider" />
 
-          {/* Contact Section */}
-          <div className="policy-contact">
-            <h2>Contact Us</h2>
-            <p>For cancellation, refund, or exchange requests, please contact us:</p>
-            <p><strong>Floretta India</strong></p>
-            <p>Email: <a href="mailto:support@florettaindia.com">support@florettaindia.com</a></p>
-            <p>Phone: +91-9639970148</p>
-            <p>Our customer support team will assist you with your request and guide you through the process.</p>
-          </div>
+            <div className="policy-contact">
+              <h3>Contact Us</h3>
+              <p>For cancellation, refund, or exchange requests, please contact us:</p>
+              <p><strong>Floretta India</strong></p>
+              <p>Email: <a href="mailto:support@florettaindia.com">support@florettaindia.com</a></p>
+              <p>Phone: +91-9639970148</p>
+              <p>Our customer support team will assist you with your request and guide you through the process.</p>
+            </div>
+          </AccordionItem>
         </div>
       </div>
 
