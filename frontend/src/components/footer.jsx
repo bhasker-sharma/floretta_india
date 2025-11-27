@@ -18,7 +18,7 @@ function Footer() {
         {/* Contact Info */}
         <div className="footer-section">
           <h3>CONTACT INFORMATION</h3>
-          <p>Phone: +91 9149126788</p>
+          <p>Phone: +91 9639970148</p>
           <p>Email: kaushikmashek93@gmail.com</p>
           <p>Address: Haridwar, Uttrakhand</p>
         </div>
@@ -50,6 +50,7 @@ function Footer() {
           <ul>
             <li><a href="/admin">Admin</a></li>
             <li><a href="/privacy-policy">Privacy Policy</a></li>
+            <li><a href="/shipping-policy">Shipping Policy</a></li>
             <li><a href="/refund-policy">Refund & Return Policy</a></li>
             <li><a href="/terms-and-conditions">Terms & Conditions</a></li>
           </ul>

@@ -1,0 +1,310 @@
+/* Shared CSS for all policy pages - Floretta India */
+
+.policy-page {
+  min-height: 100vh;
+  background-color: #f9f9f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.policy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 60px 60px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.policy-header {
+  text-align: center;
+  margin-bottom: 50px;
+  padding-bottom: 30px;
+  border-bottom: 3px solid #b5465c;
+}
+
+.policy-header h1 {
+  font-size: 2.8rem;
+  color: #b5465c;
+  margin-bottom: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.policy-last-updated {
+  font-size: 1rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.policy-content {
+  line-height: 1.8;
+  color: #333;
+}
+
+.policy-intro {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 40px;
+  padding: 20px;
+  background-color: #fff5f7;
+  border-left: 4px solid #b5465c;
+  border-radius: 4px;
+}
+
+.policy-section {
+  margin-bottom: 45px;
+}
+
+.policy-section h2 {
+  font-size: 1.9rem;
+  color: #a33d3d;
+  margin-bottom: 20px;
+  font-weight: 600;
+  border-bottom: 2px solid #f0e5e7;
+  padding-bottom: 10px;
+}
+
+.policy-section h3 {
+  font-size: 1.4rem;
+  color: #b5465c;
+  margin: 25px 0 15px;
+  font-weight: 600;
+}
+
+.policy-section h4 {
+  font-size: 1.2rem;
+  color: #555;
+  margin: 20px 0 12px;
+  font-weight: 600;
+}
+
+.policy-section p {
+  font-size: 1.05rem;
+  margin-bottom: 15px;
+  color: #444;
+  text-align: justify;
+}
+
+.policy-section ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 20px 0;
+}
+
+.policy-section ul li {
+  font-size: 1.05rem;
+  padding: 10px 0 10px 30px;
+  position: relative;
+  color: #444;
+}
+
+.policy-section ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #b5465c;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.policy-highlight {
+  background-color: #fff5f7;
+  padding: 20px 25px;
+  border-radius: 8px;
+  margin: 25px 0;
+  border-left: 5px solid #b5465c;
+}
+
+.policy-highlight strong {
+  color: #a33d3d;
+}
+
+.policy-contact {
+  background-color: #f5f5f5;
+  padding: 30px;
+  border-radius: 10px;
+  margin-top: 50px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+}
+
+.policy-contact h2 {
+  font-size: 1.8rem;
+  color: #b5465c;
+  margin-bottom: 20px;
+}
+
+.policy-contact p {
+  font-size: 1.1rem;
+  color: #555;
+  margin: 10px 0;
+}
+
+.policy-contact a {
+  color: #b5465c;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.policy-contact a:hover {
+  color: #a33d3d;
+  text-decoration: underline;
+}
+
+.policy-divider {
+  border: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #b5465c, transparent);
+  margin: 40px 0;
+}
+
+.policy-note {
+  background-color: #fffbea;
+  border-left: 4px solid #ffc107;
+  padding: 15px 20px;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+
+.policy-note p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.policy-important {
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+  padding: 15px 20px;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+
+.policy-important p {
+  margin: 0;
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+
+/* Tablet view (481px - 768px) */
+@media (max-width: 768px) {
+  .policy-container {
+    padding: 60px 40px 40px;
+  }
+
+  .policy-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .policy-section h2 {
+    font-size: 1.6rem;
+  }
+
+  .policy-section h3 {
+    font-size: 1.3rem;
+  }
+
+  .policy-section p,
+  .policy-section ul li {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile view (0px - 480px) */
+@media (max-width: 480px) {
+  .policy-container {
+    padding: 40px 20px 30px;
+  }
+
+  .policy-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+  }
+
+  .policy-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .policy-last-updated {
+    font-size: 0.9rem;
+  }
+
+  .policy-intro {
+    font-size: 1rem;
+    padding: 15px;
+    margin-bottom: 30px;
+  }
+
+  .policy-section {
+    margin-bottom: 30px;
+  }
+
+  .policy-section h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+
+  .policy-section h3 {
+    font-size: 1.2rem;
+    margin: 20px 0 12px;
+  }
+
+  .policy-section h4 {
+    font-size: 1.1rem;
+  }
+
+  .policy-section p,
+  .policy-section ul li {
+    font-size: 0.95rem;
+    text-align: left;
+  }
+
+  .policy-section ul li {
+    padding: 8px 0 8px 25px;
+  }
+
+  .policy-highlight {
+    padding: 15px 20px;
+    margin: 20px 0;
+  }
+
+  .policy-contact {
+    padding: 20px 15px;
+    margin-top: 35px;
+  }
+
+  .policy-contact h2 {
+    font-size: 1.5rem;
+  }
+
+  .policy-contact p {
+    font-size: 1rem;
+  }
+}
+
+/* Small mobile view (0px - 374px) */
+@media (max-width: 374px) {
+  .policy-container {
+    padding: 30px 15px 20px;
+  }
+
+  .policy-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .policy-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .policy-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .policy-section p,
+  .policy-section ul li {
+    font-size: 0.9rem;
+  }
+}
