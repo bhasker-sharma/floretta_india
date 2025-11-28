@@ -19,7 +19,7 @@ function Footer() {
         <div className="footer-section">
           <h3>CONTACT INFORMATION</h3>
           <p>Phone: +91 9639970148</p>
-          <p>Email: kaushikmashek93@gmail.com</p>
+          <p>Email: contact-us@florettaindia.com</p>
           <p>Address: Haridwar, Uttrakhand</p>
         </div>
 

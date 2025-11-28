@@ -159,22 +159,23 @@ const Home = () => {
                 <label>SIZE</label>
                 <div className="pdp-size-box">{featuredProduct.volume_ml}ml</div>
               </div>
-              <button
-                className="pdp-add-to-cart-btn"
-                onClick={handleAddToCart}
-                disabled={addedToCart}
-              >
-                {addedToCart ? 'ADDED TO CART' : 'ADD TO CART'}
-              </button>
-              <button className="pdp-shop-now-btn" onClick={handleShopNow}>
-                SHOP NOW
-              </button>
+              <div className="pdp-button-row">
+                <button
+                  className="pdp-add-to-cart-btn"
+                  onClick={handleAddToCart}
+                  disabled={addedToCart}
+                >
+                  {addedToCart ? 'ADDED TO CART' : 'ADD TO CART'}
+                </button>
+                <button className="pdp-shop-now-btn" onClick={handleShopNow}>
+                  SHOP NOW
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      <Uproducts />
       <Testimonials />
       <Footer />
     </>
