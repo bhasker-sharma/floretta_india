@@ -554,6 +554,45 @@ const ProductDetail = () => {
 
             <hr className="amazon-divider" />
 
+            {/* Mobile/Tablet Action Buttons - Only visible on small/medium screens */}
+            <div className="amazon-mobile-action-buttons">
+              <div className="amazon-quantity-selector">
+                <label htmlFor="quantity-mobile">Quantity:</label>
+                <select
+                  id="quantity-mobile"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  className="amazon-quantity-dropdown"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="amazon-mobile-buttons-row">
+                <button
+                  className="amazon-add-to-cart-btn"
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                >
+                  {addingToCart ? "Adding..." : "Add to Cart"}
+                </button>
+
+                <button
+                  className="amazon-buy-now-btn"
+                  onClick={handleBuyNow}
+                  disabled={buyingNow}
+                >
+                  {buyingNow ? "Processing..." : "Buy Now"}
+                </button>
+              </div>
+            </div>
+
+            <hr className="amazon-divider" />
+
             {/* Product Details */}
             <div className="amazon-details-table">
               <table>

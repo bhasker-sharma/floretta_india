@@ -15,13 +15,6 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Contact Info */}
-        <div className="footer-section">
-          <h3>CONTACT INFORMATION</h3>
-          <p>Phone: +91 9149126788</p>
-          <p>Email: kaushikmashek93@gmail.com</p>
-          <p>Address: Haridwar, Uttrakhand</p>
-        </div>
 
         {/* Newsletter */}
         <div className="footer-section newsletter">
@@ -55,6 +48,13 @@ function Footer() {
           </ul>
         </div>
 
+        {/* Contact Info */}
+        <div className="footer-section">
+          <h3>CONTACT INFORMATION</h3>
+          <p>Phone: +91 9149126788</p>
+          <p>Email: kaushikmashek93@gmail.com</p>
+          <p>Address: Haridwar, Uttrakhand</p>
+        </div>
         {/* Social Section - Full Width Bottom */}
         <div className="social-section">
           <p className="social-title">Follow Us</p>
