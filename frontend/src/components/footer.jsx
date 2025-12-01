@@ -15,6 +15,13 @@ function Footer() {
           </ul>
         </div>
 
+        {/* Contact Info */}
+        <div className="footer-section">
+          <h3>CONTACT INFORMATION</h3>
+          <p>Phone: +91 9639970148</p>
+          <p>Email: contact-us@florettaindia.com</p>
+          <p>Address: Haridwar, Uttrakhand</p>
+        </div>
 
         {/* Newsletter */}
         <div className="footer-section newsletter">
@@ -43,18 +50,12 @@ function Footer() {
           <ul>
             <li><a href="/admin">Admin</a></li>
             <li><a href="/privacy-policy">Privacy Policy</a></li>
+            <li><a href="/shipping-policy">Shipping Policy</a></li>
             <li><a href="/refund-policy">Refund & Return Policy</a></li>
             <li><a href="/terms-and-conditions">Terms & Conditions</a></li>
           </ul>
         </div>
 
-        {/* Contact Info */}
-        <div className="footer-section">
-          <h3>CONTACT INFORMATION</h3>
-          <p>Phone: +91 9149126788</p>
-          <p>Email: kaushikmashek93@gmail.com</p>
-          <p>Address: Haridwar, Uttrakhand</p>
-        </div>
         {/* Social Section - Full Width Bottom */}
         <div className="social-section">
           <p className="social-title">Follow Us</p>
