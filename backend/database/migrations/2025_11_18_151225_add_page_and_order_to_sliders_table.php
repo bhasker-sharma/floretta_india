@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sliders', function (Blueprint $table) {
-            $table->enum('page', ['home', 'products', 'liveperfume', 'hotelamenities'])->default('home')->after('id');
-            $table->integer('order')->default(0)->after('image');
+            if (!Schema::hasColumn('sliders', 'page')) {
+                $table->enum('page', ['home', 'products', 'liveperfume', 'hotelamenities'])->default('home');
+            }
+            if (!Schema::hasColumn('sliders', 'order')) {
+                $table->integer('order')->default(0);
+            }
         });
     }
 

@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('admin_auth', function (Blueprint $table) {
-            $table->string('role')->default('admin')->after('password');
+        $tableName = Schema::hasTable('admin_auth') ? 'admin_auth' : 'admins';
+
+        Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+            if (!Schema::hasColumn($tableName, 'role')) {
+                $table->string('role')->default('admin');
+            }
         });
     }
 
@@ -21,7 +25,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('admin_auth', function (Blueprint $table) {
+        $tableName = Schema::hasTable('admin_auth') ? 'admin_auth' : 'admins';
+
+        Schema::table($tableName, function (Blueprint $table) {
             $table->dropColumn('role');
         });
     }

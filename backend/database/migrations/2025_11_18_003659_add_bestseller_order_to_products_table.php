@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->integer('bestseller_order')->nullable()->after('is_bestseller');
+            if (!Schema::hasColumn('products', 'bestseller_order')) {
+                $table->integer('bestseller_order')->nullable();
+            }
         });
     }
 
