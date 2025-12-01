@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import AdminReviews from "./AdminReviews";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -2733,6 +2734,16 @@ function AdminDashboard() {
               <span>Enquiries</span>
             </li>
             <li
+              className={activeSection === "reviews" ? "active" : ""}
+              onClick={() => {
+                setActiveSection("reviews");
+                setSidebarOpen(false);
+              }}
+            >
+              <i className="fas fa-star"></i>
+              <span>Reviews</span>
+            </li>
+            <li
               className={activeSection === "settings" ? "active" : ""}
               onClick={() => {
                 setActiveSection("settings");
@@ -2779,8 +2790,9 @@ function AdminDashboard() {
             {activeSection === "addUser" && "Add User"}
             {activeSection === "admins" && "Admin Management"}
             {activeSection === "enquiries" && "Enquiries"}
+            {activeSection === "reviews" && "Reviews"}
             {activeSection === "settings" && "Settings"}
-            {!["orders", "newOrders", "products", "customers", "analytics", "addUser", "admins", "enquiries", "settings"].includes(activeSection) && "Dashboard"}
+            {!["orders", "newOrders", "products", "customers", "analytics", "addUser", "admins", "enquiries", "reviews", "settings"].includes(activeSection) && "Dashboard"}
           </h1>
           <div className="admin-header-right">
             <span className="admin-user">
@@ -4893,6 +4905,13 @@ function AdminDashboard() {
                 )}
               </div>
             )}
+          </section>
+        )}
+
+        {/* Reviews Section */}
+        {activeSection === "reviews" && (
+          <section className="admin-section" style={{ padding: 0 }}>
+            <AdminReviews />
           </section>
         )}
 
