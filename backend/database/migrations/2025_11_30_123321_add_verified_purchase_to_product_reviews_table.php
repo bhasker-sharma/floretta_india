@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('product_reviews', function (Blueprint $table) {
-            $table->boolean('verified_purchase')->default(false)->after('user_name');
+            if (!Schema::hasColumn('product_reviews', 'verified_purchase')) {
+                $table->boolean('verified_purchase')->default(false)->after('user_name');
+            }
         });
     }
 
