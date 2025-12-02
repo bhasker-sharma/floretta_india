@@ -13,17 +13,20 @@ return new class extends Migration {
         Schema::table('orders', function (Blueprint $table) {
             // Add verified_at if it doesn't exist
             if (!Schema::hasColumn('orders', 'verified_at')) {
-                $table->timestamp('verified_at')->nullable()->after('include_gst');
+                $table->timestamp('verified_at')->nullable();
             }
 
             // Add verified_by_admin_id if it doesn't exist
             if (!Schema::hasColumn('orders', 'verified_by_admin_id')) {
-                $table->unsignedBigInteger('verified_by_admin_id')->nullable()->after('verified_at');
+                $table->unsignedBigInteger('verified_by_admin_id')->nullable();
 
-                // Add foreign key to admin_auth table if both tables/columns are present
+                // Determine correct admin table name
+                $adminTable = Schema::hasTable('admin_auth') ? 'admin_auth' : 'admins';
+
+                // Add foreign key to admin table if both tables/columns are present
                 $table->foreign('verified_by_admin_id')
                     ->references('id')
-                    ->on('admin_auth')
+                    ->on($adminTable)
                     ->nullOnDelete();
             }
         });

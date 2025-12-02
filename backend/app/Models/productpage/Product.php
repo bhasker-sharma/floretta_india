@@ -96,4 +96,12 @@ class Product extends Model
     {
         return $this->hasOne(\App\Models\ProductImage::class)->where('is_primary', true);
     }
+
+    /**
+     * Get all reviews for the product
+     */
+    public function reviews()
+    {
+        return $this->hasMany(\App\Models\ProductReview::class)->orderBy('created_at', 'desc');
+    }
 }

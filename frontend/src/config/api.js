@@ -55,6 +55,13 @@ export const API_ENDPOINTS = {
   FRESHNER_MIST_DETAIL: (id) => `${API_URL}/api/freshners-mist-all/${id}`,
   FRESHNERS_MIST_ALL: `${API_URL}/api/freshners-mist-all`,
 
+  // Reviews
+  PRODUCT_REVIEWS: (productId) => `${API_URL}/api/products/${productId}/reviews`,
+  ADD_REVIEW: `${API_URL}/api/reviews`,
+  UPDATE_REVIEW: (reviewId) => `${API_URL}/api/reviews/${reviewId}`,
+  DELETE_REVIEW: (reviewId) => `${API_URL}/api/reviews/${reviewId}`,
+  USER_REVIEW: (productId) => `${API_URL}/api/products/${productId}/my-review`,
+
   // Payment
   RAZORPAY_CREATE_ORDER: `${API_URL}/api/razorpay/create-order`,
   RAZORPAY_VERIFY: `${API_URL}/api/razorpay/verify`,
@@ -106,6 +113,11 @@ export const API_ENDPOINTS = {
   ADMIN_HOW_IT_WORKS_CREATE: `${API_URL}/api/admin/how-it-works`,
   ADMIN_HOW_IT_WORKS_UPDATE: (id) => `${API_URL}/api/admin/how-it-works/${id}`,
   ADMIN_HOW_IT_WORKS_DELETE: (id) => `${API_URL}/api/admin/how-it-works/${id}`,
+
+  // Admin Reviews
+  ADMIN_REVIEWS: `${API_URL}/api/admin/reviews`,
+  ADMIN_REVIEW_DELETE: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}`,
+  ADMIN_REVIEW_STATS: `${API_URL}/api/admin/reviews/stats`,
 };
 
 // Storage URLs (for images, files, etc.)

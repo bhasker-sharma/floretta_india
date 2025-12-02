@@ -17,6 +17,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\SliderController;
 use App\Http\Controllers\UproductController;
 use App\Http\Controllers\HowItWorksController;
+use App\Http\Controllers\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +78,9 @@ Route::middleware('throttle:3,1')->post('/bookings', [LivePerfumeController::cla
 // 🌐 Sliders (Public - get sliders by page)
 Route::get('/sliders/{page}', [SliderController::class, 'getSlidersByPage']);
 
+// 🌐 Product Reviews (Public - get reviews for a product)
+Route::get('/products/{productId}/reviews', [ReviewController::class, 'getProductReviews']);
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes (JWT Protected via `auth:api`)
@@ -113,6 +117,11 @@ Route::middleware('auth:api')->group(function () {
     // routes/api.php
     Route::middleware('auth:api')->post('/create-order', [PaymentController::class, 'createOrder']);
 
+    // ⭐ Product Reviews (Authenticated)
+    Route::post('/reviews', [ReviewController::class, 'addReview']);
+    Route::put('/reviews/{reviewId}', [ReviewController::class, 'updateReview']);
+    Route::delete('/reviews/{reviewId}', [ReviewController::class, 'deleteReview']);
+    Route::get('/products/{productId}/my-review', [ReviewController::class, 'getUserReview']);
 
     // 🔐 Logout (User)
     Route::post('/logout', [UserController::class, 'logout']);
@@ -177,6 +186,11 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/how-it-works', [HowItWorksController::class, 'store']);
     Route::post('/how-it-works/{id}', [HowItWorksController::class, 'update']);
     Route::delete('/how-it-works/{id}', [HowItWorksController::class, 'destroy']);
+
+    // Review management
+    Route::get('/reviews', [ReviewController::class, 'adminGetAllReviews']);
+    Route::delete('/reviews/{reviewId}', [ReviewController::class, 'adminDeleteReview']);
+    Route::get('/reviews/stats', [ReviewController::class, 'adminGetReviewStats']);
 
     // User Enquiries management (with pagination)
     Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);

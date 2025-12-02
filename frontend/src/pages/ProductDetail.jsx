@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_ENDPOINTS, STORAGE_URL } from "../config/api";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+import ReviewSection from "../components/ReviewSection";
 import "../styles/productDetail.css";
 
 const ProductDetail = () => {
@@ -503,10 +504,12 @@ const ProductDetail = () => {
 
             <div className="amazon-rating-section">
               <div className="amazon-stars">
-                <span className="star-rating">★★★★☆</span>
-                <span className="rating-value">4.5</span>
+                <span className="star-rating">
+                  {product.rating >= 0 ? '★'.repeat(Math.round(Number(product.rating))) + '☆'.repeat(5 - Math.round(Number(product.rating))) : '☆☆☆☆☆'}
+                </span>
+                <span className="rating-value">{product.rating ? Number(product.rating).toFixed(1) : '0.0'}</span>
               </div>
-              <span className="amazon-rating-count">({product.reviews || 120} reviews)</span>
+              <span className="amazon-rating-count">({product.reviews_count || 0} reviews)</span>
             </div>
 
             <hr className="amazon-divider" />
@@ -723,6 +726,11 @@ const ProductDetail = () => {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Review Section */}
+        <div className="amazon-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+          <ReviewSection productId={id} />
         </div>
 
         {/* Related Products */}

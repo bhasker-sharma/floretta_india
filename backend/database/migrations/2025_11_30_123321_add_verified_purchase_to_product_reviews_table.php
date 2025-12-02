@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'gst_number')) {
-                $table->string('gst_number')->nullable();
+        Schema::table('product_reviews', function (Blueprint $table) {
+            if (!Schema::hasColumn('product_reviews', 'verified_purchase')) {
+                $table->boolean('verified_purchase')->default(false)->after('user_name');
             }
         });
     }
@@ -23,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('gst_number');
+        Schema::table('product_reviews', function (Blueprint $table) {
+            $table->dropColumn('verified_purchase');
         });
     }
 };
