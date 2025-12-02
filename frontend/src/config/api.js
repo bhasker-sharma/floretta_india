@@ -118,6 +118,8 @@ export const API_ENDPOINTS = {
   ADMIN_REVIEWS: `${API_URL}/api/admin/reviews`,
   ADMIN_REVIEW_DELETE: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}`,
   ADMIN_REVIEW_STATS: `${API_URL}/api/admin/reviews/stats`,
+  ADMIN_REVIEW_TOGGLE_FEATURED: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}/toggle-featured`,
+  ADMIN_REVIEW_UPDATE_STATUS: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}/status`,
 };
 
 // Storage URLs (for images, files, etc.)

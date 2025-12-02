@@ -125,7 +125,11 @@ const Home = () => {
           <p className="loading-text">Loading Featured Product...</p>
         ) : (
           <div className="pdp-product-card">
-            <div className="pdp-product-images">
+            <div
+              className="pdp-product-images"
+              onClick={() => navigate(`/product/${featuredProduct.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <img
                 className="pdp-product-main-image"
                 src={getImageUrl(selectedImage)}
@@ -138,7 +142,10 @@ const Home = () => {
                     className={`pdp-thumbnail ${img === selectedImage ? 'active' : ''}`}
                     src={getImageUrl(img)}
                     alt={`Thumb ${idx + 1}`}
-                    onClick={() => setSelectedImage(img)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImage(img);
+                    }}
                     onError={(e) => (e.target.src = '/fallback.jpg')}
                   />
                 ))}
@@ -146,18 +153,23 @@ const Home = () => {
             </div>
 
             <div className="pdp-info-section">
-              <p className="pdp-product-brand">{featuredProduct.brand}</p>
-              <h2 className="pdp-product-name">{featuredProduct.name}</h2>
-              <div className="pdp-product-save">
-                SAVE RS. {(featuredProduct.original_price - featuredProduct.price).toFixed(2)}
-              </div>
-              <div className="pdp-product-prices">
-                <span className="pdp-product-price">RS ₹{featuredProduct.price}</span>
-                <span className="pdp-product-old-price">₹{featuredProduct.original_price}</span>
-              </div>
-              <div className="pdp-product-size">
-                <label>SIZE</label>
-                <div className="pdp-size-box">{featuredProduct.volume_ml}ml</div>
+              <div
+                onClick={() => navigate(`/product/${featuredProduct.id}`)}
+                style={{ cursor: 'pointer' }}
+              >
+                <p className="pdp-product-brand">{featuredProduct.brand}</p>
+                <h2 className="pdp-product-name">{featuredProduct.name}</h2>
+                <div className="pdp-product-save">
+                  SAVE RS. {(featuredProduct.original_price - featuredProduct.price).toFixed(2)}
+                </div>
+                <div className="pdp-product-prices">
+                  <span className="pdp-product-price">RS ₹{featuredProduct.price}</span>
+                  <span className="pdp-product-old-price">₹{featuredProduct.original_price}</span>
+                </div>
+                <div className="pdp-product-size">
+                  <label>SIZE</label>
+                  <div className="pdp-size-box">{featuredProduct.volume_ml}ml</div>
+                </div>
               </div>
               <div className="pdp-button-row">
                 <button

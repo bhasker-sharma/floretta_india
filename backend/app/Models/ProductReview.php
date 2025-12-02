@@ -16,13 +16,21 @@ class ProductReview extends Model
         'review',
         'user_name',
         'verified_purchase',
+        'status',
+        'is_featured',
     ];
 
     protected $casts = [
         'rating' => 'integer',
         'verified_purchase' => 'boolean',
+        'is_featured' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    protected $attributes = [
+        'status' => 'pending',
+        'is_featured' => false,
     ];
 
     /**

@@ -361,6 +361,9 @@ class ReviewController extends Controller
                     'product_id' => $review->product_id,
                     'product_name' => $review->product->name ?? 'Product Deleted',
                     'product_image' => $review->product->image ?? null,
+                    'is_featured' => $review->is_featured ?? false,
+                    'status' => $review->status ?? 'pending',
+                    'verified_purchase' => $review->verified_purchase ?? false,
                     'created_at' => $review->created_at->format('d M Y, h:i A'),
                     'updated_at' => $review->updated_at->format('d M Y, h:i A'),
                 ];
@@ -453,6 +456,84 @@ class ReviewController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch review statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle featured status of a review (Admin only)
+     */
+    public function adminToggleFeatured($reviewId)
+    {
+        try {
+            $review = ProductReview::findOrFail($reviewId);
+
+            // Toggle the featured status
+            $review->is_featured = !$review->is_featured;
+            $review->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => $review->is_featured ? 'Review marked as featured' : 'Review unmarked as featured',
+                'is_featured' => $review->is_featured,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Review not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update review',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update review status (Admin only)
+     */
+    public function adminUpdateStatus(Request $request, $reviewId)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:pending,approved,rejected',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid status',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $review = ProductReview::findOrFail($reviewId);
+            $review->status = $request->status;
+            $review->save();
+
+            $statusMessages = [
+                'approved' => 'Review approved successfully',
+                'rejected' => 'Review rejected successfully',
+                'pending' => 'Review status changed to pending',
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => $statusMessages[$request->status],
+                'status' => $review->status,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Review not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update review status',
                 'error' => $e->getMessage()
             ], 500);
         }

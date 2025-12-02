@@ -26,23 +26,45 @@
   text-align: left;
 }
 
+/* .testimonial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+} */
+
 .testimonial-name {
   font-weight: bold;
   color: #b5465c;
+  margin: 0;
 }
 
+
+
 .testimonial-stars {
-  color: green;
+  color: #ffd700;
   font-size: 18px;
+  margin: 5px 0;
 }
 
 .testimonial-product {
   color: #b5465c;
   font-weight: 600;
+  margin: 8px 0;
 }
 
 .testimonial-review {
-  color: #b5465c;
+  color: #666;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.testimonial-date {
+  color: #999;
+  font-size: 12px;
+  margin-top: 8px;
+  font-style: italic;
 }
 
 /* Mobile Responsive */

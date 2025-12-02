@@ -191,6 +191,8 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/reviews', [ReviewController::class, 'adminGetAllReviews']);
     Route::delete('/reviews/{reviewId}', [ReviewController::class, 'adminDeleteReview']);
     Route::get('/reviews/stats', [ReviewController::class, 'adminGetReviewStats']);
+    Route::put('/reviews/{reviewId}/toggle-featured', [ReviewController::class, 'adminToggleFeatured']);
+    Route::put('/reviews/{reviewId}/status', [ReviewController::class, 'adminUpdateStatus']);
 
     // User Enquiries management (with pagination)
     Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);

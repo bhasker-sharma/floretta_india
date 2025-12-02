@@ -11,12 +11,24 @@ const Testimonials = () => {
     fetch(API_ENDPOINTS.HOMEPAGE)
       .then((response) => response.json())
       .then((data) => {
-        if (Array.isArray(data)) {
+        console.log("Homepage API Response:", data);
+        console.log("Reviews data:", data.reviews);
+        console.log("Reviews is array?", Array.isArray(data.reviews));
+        console.log("Reviews length:", data.reviews?.length);
+
+        // Prioritize real user reviews over testimonials
+        if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+          console.log("Using reviews:", data.reviews);
+          setTestimonials(data.reviews);
+        } else if (Array.isArray(data.testimonials)) {
+          console.log("Using testimonials:", data.testimonials);
+          setTestimonials(data.testimonials);
+        } else if (Array.isArray(data)) {
+          console.log("Using data as array");
           setTestimonials(data);
         } else if (Array.isArray(data.data)) {
+          console.log("Using data.data");
           setTestimonials(data.data);
-        } else if (Array.isArray(data.testimonials)) {
-          setTestimonials(data.testimonials);
         } else {
           console.error("Unexpected response format:", data);
         }
@@ -48,17 +60,40 @@ const Testimonials = () => {
     <div className="testimonials-section">
       <h2 className="testimonial-heading">OUR CUSTOMERS</h2>
 
+      {testimonials.length === 0 && (
+        <p style={{textAlign: 'center', color: '#999', padding: '20px'}}>
+          No reviews available yet. Be the first to leave a review!
+        </p>
+      )}
+
       {/* Grid layout for large screens */}
       <div className="testimonial-container">
         {testimonials.map((item, index) => (
           <div className="testimonial-card" key={index}>
-            <p className="testimonial-name">{item.name}</p>
+            <div className="testimonial-header">
+              <p className="testimonial-name">{item.name}</p>
+              {/* <div style={{ display: 'flex', gap: '5px' }}>
+                {item.is_featured && (
+                  <span className="featured-badge" title="Featured Review">
+                    ⭐ Featured
+                  </span>
+                )}
+                {item.verified_purchase && (
+                  <span className="verified-badge" title="Verified Purchase">
+                    ✓ Verified
+                  </span>
+                )}
+              </div> */}
+            </div>
             <div className="testimonial-stars">
               {"★".repeat(item.rating)}
               {"☆".repeat(5 - item.rating)}
             </div>
             <p className="testimonial-product">{item.product}</p>
             <p className="testimonial-review">{item.review}</p>
+            {item.created_at && (
+              <p className="testimonial-date">{item.created_at}</p>
+            )}
           </div>
         ))}
       </div>
@@ -76,13 +111,19 @@ const Testimonials = () => {
               key={index}
             >
               <div className="testimonial-card">
-                <p className="testimonial-name">{item.name}</p>
+                <div className="testimonial-header">
+                  <p className="testimonial-name">{item.name}</p>
+                 
+                </div>
                 <div className="testimonial-stars">
                   {"★".repeat(item.rating)}
                   {"☆".repeat(5 - item.rating)}
                 </div>
                 <p className="testimonial-product">{item.product}</p>
                 <p className="testimonial-review">{item.review}</p>
+                {item.created_at && (
+                  <p className="testimonial-date">{item.created_at}</p>
+                )}
               </div>
             </div>
           ))}

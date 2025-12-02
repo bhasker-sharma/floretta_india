@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_URL } from '../config/api';
-import { Star, Trash2, Search, TrendingUp, BarChart3 } from 'lucide-react';
+import { Star, Trash2, Search, TrendingUp, BarChart3, Award, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminReviews = () => {
   const navigate = useNavigate();
@@ -10,6 +10,8 @@ const AdminReviews = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [togglingFeatured, setTogglingFeatured] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
@@ -97,6 +99,72 @@ const AdminReviews = () => {
     }
   };
 
+  const handleToggleFeatured = async (reviewId, currentStatus) => {
+    try {
+      setTogglingFeatured(reviewId);
+      const token = localStorage.getItem('adminToken');
+
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_REVIEW_TOGGLE_FEATURED(reviewId),
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        // Update the review in the local state
+        setReviews(reviews.map(review =>
+          review.id === reviewId
+            ? { ...review, is_featured: response.data.is_featured }
+            : review
+        ));
+
+        const message = response.data.is_featured
+          ? 'Review added to homepage!'
+          : 'Review removed from homepage';
+        alert(message);
+      }
+    } catch (error) {
+      console.error('Error toggling featured status:', error);
+      alert('Failed to update featured status. Please try again.');
+    } finally {
+      setTogglingFeatured(null);
+    }
+  };
+
+  const handleUpdateStatus = async (reviewId, newStatus) => {
+    try {
+      setUpdatingStatus(reviewId);
+      const token = localStorage.getItem('adminToken');
+
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_REVIEW_UPDATE_STATUS(reviewId),
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        // Update the review in the local state
+        setReviews(reviews.map(review =>
+          review.id === reviewId
+            ? { ...review, status: response.data.status }
+            : review
+        ));
+
+        alert(response.data.message);
+        fetchStats(); // Refresh stats as approval status affects them
+      }
+    } catch (error) {
+      console.error('Error updating review status:', error);
+      alert('Failed to update review status. Please try again.');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
@@ -131,7 +199,7 @@ const AdminReviews = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         .admin-reviews-header {
           margin-bottom: 30px;
@@ -585,19 +653,234 @@ const AdminReviews = () => {
           cursor: not-allowed;
         }
 
-        @media (max-width: 768px) {
-          .admin-reviews-table {
-            font-size: 12px;
+        /* Tablet Responsive (768px - 1024px) */
+        @media (max-width: 1024px) {
+          .admin-reviews-title {
+            font-size: 28px;
           }
 
           .admin-reviews-table th,
           .admin-reviews-table td {
-            padding: 10px;
+            padding: 12px;
+            font-size: 13px;
+          }
+
+          .admin-product-name {
+            max-width: 150px;
+          }
+
+          .admin-review-text {
+            max-width: 200px;
+          }
+
+          .admin-action-button,
+          .admin-delete-button {
+            font-size: 12px;
+            padding: 6px 8px;
+          }
+        }
+
+        /* Mobile Responsive (max-width: 768px) */
+        @media (max-width: 768px) {
+          .admin-reviews-header {
+            margin-bottom: 20px;
+          }
+
+          .admin-reviews-title {
+            font-size: 24px;
+          }
+
+          .admin-reviews-subtitle {
+            font-size: 14px;
+          }
+
+          .admin-stats-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+
+          .admin-stat-card {
+            padding: 16px;
+          }
+
+          .admin-stat-value {
+            font-size: 28px;
+          }
+
+          .admin-search-section {
+            padding: 16px;
+          }
+
+          .admin-search-form {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .admin-search-input {
+            width: 100%;
+            min-width: unset;
+          }
+
+          .admin-search-button {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .admin-per-page-select {
+            width: 100%;
+          }
+
+          /* Hide table, show mobile cards instead */
+          .admin-reviews-table-container {
+            overflow-x: auto;
+          }
+
+          .admin-reviews-table {
+            font-size: 12px;
+            min-width: 800px;
+          }
+
+          .admin-reviews-table th,
+          .admin-reviews-table td {
+            padding: 8px;
+          }
+
+          .admin-product-image {
+            width: 40px;
+            height: 40px;
+          }
+
+          .admin-product-name {
+            max-width: 100px;
+            font-size: 12px;
+          }
+
+          .admin-review-text {
+            max-width: 120px;
+            font-size: 12px;
+          }
+
+          .admin-action-button {
+            padding: 4px 6px;
+            font-size: 11px;
+          }
+
+          .admin-action-button span {
+            display: none;
+          }
+
+          .admin-delete-button {
+            padding: 6px 8px;
+            font-size: 11px;
+          }
+
+          .admin-delete-button span {
+            display: none;
+          }
+
+          .admin-pagination {
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+          }
+
+          .admin-pagination-info {
+            text-align: center;
+            font-size: 13px;
+          }
+
+          .admin-pagination-buttons {
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+
+          .admin-pagination-button {
+            padding: 6px 12px;
+            font-size: 13px;
+          }
+
+          .modal-content {
+            max-width: 95%;
+          }
+
+          .modal-header {
+            padding: 16px;
+          }
+
+          .modal-title {
+            font-size: 18px;
+          }
+
+          .modal-body {
+            padding: 16px;
+          }
+
+          .modal-footer {
+            padding: 12px 16px;
+            flex-direction: column;
+          }
+
+          .modal-button {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .modal-product-image {
+            width: 60px;
+            height: 60px;
+          }
+
+          .modal-rating-number {
+            font-size: 24px;
+          }
+        }
+
+        /* Extra Small Mobile (max-width: 480px) */
+        @media (max-width: 480px) {
+          div[style*="padding: 20px"] {
+            padding: 12px !important;
+          }
+
+          .admin-reviews-title {
+            font-size: 20px;
+          }
+
+          .admin-reviews-subtitle {
+            font-size: 13px;
+          }
+
+          .admin-stat-label {
+            font-size: 12px;
+          }
+
+          .admin-stat-value {
+            font-size: 24px;
+          }
+
+          .admin-search-section {
+            padding: 12px;
+          }
+
+          .admin-reviews-table {
+            min-width: 700px;
+          }
+
+          .admin-reviews-table th,
+          .admin-reviews-table td {
+            padding: 6px;
+            font-size: 11px;
           }
 
           .admin-product-name,
           .admin-review-text {
-            max-width: 150px;
+            max-width: 80px;
+            font-size: 11px;
+          }
+
+          .modal-product-info {
+            flex-direction: column;
+            align-items: flex-start;
           }
         }
       `}</style>
@@ -721,17 +1004,95 @@ const AdminReviews = () => {
                     <td style={{ color: '#6b7280' }}>{review.user_email}</td>
                     <td style={{ color: '#6b7280', fontSize: '13px' }}>{review.created_at}</td>
                     <td>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(review.id);
-                        }}
-                        disabled={deleting === review.id}
-                        className="admin-delete-button"
-                      >
-                        <Trash2 size={14} />
-                        {deleting === review.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {review.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(review.id, 'approved');
+                              }}
+                              disabled={updatingStatus === review.id}
+                              className="admin-action-button"
+                              style={{
+                                backgroundColor: '#10b981',
+                                color: '#ffffff',
+                                border: 'none',
+                                cursor: updatingStatus === review.id ? 'not-allowed' : 'pointer',
+                                opacity: updatingStatus === review.id ? 0.5 : 1,
+                                padding: '6px 10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              title="Approve review"
+                            >
+                              <CheckCircle size={14} />
+                              <span style={{ fontSize: '12px' }}>Approve</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(review.id, 'rejected');
+                              }}
+                              disabled={updatingStatus === review.id}
+                              className="admin-action-button"
+                              style={{
+                                backgroundColor: '#ef4444',
+                                color: '#ffffff',
+                                border: 'none',
+                                cursor: updatingStatus === review.id ? 'not-allowed' : 'pointer',
+                                opacity: updatingStatus === review.id ? 0.5 : 1,
+                                padding: '6px 10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              title="Reject review"
+                            >
+                              <XCircle size={14} />
+                              <span style={{ fontSize: '12px' }}>Reject</span>
+                            </button>
+                          </>
+                        )}
+                        {/* Featured button - available for all reviews except rejected */}
+                        {review.status !== 'rejected' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFeatured(review.id, review.is_featured);
+                            }}
+                            disabled={togglingFeatured === review.id}
+                            className="admin-action-button"
+                            style={{
+                              backgroundColor: review.is_featured ? '#fbbf24' : '#e5e7eb',
+                              color: review.is_featured ? '#ffffff' : '#6b7280',
+                              border: 'none',
+                              cursor: togglingFeatured === review.id ? 'not-allowed' : 'pointer',
+                              opacity: togglingFeatured === review.id ? 0.5 : 1,
+                              padding: '6px 10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            title={review.is_featured ? 'Remove from homepage' : 'Add to homepage (Featured)'}
+                          >
+                            <Award size={14} />
+                            {review.is_featured && <span style={{ fontSize: '12px' }}>Featured</span>}
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(review.id);
+                          }}
+                          disabled={deleting === review.id}
+                          className="admin-delete-button"
+                        >
+                          <Trash2 size={14} />
+                          {deleting === review.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
