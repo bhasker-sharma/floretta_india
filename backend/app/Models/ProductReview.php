@@ -29,7 +29,7 @@ class ProductReview extends Model
     ];
 
     protected $attributes = [
-        'status' => 'pending',
+        'status' => 'approved', // Auto-approve all reviews
         'is_featured' => false,
     ];
 

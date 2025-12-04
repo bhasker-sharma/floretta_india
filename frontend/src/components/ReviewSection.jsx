@@ -648,11 +648,11 @@ const ReviewSection = ({ productId }) => {
                       </div>
                       <div className="amazon-reviewer-name">
                         {review.user_name}
-                        {isUserReview && (
+                        {/* {isUserReview && (
                           <span style={{ marginLeft: '8px', fontSize: '12px', color: '#067d62', fontWeight: '600' }}>
                             (My Review)
                           </span>
-                        )}
+                        )} */}
                       </div>
                     </div>
 
@@ -697,6 +697,12 @@ const ReviewSection = ({ productId }) => {
                         )}
                       </div>
                     )}
+                  {review.verified_purchase && (
+                    <div className="amazon-verified-purchase">
+                      <CheckCircle size={14} />
+                      Verified Purchase
+                    </div>
+                  )}
                   </div>
 
                   <div className="amazon-review-rating-row">
@@ -711,12 +717,6 @@ const ReviewSection = ({ productId }) => {
                     <div className="amazon-review-text">{review.review}</div>
                   )}
 
-                  {review.verified_purchase && (
-                    <div className="amazon-verified-purchase">
-                      <CheckCircle size={14} />
-                      Verified Purchase
-                    </div>
-                  )}
                 </div>
               );
             })}

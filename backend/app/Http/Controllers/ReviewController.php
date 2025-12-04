@@ -278,13 +278,13 @@ class ReviewController extends Controller
     }
 
     /**
-     * Check if user has purchased a specific product
+     * Check if user has ordered a specific product
+     * (Verified badge based on order existence, not payment status)
      */
     private function hasUserPurchasedProduct($userId, $productId)
     {
-        // Check if user has any completed order containing this product
+        // Check if user has any order containing this product, regardless of payment/verification status
         $hasPurchased = Order::where('user_id', $userId)
-            ->where('status', 'completed') // Only check completed orders
             ->get()
             ->filter(function($order) use ($productId) {
                 // order_items is a JSON array of products

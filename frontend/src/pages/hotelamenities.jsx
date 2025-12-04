@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_ENDPOINTS, getImageUrl } from '../config/api';
-
+import UProductGallery from '../components/Uproduct';
 import Navbar from '../components/navbar';
 import Slider from '../components/slider';
 import Footer from '../components/footer';
@@ -56,7 +56,7 @@ function HotelAmenities() {
       <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('hotelamenities')} interval={4000} />
 
       {/* Room Freshener Section */}
-      <div className="rfv-container">
+      {/* <div className="rfv-container">
         <h2 className="rfv-title">Room Fresheners</h2>
         <div className="rfv-grid">
           {freshners.map((item, idx) => (
@@ -70,7 +70,8 @@ function HotelAmenities() {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
+      <UProductGallery/>
 
       {/* Contact Form Section */}
       <div className="cf-container">

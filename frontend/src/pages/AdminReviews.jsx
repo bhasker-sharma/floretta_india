@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_URL } from '../config/api';
-import { Star, Trash2, Search, TrendingUp, BarChart3, Award, CheckCircle, XCircle } from 'lucide-react';
+import { Star, Trash2, Search, TrendingUp, BarChart3, Award } from 'lucide-react';
 
 const AdminReviews = () => {
   const navigate = useNavigate();
@@ -11,7 +11,6 @@ const AdminReviews = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [togglingFeatured, setTogglingFeatured] = useState(null);
-  const [updatingStatus, setUpdatingStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
@@ -130,38 +129,6 @@ const AdminReviews = () => {
       alert('Failed to update featured status. Please try again.');
     } finally {
       setTogglingFeatured(null);
-    }
-  };
-
-  const handleUpdateStatus = async (reviewId, newStatus) => {
-    try {
-      setUpdatingStatus(reviewId);
-      const token = localStorage.getItem('adminToken');
-
-      const response = await axios.put(
-        API_ENDPOINTS.ADMIN_REVIEW_UPDATE_STATUS(reviewId),
-        { status: newStatus },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.success) {
-        // Update the review in the local state
-        setReviews(reviews.map(review =>
-          review.id === reviewId
-            ? { ...review, status: response.data.status }
-            : review
-        ));
-
-        alert(response.data.message);
-        fetchStats(); // Refresh stats as approval status affects them
-      }
-    } catch (error) {
-      console.error('Error updating review status:', error);
-      alert('Failed to update review status. Please try again.');
-    } finally {
-      setUpdatingStatus(null);
     }
   };
 
@@ -1005,82 +972,30 @@ const AdminReviews = () => {
                     <td style={{ color: '#6b7280', fontSize: '13px' }}>{review.created_at}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {review.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(review.id, 'approved');
-                              }}
-                              disabled={updatingStatus === review.id}
-                              className="admin-action-button"
-                              style={{
-                                backgroundColor: '#10b981',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: updatingStatus === review.id ? 'not-allowed' : 'pointer',
-                                opacity: updatingStatus === review.id ? 0.5 : 1,
-                                padding: '6px 10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                              title="Approve review"
-                            >
-                              <CheckCircle size={14} />
-                              <span style={{ fontSize: '12px' }}>Approve</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(review.id, 'rejected');
-                              }}
-                              disabled={updatingStatus === review.id}
-                              className="admin-action-button"
-                              style={{
-                                backgroundColor: '#ef4444',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: updatingStatus === review.id ? 'not-allowed' : 'pointer',
-                                opacity: updatingStatus === review.id ? 0.5 : 1,
-                                padding: '6px 10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                              title="Reject review"
-                            >
-                              <XCircle size={14} />
-                              <span style={{ fontSize: '12px' }}>Reject</span>
-                            </button>
-                          </>
-                        )}
-                        {/* Featured button - available for all reviews except rejected */}
-                        {review.status !== 'rejected' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleFeatured(review.id, review.is_featured);
-                            }}
-                            disabled={togglingFeatured === review.id}
-                            className="admin-action-button"
-                            style={{
-                              backgroundColor: review.is_featured ? '#fbbf24' : '#e5e7eb',
-                              color: review.is_featured ? '#ffffff' : '#6b7280',
-                              border: 'none',
-                              cursor: togglingFeatured === review.id ? 'not-allowed' : 'pointer',
-                              opacity: togglingFeatured === review.id ? 0.5 : 1,
-                              padding: '6px 10px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                            }}
-                            title={review.is_featured ? 'Remove from homepage' : 'Add to homepage (Featured)'}
-                          >
-                            <Award size={14} />
-                            {review.is_featured && <span style={{ fontSize: '12px' }}>Featured</span>}
-                          </button>
-                        )}
+                        {/* Featured button - available for all reviews */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFeatured(review.id, review.is_featured);
+                          }}
+                          disabled={togglingFeatured === review.id}
+                          className="admin-action-button"
+                          style={{
+                            backgroundColor: review.is_featured ? '#fbbf24' : '#e5e7eb',
+                            color: review.is_featured ? '#ffffff' : '#6b7280',
+                            border: 'none',
+                            cursor: togglingFeatured === review.id ? 'not-allowed' : 'pointer',
+                            opacity: togglingFeatured === review.id ? 0.5 : 1,
+                            padding: '6px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                          title={review.is_featured ? 'Remove from homepage' : 'Add to homepage (Featured)'}
+                        >
+                          <Award size={14} />
+                          {review.is_featured && <span style={{ fontSize: '12px' }}>Featured</span>}
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
