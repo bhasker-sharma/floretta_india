@@ -4972,7 +4972,7 @@ function AdminDashboard() {
                   >
                     <i className="fas fa-images"></i> Sliders
                   </button>
-                  <button
+                  {/* <button
                     onClick={() => setSettingsView("ourproducts")}
                     style={{
                       flex: 1,
@@ -4989,7 +4989,7 @@ function AdminDashboard() {
                     }}
                   >
                     <i className="fas fa-box-open"></i> Our Products
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => setSettingsView("howitworks")}
                     style={{

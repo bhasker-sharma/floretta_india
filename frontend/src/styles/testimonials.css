@@ -13,13 +13,14 @@
 .testimonial-container-wrapper {
   position: relative;
   width: 100%;
+  padding-bottom: 80px; /* Space for arrows below */
 }
 
 /* Navigation arrows for large screens */
 .testimonial-nav-arrow {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 10px;
+  transform: translateX(0);
   background: transparent;
   color: #b5465c;
   border: none;
@@ -39,19 +40,19 @@
 
 .testimonial-nav-arrow:hover {
   color: #8a3446;
-  transform: translateY(-50%) scale(1.15);
+  transform: translateX(0) scale(1.15);
 }
 
 .testimonial-nav-arrow:active {
-  transform: translateY(-50%) scale(0.95);
+  transform: translateX(0) scale(0.95);
 }
 
 .testimonial-nav-left {
-  left: 10px;
+  left: calc(50% - 60px);
 }
 
 .testimonial-nav-right {
-  right: 10px;
+  right: calc(50% - 60px);
 }
 
 .testimonial-container {
