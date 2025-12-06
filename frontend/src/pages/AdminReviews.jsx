@@ -1,8 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS, STORAGE_URL } from '../config/api';
-import { Star, Trash2, Search, TrendingUp, BarChart3, Award } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_ENDPOINTS, STORAGE_URL } from "../config/api";
+import {
+  Star,
+  Trash2,
+  Search,
+  TrendingUp,
+  BarChart3,
+  Award,
+} from "lucide-react";
 
 const AdminReviews = () => {
   const navigate = useNavigate();
@@ -11,7 +18,7 @@ const AdminReviews = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [togglingFeatured, setTogglingFeatured] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [perPage, setPerPage] = useState(20);
@@ -19,9 +26,9 @@ const AdminReviews = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem("adminToken");
     if (!token) {
-      navigate('/admin/login');
+      navigate("/admin/login");
       return;
     }
     fetchReviews();
@@ -31,7 +38,7 @@ const AdminReviews = () => {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
 
       const response = await axios.get(API_ENDPOINTS.ADMIN_REVIEWS, {
         headers: { Authorization: `Bearer ${token}` },
@@ -47,10 +54,10 @@ const AdminReviews = () => {
         setPagination(response.data.pagination);
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error("Error fetching reviews:", error);
       if (error.response?.status === 401) {
-        localStorage.removeItem('adminToken');
-        navigate('/admin/login');
+        localStorage.removeItem("adminToken");
+        navigate("/admin/login");
       }
     } finally {
       setLoading(false);
@@ -59,7 +66,7 @@ const AdminReviews = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       const response = await axios.get(API_ENDPOINTS.ADMIN_REVIEW_STATS, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -68,31 +75,38 @@ const AdminReviews = () => {
         setStats(response.data.stats);
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
     }
   };
 
   const handleDelete = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this review? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       setDeleting(reviewId);
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
 
-      const response = await axios.delete(API_ENDPOINTS.ADMIN_REVIEW_DELETE(reviewId), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_REVIEW_DELETE(reviewId),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.success) {
-        alert('Review deleted successfully');
+        alert("Review deleted successfully");
         fetchReviews();
         fetchStats();
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
-      alert('Failed to delete review. Please try again.');
+      console.error("Error deleting review:", error);
+      alert("Failed to delete review. Please try again.");
     } finally {
       setDeleting(null);
     }
@@ -101,7 +115,7 @@ const AdminReviews = () => {
   const handleToggleFeatured = async (reviewId, currentStatus) => {
     try {
       setTogglingFeatured(reviewId);
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
 
       const response = await axios.put(
         API_ENDPOINTS.ADMIN_REVIEW_TOGGLE_FEATURED(reviewId),
@@ -113,20 +127,22 @@ const AdminReviews = () => {
 
       if (response.data.success) {
         // Update the review in the local state
-        setReviews(reviews.map(review =>
-          review.id === reviewId
-            ? { ...review, is_featured: response.data.is_featured }
-            : review
-        ));
+        setReviews(
+          reviews.map((review) =>
+            review.id === reviewId
+              ? { ...review, is_featured: response.data.is_featured }
+              : review
+          )
+        );
 
         const message = response.data.is_featured
-          ? 'Review added to homepage!'
-          : 'Review removed from homepage';
+          ? "Review added to homepage!"
+          : "Review removed from homepage";
         alert(message);
       }
     } catch (error) {
-      console.error('Error toggling featured status:', error);
-      alert('Failed to update featured status. Please try again.');
+      console.error("Error toggling featured status:", error);
+      alert("Failed to update featured status. Please try again.");
     } finally {
       setTogglingFeatured(null);
     }
@@ -150,14 +166,14 @@ const AdminReviews = () => {
 
   const renderStars = (rating) => {
     return (
-      <div style={{ display: 'flex', gap: '2px' }}>
+      <div style={{ display: "flex", gap: "2px" }}>
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
             size={16}
             style={{
-              fill: star <= rating ? '#fbbf24' : 'none',
-              color: star <= rating ? '#fbbf24' : '#d1d5db',
+              fill: star <= rating ? "#fbbf24" : "none",
+              color: star <= rating ? "#fbbf24" : "#d1d5db",
             }}
           />
         ))}
@@ -166,7 +182,15 @@ const AdminReviews = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: "1400px",
+        margin: "0 auto",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <style>{`
         .admin-reviews-header {
           margin-bottom: 30px;
@@ -855,7 +879,9 @@ const AdminReviews = () => {
       {/* Header */}
       <div className="admin-reviews-header">
         <h1 className="admin-reviews-title">Review Management</h1>
-        <p className="admin-reviews-subtitle">Manage all product reviews from customers</p>
+        <p className="admin-reviews-subtitle">
+          Manage all product reviews from customers
+        </p>
       </div>
 
       {/* Statistics */}
@@ -882,7 +908,9 @@ const AdminReviews = () => {
               <span className="admin-stat-label">5-Star Reviews</span>
               <Star size={24} color="#fbbf24" />
             </div>
-            <div className="admin-stat-value">{stats.rating_distribution[5] || 0}</div>
+            <div className="admin-stat-value">
+              {stats.rating_distribution[5] || 0}
+            </div>
           </div>
         </div>
       )}
@@ -956,7 +984,10 @@ const AdminReviews = () => {
                             className="admin-product-image"
                           />
                         )}
-                        <span className="admin-product-name" title={review.product_name}>
+                        <span
+                          className="admin-product-name"
+                          title={review.product_name}
+                        >
                           {review.product_name}
                         </span>
                       </div>
@@ -964,14 +995,25 @@ const AdminReviews = () => {
                     <td>{renderStars(review.rating)}</td>
                     <td>
                       <div className="admin-review-text" title={review.review}>
-                        {review.review || <em style={{ color: '#9ca3af' }}>No text</em>}
+                        {review.review || (
+                          <em style={{ color: "#9ca3af" }}>No text</em>
+                        )}
                       </div>
                     </td>
                     <td>{review.user_name}</td>
-                    <td style={{ color: '#6b7280' }}>{review.user_email}</td>
-                    <td style={{ color: '#6b7280', fontSize: '13px' }}>{review.created_at}</td>
+                    <td style={{ color: "#6b7280" }}>{review.user_email}</td>
+                    <td style={{ color: "#6b7280", fontSize: "13px" }}>
+                      {review.created_at}
+                    </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                        }}
+                      >
                         {/* Featured button - available for all reviews */}
                         <button
                           onClick={(e) => {
@@ -981,20 +1023,31 @@ const AdminReviews = () => {
                           disabled={togglingFeatured === review.id}
                           className="admin-action-button"
                           style={{
-                            backgroundColor: review.is_featured ? '#fbbf24' : '#e5e7eb',
-                            color: review.is_featured ? '#ffffff' : '#6b7280',
-                            border: 'none',
-                            cursor: togglingFeatured === review.id ? 'not-allowed' : 'pointer',
+                            backgroundColor: review.is_featured
+                              ? "#fbbf24"
+                              : "#e5e7eb",
+                            color: review.is_featured ? "#ffffff" : "#6b7280",
+                            border: "none",
+                            cursor:
+                              togglingFeatured === review.id
+                                ? "not-allowed"
+                                : "pointer",
                             opacity: togglingFeatured === review.id ? 0.5 : 1,
-                            padding: '6px 10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
+                            padding: "6px 10px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
                           }}
-                          title={review.is_featured ? 'Remove from homepage' : 'Add to homepage (Featured)'}
+                          title={
+                            review.is_featured
+                              ? "Remove from homepage"
+                              : "Add to homepage (Featured)"
+                          }
                         >
                           <Award size={14} />
-                          {review.is_featured && <span style={{ fontSize: '12px' }}>Featured</span>}
+                          {review.is_featured && (
+                            <span style={{ fontSize: "12px" }}>Featured</span>
+                          )}
                         </button>
                         <button
                           onClick={(e) => {
@@ -1005,7 +1058,7 @@ const AdminReviews = () => {
                           className="admin-delete-button"
                         >
                           <Trash2 size={14} />
-                          {deleting === review.id ? 'Deleting...' : 'Delete'}
+                          {deleting === review.id ? "Deleting..." : "Delete"}
                         </button>
                       </div>
                     </td>
@@ -1018,7 +1071,8 @@ const AdminReviews = () => {
             {pagination && (
               <div className="admin-pagination">
                 <div className="admin-pagination-info">
-                  Showing {pagination.from} to {pagination.to} of {pagination.total} reviews
+                  Showing {pagination.from} to {pagination.to} of{" "}
+                  {pagination.total} reviews
                 </div>
                 <div className="admin-pagination-buttons">
                   <button
@@ -1041,13 +1095,16 @@ const AdminReviews = () => {
                           key={page}
                           onClick={() => setCurrentPage(page)}
                           className={`admin-pagination-button ${
-                            page === currentPage ? 'active' : ''
+                            page === currentPage ? "active" : ""
                           }`}
                         >
                           {page}
                         </button>
                       );
-                    } else if (page === currentPage - 3 || page === currentPage + 3) {
+                    } else if (
+                      page === currentPage - 3 ||
+                      page === currentPage + 3
+                    ) {
                       return <span key={page}>...</span>;
                     }
                     return null;
@@ -1090,8 +1147,12 @@ const AdminReviews = () => {
                     />
                   )}
                   <div className="modal-product-details">
-                    <div className="modal-product-name">{selectedReview.product_name}</div>
-                    <div className="modal-product-id">Product ID: #{selectedReview.product_id}</div>
+                    <div className="modal-product-name">
+                      {selectedReview.product_name}
+                    </div>
+                    <div className="modal-product-id">
+                      Product ID: #{selectedReview.product_id}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1100,7 +1161,9 @@ const AdminReviews = () => {
               <div className="modal-section">
                 <div className="modal-label">Rating</div>
                 <div className="modal-rating-display">
-                  <div className="modal-rating-number">{selectedReview.rating}.0</div>
+                  <div className="modal-rating-number">
+                    {selectedReview.rating}.0
+                  </div>
                   {renderStars(selectedReview.rating)}
                 </div>
               </div>
@@ -1109,7 +1172,11 @@ const AdminReviews = () => {
               <div className="modal-section">
                 <div className="modal-label">Review</div>
                 <div className="modal-review-text">
-                  {selectedReview.review || <em style={{ color: '#9ca3af' }}>No review text provided</em>}
+                  {selectedReview.review || (
+                    <em style={{ color: "#9ca3af" }}>
+                      No review text provided
+                    </em>
+                  )}
                 </div>
               </div>
 
@@ -1119,15 +1186,21 @@ const AdminReviews = () => {
                 <div className="modal-user-info">
                   <div className="modal-user-row">
                     <span className="modal-user-label">Name:</span>
-                    <span className="modal-user-value">{selectedReview.user_name}</span>
+                    <span className="modal-user-value">
+                      {selectedReview.user_name}
+                    </span>
                   </div>
                   <div className="modal-user-row">
                     <span className="modal-user-label">Email:</span>
-                    <span className="modal-user-value">{selectedReview.user_email}</span>
+                    <span className="modal-user-value">
+                      {selectedReview.user_email}
+                    </span>
                   </div>
                   <div className="modal-user-row">
                     <span className="modal-user-label">Review ID:</span>
-                    <span className="modal-user-value">#{selectedReview.id}</span>
+                    <span className="modal-user-value">
+                      #{selectedReview.id}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1138,18 +1211,25 @@ const AdminReviews = () => {
                 <div className="modal-user-info">
                   <div className="modal-user-row">
                     <span className="modal-user-label">Created:</span>
-                    <span className="modal-user-value">{selectedReview.created_at}</span>
+                    <span className="modal-user-value">
+                      {selectedReview.created_at}
+                    </span>
                   </div>
                   <div className="modal-user-row">
                     <span className="modal-user-label">Updated:</span>
-                    <span className="modal-user-value">{selectedReview.updated_at}</span>
+                    <span className="modal-user-value">
+                      {selectedReview.updated_at}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="modal-footer">
-              <button className="modal-button modal-button-close" onClick={closeModal}>
+              <button
+                className="modal-button modal-button-close"
+                onClick={closeModal}
+              >
                 Close
               </button>
               <button
@@ -1161,7 +1241,9 @@ const AdminReviews = () => {
                 disabled={deleting === selectedReview.id}
               >
                 <Trash2 size={16} />
-                {deleting === selectedReview.id ? 'Deleting...' : 'Delete Review'}
+                {deleting === selectedReview.id
+                  ? "Deleting..."
+                  : "Delete Review"}
               </button>
             </div>
           </div>

@@ -18,6 +18,7 @@ use App\Http\Controllers\SliderController;
 use App\Http\Controllers\UproductController;
 use App\Http\Controllers\HowItWorksController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\CareerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,10 @@ Route::get('/sliders/{page}', [SliderController::class, 'getSlidersByPage']);
 
 // 🌐 Product Reviews (Public - get reviews for a product)
 Route::get('/products/{productId}/reviews', [ReviewController::class, 'getProductReviews']);
+
+// 🌐 Career Page (Public - get active jobs and submit applications)
+Route::get('/careers', [CareerController::class, 'getActiveJobs']);
+Route::middleware('throttle:3,1')->post('/careers/apply', [CareerController::class, 'submitApplication']);
 
 /*
 |--------------------------------------------------------------------------
@@ -197,5 +202,14 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     // User Enquiries management (with pagination)
     Route::get('/user-enquiry/contact', [AdminEnquiryController::class, 'listContactEnquiries']);
     Route::get('/user-enquiry/bookings', [AdminEnquiryController::class, 'listPerfumeBarBookings']);
+
+    // Career management
+    Route::get('/careers', [CareerController::class, 'adminGetAllJobs']);
+    Route::post('/careers', [CareerController::class, 'adminCreateJob']);
+    Route::put('/careers/{id}', [CareerController::class, 'adminUpdateJob']);
+    Route::delete('/careers/{id}', [CareerController::class, 'adminDeleteJob']);
+    Route::post('/careers/{id}/toggle-status', [CareerController::class, 'adminToggleJobStatus']);
+    Route::get('/career-applications', [CareerController::class, 'adminGetApplications']);
+    Route::get('/career-applications/{id}/resume', [CareerController::class, 'adminDownloadResume']);
 });
 

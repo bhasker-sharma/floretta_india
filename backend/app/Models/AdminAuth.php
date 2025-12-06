@@ -10,6 +10,7 @@ class AdminAuth extends Authenticatable implements JWTSubject
     protected $table = 'admin_auth'; // your table name
 
     protected $fillable = [
+        'name',
         'email',
         'password',
         'role',

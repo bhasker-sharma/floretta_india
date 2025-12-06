@@ -25,7 +25,8 @@ class ReviewController extends Controller
                     return [
                         'id' => $review->id,
                         'rating' => $review->rating,
-                        'review' => $review->review,
+                        'review' => $review->review_text, // Return review_text as 'review' for frontend
+                        'review_text' => $review->review_text, // Also include review_text
                         'user_name' => $review->user_name ?? $review->user->name,
                         'created_at' => $review->created_at->format('d M Y'),
                         'user_id' => $review->user_id,
@@ -62,6 +63,7 @@ class ReviewController extends Controller
                 'product_id' => 'required|exists:products,id',
                 'rating' => 'required|integer|min:1|max:5',
                 'review' => 'nullable|string|max:1000',
+                'review_text' => 'nullable|string|max:1000',
             ]);
 
             if ($validator->fails()) {
@@ -73,38 +75,50 @@ class ReviewController extends Controller
             }
 
             $user = $request->user();
+            
+            // Handle review_text field (frontend sends this)
+            $reviewText = $request->review_text ?? $request->review;
 
             // Check if user has purchased this product
-            $verifiedPurchase = $this->hasUserPurchasedProduct($user->id, $request->product_id);
+            $verifiedPurchase = $user ? $this->hasUserPurchasedProduct($user->id, $request->product_id) : false;
 
-            // Check if user has already reviewed this product
-            $existingReview = ProductReview::where('product_id', $request->product_id)
-                ->where('user_id', $user->id)
-                ->first();
+            if ($user) {
+                // Authenticated user
+                // Check if user has already reviewed this product
+                $existingReview = ProductReview::where('product_id', $request->product_id)
+                    ->where('user_id', $user->id)
+                    ->first();
 
-            if ($existingReview) {
-                // Update existing review
-                $existingReview->update([
-                    'rating' => $request->rating,
-                    'review' => $request->review,
-                    'user_name' => $user->name,
-                    'verified_purchase' => $verifiedPurchase,
-                ]);
+                if ($existingReview) {
+                    // Update existing review
+                    $existingReview->update([
+                        'rating' => $request->rating,
+                        'review_text' => $reviewText,
+                        'user_name' => $user->name, // Keep user_name for existing reviews
+                        'verified_purchase' => $verifiedPurchase,
+                    ]);
 
-                $review = $existingReview;
-                $message = 'Review updated successfully';
+                    $review = $existingReview;
+                    $message = 'Review updated successfully';
+                } else {
+                    // Create new review
+                    $review = ProductReview::create([
+                        'product_id' => $request->product_id,
+                        'user_id' => $user->id,
+                        'rating' => $request->rating,
+                        'review_text' => $reviewText,
+                        'user_name' => $user->name, // Keep user_name for new reviews
+                        'verified_purchase' => $verifiedPurchase,
+                    ]);
+
+                    $message = 'Review added successfully';
+                }
             } else {
-                // Create new review
-                $review = ProductReview::create([
-                    'product_id' => $request->product_id,
-                    'user_id' => $user->id,
-                    'rating' => $request->rating,
-                    'review' => $request->review,
-                    'user_name' => $user->name,
-                    'verified_purchase' => $verifiedPurchase,
-                ]);
-
-                $message = 'Review added successfully';
+                // Guest user - not authenticated
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You must be logged in to submit a review'
+                ], 401);
             }
 
             // Update product rating and review count
@@ -116,8 +130,7 @@ class ReviewController extends Controller
                 'review' => [
                     'id' => $review->id,
                     'rating' => $review->rating,
-                    'review' => $review->review,
-                    'user_name' => $review->user_name,
+                    'review_text' => $review->review_text,
                     'created_at' => $review->created_at->format('d M Y'),
                 ],
             ], 201);
@@ -341,7 +354,7 @@ class ReviewController extends Controller
             // Search functionality
             if ($search) {
                 $query->where(function($q) use ($search) {
-                    $q->where('review', 'like', "%{$search}%")
+                    $q->where('review_text', 'like', "%{$search}%")
                       ->orWhere('user_name', 'like', "%{$search}%")
                       ->orWhereHas('product', function($q) use ($search) {
                           $q->where('name', 'like', "%{$search}%");
@@ -355,7 +368,7 @@ class ReviewController extends Controller
                 return [
                     'id' => $review->id,
                     'rating' => $review->rating,
-                    'review' => $review->review,
+                    'review' => $review->review_text,
                     'user_name' => $review->user_name,
                     'user_email' => $review->user->email ?? 'N/A',
                     'product_id' => $review->product_id,

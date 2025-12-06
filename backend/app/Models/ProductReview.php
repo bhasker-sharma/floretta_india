@@ -14,6 +14,7 @@ class ProductReview extends Model
         'user_id',
         'rating',
         'review',
+        'review_text', // Add review_text to allow mass assignment
         'user_name',
         'verified_purchase',
         'status',

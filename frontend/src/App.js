@@ -1,32 +1,33 @@
 // src/App.jsx
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/home';
-import Product from './pages/product';
-import LivePerfume from './pages/liveperfume';
-import ProductDetail from './pages/ProductDetail';
-import HotelAmenities from './pages/hotelamenities';
-import Userlogin from './pages/userlogin';
-import Register from './pages/register';
-import Addtocart from './pages/addtocart';
-import Carrier from './pages/carrier';
-import Contact from './pages/contactus';
-import Profile from './pages/userprofile';
-import Wishlist from './pages/Wishlist';
-import PrivateRoute from './components/PrivateRoute';
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminReviews from './pages/AdminReviews';
-import AuthCallback from './pages/AuthCallback';
-import ForgotPassword from './pages/ForgotPassword';
-import VerifyOTP from './pages/VerifyOTP';
-import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsAndConditions from './pages/TermsAndConditions';
-import ShippingPolicy from './pages/ShippingPolicy';
-import RefundReturnPolicy from './pages/RefundReturnPolicy';
-import { initializeAuth } from './utils/axiosInterceptor';
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/home";
+import Product from "./pages/product";
+import LivePerfume from "./pages/liveperfume";
+import ProductDetail from "./pages/ProductDetail";
+import HotelAmenities from "./pages/hotelamenities";
+import Userlogin from "./pages/userlogin";
+import Register from "./pages/register";
+import Addtocart from "./pages/addtocart";
+import Carrier from "./pages/carrier";
+import Contact from "./pages/contactus";
+import Profile from "./pages/userprofile";
+import Wishlist from "./pages/Wishlist";
+import PrivateRoute from "./components/PrivateRoute";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminReviews from "./pages/AdminReviews";
+import AuthCallback from "./pages/AuthCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import RefundReturnPolicy from "./pages/RefundReturnPolicy";
+
+import { initializeAuth } from "./utils/axiosInterceptor";
 
 const App = () => {
   // Initialize axios interceptors on app load
@@ -46,6 +47,7 @@ const App = () => {
 
         <Route path="/register" element={<Register />} />
         <Route path="/carrier" element={<Carrier />} />
+
         <Route path="/contactus" element={<Contact />} />
         <Route path="/login" element={<Userlogin />} />
         <Route path="/userlogin" element={<Userlogin />} />

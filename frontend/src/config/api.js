@@ -56,7 +56,8 @@ export const API_ENDPOINTS = {
   FRESHNERS_MIST_ALL: `${API_URL}/api/freshners-mist-all`,
 
   // Reviews
-  PRODUCT_REVIEWS: (productId) => `${API_URL}/api/products/${productId}/reviews`,
+  PRODUCT_REVIEWS: (productId) =>
+    `${API_URL}/api/products/${productId}/reviews`,
   ADD_REVIEW: `${API_URL}/api/reviews`,
   UPDATE_REVIEW: (reviewId) => `${API_URL}/api/reviews/${reviewId}`,
   DELETE_REVIEW: (reviewId) => `${API_URL}/api/reviews/${reviewId}`,
@@ -82,7 +83,8 @@ export const API_ENDPOINTS = {
   ADMIN_PRODUCTS: `${API_URL}/api/admin/products`,
   ADMIN_PRODUCT_UPDATE: (id) => `${API_URL}/api/admin/products/${id}`,
   ADMIN_PRODUCT_DELETE: (id) => `${API_URL}/api/admin/products/${id}`,
-  ADMIN_PRODUCT_IMAGE_DELETE: (productId, imageId) => `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
+  ADMIN_PRODUCT_IMAGE_DELETE: (productId, imageId) =>
+    `${API_URL}/api/admin/products/${productId}/images/${imageId}`,
   ADMIN_BESTSELLERS_REORDER: `${API_URL}/api/admin/bestsellers/reorder`,
   ADMIN_ENQUIRY_CONTACT: `${API_URL}/api/admin/user-enquiry/contact`,
   ADMIN_ENQUIRY_BOOKINGS: `${API_URL}/api/admin/user-enquiry/bookings`,
@@ -118,8 +120,23 @@ export const API_ENDPOINTS = {
   ADMIN_REVIEWS: `${API_URL}/api/admin/reviews`,
   ADMIN_REVIEW_DELETE: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}`,
   ADMIN_REVIEW_STATS: `${API_URL}/api/admin/reviews/stats`,
-  ADMIN_REVIEW_TOGGLE_FEATURED: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}/toggle-featured`,
-  ADMIN_REVIEW_UPDATE_STATUS: (reviewId) => `${API_URL}/api/admin/reviews/${reviewId}/status`,
+  ADMIN_REVIEW_TOGGLE_FEATURED: (reviewId) =>
+    `${API_URL}/api/admin/reviews/${reviewId}/toggle-featured`,
+  ADMIN_REVIEW_UPDATE_STATUS: (reviewId) =>
+    `${API_URL}/api/admin/reviews/${reviewId}/status`,
+
+  // Career Page
+  CAREERS: `${API_URL}/api/careers`,
+  CAREER_APPLY: `${API_URL}/api/careers/apply`,
+  ADMIN_CAREERS: `${API_URL}/api/admin/careers`,
+  ADMIN_CAREER_CREATE: `${API_URL}/api/admin/careers`,
+  ADMIN_CAREER_UPDATE: (id) => `${API_URL}/api/admin/careers/${id}`,
+  ADMIN_CAREER_DELETE: (id) => `${API_URL}/api/admin/careers/${id}`,
+  ADMIN_CAREER_TOGGLE_STATUS: (id) =>
+    `${API_URL}/api/admin/careers/${id}/toggle-status`,
+  ADMIN_CAREER_APPLICATIONS: `${API_URL}/api/admin/career-applications`,
+  ADMIN_CAREER_RESUME_DOWNLOAD: (id) =>
+    `${API_URL}/api/admin/career-applications/${id}/resume`,
 };
 
 // Storage URLs (for images, files, etc.)

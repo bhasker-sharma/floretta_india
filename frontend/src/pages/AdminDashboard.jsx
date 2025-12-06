@@ -6,6 +6,7 @@ import "../styles/AdminDashboard.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdminReviews from "./AdminReviews";
+import AdminCareer from "./AdminCareer";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -1202,7 +1203,9 @@ function AdminDashboard() {
       setSliderMessage("⏳ Validating image dimensions...");
 
       const dimensions = await validateSliderImageDimensions(sliderUploadFile);
-      console.log(`Image dimensions: ${dimensions.width}x${dimensions.height}px`);
+      console.log(
+        `Image dimensions: ${dimensions.width}x${dimensions.height}px`
+      );
     } catch (error) {
       setSliderUploadLoading(false);
       setSliderMessage("✗ " + error);
@@ -1258,7 +1261,7 @@ function AdminDashboard() {
         const errors = error.response.data.errors;
         console.error("Detailed errors:", errors);
         // Log each error field individually
-        Object.keys(errors).forEach(field => {
+        Object.keys(errors).forEach((field) => {
           console.error(`Field '${field}':`, errors[field]);
         });
         errorMsg = Object.values(errors).flat().join(", ");
@@ -1313,18 +1316,20 @@ function AdminDashboard() {
   // Handle slider reordering (move up/down)
   const handleReorderSlider = async (page, currentIndex, direction) => {
     const pageSliders = allSliders.filter((s) => s.page === page);
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
     // Validate bounds
     if (newIndex < 0 || newIndex >= pageSliders.length) return;
 
     // Create new order array by swapping positions
     const reorderedSliders = [...pageSliders];
-    [reorderedSliders[currentIndex], reorderedSliders[newIndex]] =
-      [reorderedSliders[newIndex], reorderedSliders[currentIndex]];
+    [reorderedSliders[currentIndex], reorderedSliders[newIndex]] = [
+      reorderedSliders[newIndex],
+      reorderedSliders[currentIndex],
+    ];
 
     // Extract slider IDs in new order
-    const sliderIds = reorderedSliders.map(slider => slider.id);
+    const sliderIds = reorderedSliders.map((slider) => slider.id);
 
     try {
       const token = localStorage.getItem("adminToken");
@@ -1332,7 +1337,7 @@ function AdminDashboard() {
         API_ENDPOINTS.ADMIN_SLIDERS_REORDER,
         {
           page: page,
-          slider_ids: sliderIds
+          slider_ids: sliderIds,
         },
         {
           headers: {
@@ -1426,14 +1431,24 @@ function AdminDashboard() {
 
       // Validate main image if provided
       if (uproductImageFile) {
-        const dimensions = await validateUproductImageDimensions(uproductImageFile, "Main");
-        console.log(`Main image dimensions: ${dimensions.width}x${dimensions.height}px`);
+        const dimensions = await validateUproductImageDimensions(
+          uproductImageFile,
+          "Main"
+        );
+        console.log(
+          `Main image dimensions: ${dimensions.width}x${dimensions.height}px`
+        );
       }
 
       // Validate hover image if provided
       if (uproductHoverImageFile) {
-        const hoverDimensions = await validateUproductImageDimensions(uproductHoverImageFile, "Hover");
-        console.log(`Hover image dimensions: ${hoverDimensions.width}x${hoverDimensions.height}px`);
+        const hoverDimensions = await validateUproductImageDimensions(
+          uproductHoverImageFile,
+          "Hover"
+        );
+        console.log(
+          `Hover image dimensions: ${hoverDimensions.width}x${hoverDimensions.height}px`
+        );
       }
     } catch (error) {
       setUproductUploadLoading(false);
@@ -1466,7 +1481,9 @@ function AdminDashboard() {
 
       if (response.data.success) {
         setUproductMessage(
-          `✓ Uproduct ${isEditingUproduct ? "updated" : "uploaded"} successfully!`
+          `✓ Uproduct ${
+            isEditingUproduct ? "updated" : "uploaded"
+          } successfully!`
         );
         setUproductImageFile(null);
         setUproductHoverImageFile(null);
@@ -1474,7 +1491,9 @@ function AdminDashboard() {
         setEditingUproductId(null);
         // Reset file inputs
         const imageInput = document.getElementById("uproduct-image-input");
-        const hoverInput = document.getElementById("uproduct-hover-image-input");
+        const hoverInput = document.getElementById(
+          "uproduct-hover-image-input"
+        );
         if (imageInput) imageInput.value = "";
         if (hoverInput) hoverInput.value = "";
         fetchUproducts();
@@ -1653,7 +1672,9 @@ function AdminDashboard() {
 
       if (response.data.success) {
         setHowItWorksMessage(
-          `✓ How It Works item ${isEditingHowItWorks ? "updated" : "created"} successfully!`
+          `✓ How It Works item ${
+            isEditingHowItWorks ? "updated" : "created"
+          } successfully!`
         );
         setHowItWorksFormData({
           id: null,
@@ -1896,14 +1917,22 @@ function AdminDashboard() {
     const imageToRemove = productImages.find((img) => img.id === imageId);
 
     // If it's an existing image (from database), delete via API
-    if (imageToRemove && imageToRemove.isExisting && isEditMode && editingProduct) {
+    if (
+      imageToRemove &&
+      imageToRemove.isExisting &&
+      isEditMode &&
+      editingProduct
+    ) {
       try {
         // Extract actual database ID by removing 'existing-' prefix
         const actualImageId = imageId.toString().replace("existing-", "");
 
         const token = localStorage.getItem("adminToken");
         const response = await axios.delete(
-          API_ENDPOINTS.ADMIN_PRODUCT_IMAGE_DELETE(editingProduct.id, actualImageId),
+          API_ENDPOINTS.ADMIN_PRODUCT_IMAGE_DELETE(
+            editingProduct.id,
+            actualImageId
+          ),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -1961,7 +1990,9 @@ function AdminDashboard() {
     setProductFormMessage("");
 
     // Validate image dimensions before proceeding
-    const imagesToValidate = productImages.filter(img => img.file && !img.isExisting);
+    const imagesToValidate = productImages.filter(
+      (img) => img.file && !img.isExisting
+    );
     if (imagesToValidate.length > 0) {
       try {
         setProductFormMessage("⏳ Validating image dimensions...");
@@ -1985,12 +2016,12 @@ function AdminDashboard() {
       const formData = new FormData();
 
       // Required fields that must always have a value (not NULL)
-      const requiredFields = ['name', 'flag', 'price'];
+      const requiredFields = ["name", "flag", "price"];
 
       // Fields that need default values when empty (DB doesn't allow NULL and has no default)
       const fieldsWithDefaults = {
-        'about_product': 'N/A',
-        'note': 'none'  // Backend converts empty string to NULL, so use 'none'
+        about_product: "N/A",
+        note: "none", // Backend converts empty string to NULL, so use 'none'
       };
 
       // Add all product data
@@ -2005,7 +2036,12 @@ function AdminDashboard() {
 
           // Special handling for fields that need defaults
           if (fieldsWithDefaults.hasOwnProperty(key)) {
-            formData.append(key, processedValue && processedValue.trim() !== "" ? processedValue : fieldsWithDefaults[key]);
+            formData.append(
+              key,
+              processedValue && processedValue.trim() !== ""
+                ? processedValue
+                : fieldsWithDefaults[key]
+            );
           }
           // For other required fields, always send the value
           else if (requiredFields.includes(key)) {
@@ -2170,9 +2206,10 @@ function AdminDashboard() {
           errorMessages.push(`⚠️ ${fieldName}: ${messages[0]}`);
         }
 
-        errorMsg = errorMessages.length > 1
-          ? "Please fix the following errors:\n" + errorMessages.join("\n")
-          : errorMessages[0];
+        errorMsg =
+          errorMessages.length > 1
+            ? "Please fix the following errors:\n" + errorMessages.join("\n")
+            : errorMessages[0];
       } else if (error.response?.data?.message) {
         const dbError = error.response.data.message;
         console.log("DB Error message:", dbError);
@@ -2211,7 +2248,10 @@ function AdminDashboard() {
             .replace(/\b\w/g, (l) => l.toUpperCase());
 
           // Determine the error type and show appropriate message
-          if (dbError.includes("cannot be null") || dbError.includes("doesn't have a default value")) {
+          if (
+            dbError.includes("cannot be null") ||
+            dbError.includes("doesn't have a default value")
+          ) {
             errorMsg = `⚠️ Field Required: "${formattedFieldName}" cannot be empty`;
           } else if (dbError.includes("Data too long")) {
             errorMsg = `⚠️ Field Error: "${formattedFieldName}" value is too long`;
@@ -2230,12 +2270,15 @@ function AdminDashboard() {
           }
         } else {
           // Generic fallback
-          errorMsg = "⚠️ Database Error: Unable to save the product. Please check all required fields.";
+          errorMsg =
+            "⚠️ Database Error: Unable to save the product. Please check all required fields.";
         }
       } else if (error.response?.data?.error) {
         errorMsg = "⚠️ " + error.response.data.error;
       } else {
-        errorMsg = `Failed to ${isEditMode ? "update" : "create"} product.\n\nPlease check all required fields are filled correctly.`;
+        errorMsg = `Failed to ${
+          isEditMode ? "update" : "create"
+        } product.\n\nPlease check all required fields are filled correctly.`;
       }
 
       setProductFormMessage("✗ " + errorMsg);
@@ -2333,7 +2376,11 @@ function AdminDashboard() {
   };
 
   // Handle deleting a product
-  const handleDeleteProduct = async (productId, productName, sourceTable = null) => {
+  const handleDeleteProduct = async (
+    productId,
+    productName,
+    sourceTable = null
+  ) => {
     const confirmDelete = window.confirm(
       `Are you sure you want to delete product: ${productName}?\n\nThis action cannot be undone.`
     );
@@ -2386,7 +2433,14 @@ function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
       const newStatus = !currentStatus; // Toggle boolean value
 
-      console.log('Toggling bestseller for product', productId, 'from', currentStatus, 'to', newStatus);
+      console.log(
+        "Toggling bestseller for product",
+        productId,
+        "from",
+        currentStatus,
+        "to",
+        newStatus
+      );
 
       const response = await axios.put(
         API_ENDPOINTS.ADMIN_PRODUCT_UPDATE(productId),
@@ -2394,16 +2448,18 @@ function AdminDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
-      console.log('Bestseller update response:', response.data);
+      console.log("Bestseller update response:", response.data);
 
       if (response.data.success) {
         setProductFormMessage(
-          newStatus ? "✓ Product marked as bestseller!" : "✓ Removed from bestsellers!"
+          newStatus
+            ? "✓ Product marked as bestseller!"
+            : "✓ Removed from bestsellers!"
         );
 
         // Refresh products list
@@ -2447,8 +2503,10 @@ function AdminDashboard() {
 
       if (response.data.success) {
         const bestsellerProducts = response.data.products
-          .filter(p => p.is_bestseller)
-          .sort((a, b) => (a.bestseller_order || 999) - (b.bestseller_order || 999));
+          .filter((p) => p.is_bestseller)
+          .sort(
+            (a, b) => (a.bestseller_order || 999) - (b.bestseller_order || 999)
+          );
 
         setBestsellers(bestsellerProducts);
       }
@@ -2484,7 +2542,7 @@ function AdminDashboard() {
 
       const bestsellerData = bestsellers.map((product, index) => ({
         id: product.id,
-        order: index
+        order: index,
       }));
 
       const response = await axios.post(
@@ -2493,7 +2551,7 @@ function AdminDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -2504,7 +2562,8 @@ function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error saving bestseller order:", error);
-      const errorMsg = error.response?.data?.message || "Failed to save bestseller order";
+      const errorMsg =
+        error.response?.data?.message || "Failed to save bestseller order";
       setBestsellerMessage("✗ " + errorMsg);
       setTimeout(() => setBestsellerMessage(""), 5000);
     }
@@ -2744,6 +2803,16 @@ function AdminDashboard() {
               <span>Reviews</span>
             </li>
             <li
+              className={activeSection === "careers" ? "active" : ""}
+              onClick={() => {
+                setActiveSection("careers");
+                setSidebarOpen(false);
+              }}
+            >
+              <i className="fas fa-briefcase"></i>
+              <span>Career Page</span>
+            </li>
+            <li
               className={activeSection === "settings" ? "active" : ""}
               onClick={() => {
                 setActiveSection("settings");
@@ -2791,15 +2860,31 @@ function AdminDashboard() {
             {activeSection === "admins" && "Admin Management"}
             {activeSection === "enquiries" && "Enquiries"}
             {activeSection === "reviews" && "Reviews"}
+            {activeSection === "careers" && "Career Page"}
             {activeSection === "settings" && "Settings"}
-            {!["orders", "newOrders", "products", "customers", "analytics", "addUser", "admins", "enquiries", "reviews", "settings"].includes(activeSection) && "Dashboard"}
+            {![
+              "orders",
+              "newOrders",
+              "products",
+              "customers",
+              "analytics",
+              "addUser",
+              "admins",
+              "enquiries",
+              "reviews",
+              "careers",
+              "settings",
+            ].includes(activeSection) && "Dashboard"}
           </h1>
           <div className="admin-header-right">
             <span className="admin-user">
-              Welcome, {adminInfo?.email ? adminInfo.email.split('@')[0] : 'Admin'}
+              Welcome,{" "}
+              {adminInfo?.email ? adminInfo.email.split("@")[0] : "Admin"}
             </span>
             <img
-              src={`https://ui-avatars.com/api/?name=${adminInfo?.email ? adminInfo.email.split('@')[0] : 'Admin'}`}
+              src={`https://ui-avatars.com/api/?name=${
+                adminInfo?.email ? adminInfo.email.split("@")[0] : "Admin"
+              }`}
               alt="Admin Avatar"
               className="admin-avatar"
             />
@@ -3519,7 +3604,13 @@ function AdminDashboard() {
                       <label htmlFor="product-name">
                         Product Name *
                         <span className="required-indicator">Required</span>
-                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#666",
+                            marginLeft: "8px",
+                          }}
+                        >
                           ({productFormData.name?.length || 0}/255)
                         </span>
                       </label>
@@ -3575,7 +3666,13 @@ function AdminDashboard() {
                       <div className="form-group">
                         <label htmlFor="product-volume">
                           Volume (ml)
-                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#666",
+                              marginLeft: "8px",
+                            }}
+                          >
                             ({productFormData.volume_ml?.length || 0}/10)
                           </span>
                         </label>
@@ -3596,7 +3693,13 @@ function AdminDashboard() {
                       <div className="form-group">
                         <label htmlFor="product-scent">
                           Scent
-                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#666",
+                              marginLeft: "8px",
+                            }}
+                          >
                             ({productFormData.scent?.length || 0}/100)
                           </span>
                         </label>
@@ -3631,7 +3734,13 @@ function AdminDashboard() {
                     <div className="form-group">
                       <label htmlFor="product-description">
                         Description
-                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#666",
+                            marginLeft: "8px",
+                          }}
+                        >
                           ({productFormData.Discription?.length || 0}/1000)
                         </span>
                       </label>
@@ -3649,7 +3758,13 @@ function AdminDashboard() {
                     <div className="form-group">
                       <label htmlFor="product-about">
                         About Product
-                        <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#666",
+                            marginLeft: "8px",
+                          }}
+                        >
                           ({productFormData.about_product?.length || 0}/2000)
                         </span>
                       </label>
@@ -3759,7 +3874,13 @@ function AdminDashboard() {
                       <div className="form-group">
                         <label htmlFor="product-brand">
                           Brand
-                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#666",
+                              marginLeft: "8px",
+                            }}
+                          >
                             ({productFormData.brand?.length || 0}/100)
                           </span>
                         </label>
@@ -3777,7 +3898,13 @@ function AdminDashboard() {
                       <div className="form-group">
                         <label htmlFor="product-colour">
                           Colour
-                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#666",
+                              marginLeft: "8px",
+                            }}
+                          >
                             ({productFormData.colour?.length || 0}/50)
                           </span>
                         </label>
@@ -3797,8 +3924,7 @@ function AdminDashboard() {
                     <div className="form-group">
                       <label>
                         Product Images *
-                        {productFormData.source_table ===
-                          "freshner_mist" && (
+                        {productFormData.source_table === "freshner_mist" && (
                           <span
                             style={{
                               marginLeft: "10px",
@@ -3826,11 +3952,17 @@ function AdminDashboard() {
                       >
                         <strong>📐 Image Requirements:</strong>
                         <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
-                          <li>Minimum resolution: <strong>1020 x 1020 pixels</strong></li>
+                          <li>
+                            Minimum resolution:{" "}
+                            <strong>1020 x 1020 pixels</strong>
+                          </li>
                           <li>Aspect ratio: 1:1 (square)</li>
                           <li>Format: JPEG, PNG, GIF, WebP</li>
                           <li>Max file size: 5MB per image</li>
-                          <li>Multiple images supported (first image will be primary)</li>
+                          <li>
+                            Multiple images supported (first image will be
+                            primary)
+                          </li>
                         </ul>
                       </div>
 
@@ -4167,7 +4299,12 @@ function AdminDashboard() {
                                       <input
                                         type="checkbox"
                                         checked={product.is_bestseller || false}
-                                        onChange={() => handleToggleBestseller(product.id, product.is_bestseller)}
+                                        onChange={() =>
+                                          handleToggleBestseller(
+                                            product.id,
+                                            product.is_bestseller
+                                          )
+                                        }
                                       />
                                       <span className="toggle-slider"></span>
                                     </div>
@@ -4225,7 +4362,10 @@ function AdminDashboard() {
                     <i className="fas fa-star"></i> Manage Bestsellers
                   </h3>
                   <p className="settings-description">
-                    Use the up/down arrows to reorder bestseller products. Position #1 will appear as the featured product on the homepage, and positions #2-5 will appear in the bestseller grid.
+                    Use the up/down arrows to reorder bestseller products.
+                    Position #1 will appear as the featured product on the
+                    homepage, and positions #2-5 will appear in the bestseller
+                    grid.
                   </p>
 
                   {bestsellerMessage && (
@@ -4250,20 +4390,25 @@ function AdminDashboard() {
                   <div className="bestseller-management">
                     {bestsellers.length === 0 ? (
                       <div className="no-bestsellers">
-                        <i className="fas fa-star" style={{ fontSize: "48px", color: "#ccc", marginBottom: "10px" }}></i>
+                        <i
+                          className="fas fa-star"
+                          style={{
+                            fontSize: "48px",
+                            color: "#ccc",
+                            marginBottom: "10px",
+                          }}
+                        ></i>
                         <p>No bestseller products yet</p>
                         <p style={{ fontSize: "14px", color: "#666" }}>
-                          Go to "All Products" and toggle the bestseller switch to add products
+                          Go to "All Products" and toggle the bestseller switch
+                          to add products
                         </p>
                       </div>
                     ) : (
                       <>
                         <div className="bestseller-list">
                           {bestsellers.map((product, index) => (
-                            <div
-                              key={product.id}
-                              className="bestseller-item"
-                            >
+                            <div key={product.id} className="bestseller-item">
                               <div className="bestseller-order-controls">
                                 <button
                                   className="order-btn order-btn-up"
@@ -4273,7 +4418,9 @@ function AdminDashboard() {
                                 >
                                   <i className="fas fa-chevron-up"></i>
                                 </button>
-                                <span className="order-number">#{index + 1}</span>
+                                <span className="order-number">
+                                  #{index + 1}
+                                </span>
                                 <button
                                   className="order-btn order-btn-down"
                                   onClick={() => handleMoveDown(index)}
@@ -4285,14 +4432,23 @@ function AdminDashboard() {
                               </div>
 
                               <div className="bestseller-position">
-                                <span className={`position-badge ${index === 0 ? 'featured' : index < 5 ? 'grid' : 'extra'}`}>
+                                <span
+                                  className={`position-badge ${
+                                    index === 0
+                                      ? "featured"
+                                      : index < 5
+                                      ? "grid"
+                                      : "extra"
+                                  }`}
+                                >
                                   {index === 0 ? (
                                     <>
                                       <i className="fas fa-crown"></i> Featured
                                     </>
                                   ) : index < 5 ? (
                                     <>
-                                      <i className="fas fa-th"></i> Grid #{index}
+                                      <i className="fas fa-th"></i> Grid #
+                                      {index}
                                     </>
                                   ) : (
                                     <>Extra #{index + 1}</>
@@ -4301,7 +4457,8 @@ function AdminDashboard() {
                               </div>
 
                               <div className="bestseller-image">
-                                {product.all_images && product.all_images.length > 0 ? (
+                                {product.all_images &&
+                                product.all_images.length > 0 ? (
                                   <img
                                     src={product.all_images[0].url}
                                     alt={product.name}
@@ -4320,11 +4477,13 @@ function AdminDashboard() {
                                 <h4>{product.name}</h4>
                                 <div className="bestseller-meta">
                                   <span className="bestseller-price">
-                                    <i className="fas fa-tag"></i> ₹{product.price}
+                                    <i className="fas fa-tag"></i> ₹
+                                    {product.price}
                                   </span>
                                   {product.volume_ml && (
                                     <span className="bestseller-volume">
-                                      <i className="fas fa-flask"></i> {product.volume_ml}
+                                      <i className="fas fa-flask"></i>{" "}
+                                      {product.volume_ml}
                                     </span>
                                   )}
                                 </div>
@@ -4333,7 +4492,9 @@ function AdminDashboard() {
                               <div className="bestseller-actions">
                                 <button
                                   className="bestseller-remove-btn"
-                                  onClick={() => handleToggleBestseller(product.id, true)}
+                                  onClick={() =>
+                                    handleToggleBestseller(product.id, true)
+                                  }
                                   title="Remove from bestsellers"
                                 >
                                   <i className="fas fa-times"></i>
@@ -4351,7 +4512,8 @@ function AdminDashboard() {
                             <i className="fas fa-save"></i> Save Order
                           </button>
                           <p className="save-hint">
-                            <i className="fas fa-info-circle"></i> Remember to save after reordering
+                            <i className="fas fa-info-circle"></i> Remember to
+                            save after reordering
                           </p>
 
                           {/* Message display near save button */}
@@ -4364,9 +4526,19 @@ function AdminDashboard() {
                                 fontSize: "14px",
                                 fontWeight: "500",
                                 textAlign: "center",
-                                backgroundColor: bestsellerMessage.startsWith("✓") ? "#d4edda" : "#f8d7da",
-                                color: bestsellerMessage.startsWith("✓") ? "#155724" : "#721c24",
-                                border: `1px solid ${bestsellerMessage.startsWith("✓") ? "#c3e6cb" : "#f5c6cb"}`,
+                                backgroundColor: bestsellerMessage.startsWith(
+                                  "✓"
+                                )
+                                  ? "#d4edda"
+                                  : "#f8d7da",
+                                color: bestsellerMessage.startsWith("✓")
+                                  ? "#155724"
+                                  : "#721c24",
+                                border: `1px solid ${
+                                  bestsellerMessage.startsWith("✓")
+                                    ? "#c3e6cb"
+                                    : "#f5c6cb"
+                                }`,
                                 animation: "fadeIn 0.3s ease-in",
                               }}
                             >
@@ -4943,7 +5115,8 @@ function AdminDashboard() {
               <div className="settings-card">
                 <h3>Manage Content</h3>
                 <p className="settings-description">
-                  Select a section to manage images and content for your website.
+                  Select a section to manage images and content for your
+                  website.
                 </p>
 
                 <div
@@ -4960,9 +5133,13 @@ function AdminDashboard() {
                       flex: 1,
                       minWidth: "150px",
                       padding: "15px 20px",
-                      background: settingsView === "slider" ? "#232946" : "#f8f9fa",
+                      background:
+                        settingsView === "slider" ? "#232946" : "#f8f9fa",
                       color: settingsView === "slider" ? "white" : "#232946",
-                      border: settingsView === "slider" ? "2px solid #232946" : "2px solid #ddd",
+                      border:
+                        settingsView === "slider"
+                          ? "2px solid #232946"
+                          : "2px solid #ddd",
                       borderRadius: "8px",
                       cursor: "pointer",
                       fontSize: "16px",
@@ -4996,9 +5173,14 @@ function AdminDashboard() {
                       flex: 1,
                       minWidth: "150px",
                       padding: "15px 20px",
-                      background: settingsView === "howitworks" ? "#232946" : "#f8f9fa",
-                      color: settingsView === "howitworks" ? "white" : "#232946",
-                      border: settingsView === "howitworks" ? "2px solid #232946" : "2px solid #ddd",
+                      background:
+                        settingsView === "howitworks" ? "#232946" : "#f8f9fa",
+                      color:
+                        settingsView === "howitworks" ? "white" : "#232946",
+                      border:
+                        settingsView === "howitworks"
+                          ? "2px solid #232946"
+                          : "2px solid #ddd",
                       borderRadius: "8px",
                       cursor: "pointer",
                       fontSize: "16px",
@@ -5013,109 +5195,135 @@ function AdminDashboard() {
 
               {/* Slider Management */}
               {settingsView === "slider" && (
-              <div className="settings-card">
-                <h3>Slider Management</h3>
-                <p className="settings-description">
-                  Upload and manage slider images for different pages of your website.
-                </p>
+                <div className="settings-card">
+                  <h3>Slider Management</h3>
+                  <p className="settings-description">
+                    Upload and manage slider images for different pages of your
+                    website.
+                  </p>
 
-                {/* Upload Form */}
-                <form onSubmit={handleSliderUpload} style={{ marginBottom: "30px" }}>
-                  <div className="form-group">
-                    <label htmlFor="slider-page">Select Page</label>
-                    <select
-                      id="slider-page"
-                      value={selectedSliderPage}
-                      onChange={(e) => setSelectedSliderPage(e.target.value)}
-                      style={{
-                        padding: "10px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                        width: "100%",
-                        marginBottom: "15px",
-                      }}
-                    >
-                      <option value="home">Home</option>
-                      <option value="products">Products</option>
-                      <option value="liveperfume">Live Perfume Bar</option>
-                      <option value="hotelamenities">Hotel Amenities</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="slider-upload-input">Upload Slider Image</label>
-                    <div
-                      style={{
-                        background: "#e8f4fd",
-                        border: "1px solid #b3d9f2",
-                        borderRadius: "5px",
-                        padding: "10px",
-                        marginBottom: "10px",
-                        fontSize: "13px",
-                        color: "#0066cc",
-                      }}
-                    >
-                      <strong>📐 Image Requirements:</strong>
-                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
-                        <li>Minimum resolution: <strong>1400 x 450 pixels</strong></li>
-                        <li>Recommended: <strong>1920 x 500 pixels</strong> (Full HD)</li>
-                        <li>Format: JPEG, PNG, WebP</li>
-                        <li>Max file size: 5MB</li>
-                      </ul>
-                    </div>
-                    <input
-                      type="file"
-                      id="slider-upload-input"
-                      accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                      onChange={(e) => setSliderUploadFile(e.target.files[0])}
-                      style={{
-                        padding: "10px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                        width: "100%",
-                        marginBottom: "15px",
-                      }}
-                    />
-                    {sliderUploadFile && (
-                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
-                        Selected: {sliderUploadFile.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {sliderMessage && (
-                    <div
-                      className={`form-message ${
-                        sliderMessage.startsWith("✓") ? "success" : "error"
-                      }`}
-                      style={{ marginBottom: "15px" }}
-                    >
-                      {sliderMessage}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-create-admin"
-                    disabled={sliderUploadLoading || !sliderUploadFile}
-                    style={{
-                      opacity: sliderUploadLoading || !sliderUploadFile ? 0.6 : 1,
-                      cursor: sliderUploadLoading || !sliderUploadFile ? "not-allowed" : "pointer",
-                    }}
+                  {/* Upload Form */}
+                  <form
+                    onSubmit={handleSliderUpload}
+                    style={{ marginBottom: "30px" }}
                   >
-                    {sliderUploadLoading ? "Uploading..." : "Upload Slider"}
-                  </button>
-                </form>
+                    <div className="form-group">
+                      <label htmlFor="slider-page">Select Page</label>
+                      <select
+                        id="slider-page"
+                        value={selectedSliderPage}
+                        onChange={(e) => setSelectedSliderPage(e.target.value)}
+                        style={{
+                          padding: "10px",
+                          borderRadius: "5px",
+                          border: "1px solid #ccc",
+                          width: "100%",
+                          marginBottom: "15px",
+                        }}
+                      >
+                        <option value="home">Home</option>
+                        <option value="products">Products</option>
+                        <option value="liveperfume">Live Perfume Bar</option>
+                        <option value="hotelamenities">Hotel Amenities</option>
+                      </select>
+                    </div>
 
-                {/* Sliders List */}
-                <div className="sliders-list">
-                  <h4>Existing Sliders</h4>
-                  {slidersLoading ? (
-                    <p>Loading sliders...</p>
-                  ) : (
-                    <div>
-                      {["home", "products", "liveperfume", "hotelamenities"].map(
-                        (page) => {
+                    <div className="form-group">
+                      <label htmlFor="slider-upload-input">
+                        Upload Slider Image
+                      </label>
+                      <div
+                        style={{
+                          background: "#e8f4fd",
+                          border: "1px solid #b3d9f2",
+                          borderRadius: "5px",
+                          padding: "10px",
+                          marginBottom: "10px",
+                          fontSize: "13px",
+                          color: "#0066cc",
+                        }}
+                      >
+                        <strong>📐 Image Requirements:</strong>
+                        <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                          <li>
+                            Minimum resolution:{" "}
+                            <strong>1400 x 450 pixels</strong>
+                          </li>
+                          <li>
+                            Recommended: <strong>1920 x 500 pixels</strong>{" "}
+                            (Full HD)
+                          </li>
+                          <li>Format: JPEG, PNG, WebP</li>
+                          <li>Max file size: 5MB</li>
+                        </ul>
+                      </div>
+                      <input
+                        type="file"
+                        id="slider-upload-input"
+                        accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                        onChange={(e) => setSliderUploadFile(e.target.files[0])}
+                        style={{
+                          padding: "10px",
+                          borderRadius: "5px",
+                          border: "1px solid #ccc",
+                          width: "100%",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      {sliderUploadFile && (
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginTop: "5px",
+                          }}
+                        >
+                          Selected: {sliderUploadFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {sliderMessage && (
+                      <div
+                        className={`form-message ${
+                          sliderMessage.startsWith("✓") ? "success" : "error"
+                        }`}
+                        style={{ marginBottom: "15px" }}
+                      >
+                        {sliderMessage}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="btn-create-admin"
+                      disabled={sliderUploadLoading || !sliderUploadFile}
+                      style={{
+                        opacity:
+                          sliderUploadLoading || !sliderUploadFile ? 0.6 : 1,
+                        cursor:
+                          sliderUploadLoading || !sliderUploadFile
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      {sliderUploadLoading ? "Uploading..." : "Upload Slider"}
+                    </button>
+                  </form>
+
+                  {/* Sliders List */}
+                  <div className="sliders-list">
+                    <h4>Existing Sliders</h4>
+                    {slidersLoading ? (
+                      <p>Loading sliders...</p>
+                    ) : (
+                      <div>
+                        {[
+                          "home",
+                          "products",
+                          "liveperfume",
+                          "hotelamenities",
+                        ].map((page) => {
                           const pageSliders = allSliders.filter(
                             (s) => s.page === page
                           );
@@ -5133,12 +5341,22 @@ function AdminDashboard() {
                                   ? "Live Perfume Bar"
                                   : page === "hotelamenities"
                                   ? "Hotel Amenities"
-                                  : page.charAt(0).toUpperCase() + page.slice(1)}{" "}
+                                  : page.charAt(0).toUpperCase() +
+                                    page.slice(1)}{" "}
                                 ({pageSliders.length})
                               </h5>
                               {pageSliders.length === 0 ? (
-                                <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
-                                  No sliders uploaded yet. Use the form above to add sliders for this page.
+                                <p
+                                  style={{
+                                    color: "#999",
+                                    fontStyle: "italic",
+                                    padding: "10px",
+                                    background: "#f9f9f9",
+                                    borderRadius: "5px",
+                                  }}
+                                >
+                                  No sliders uploaded yet. Use the form above to
+                                  add sliders for this page.
                                 </p>
                               ) : (
                                 <div
@@ -5170,7 +5388,10 @@ function AdminDashboard() {
                                       />
                                       <button
                                         onClick={() =>
-                                          handleDeleteSlider(slider.id, slider.page)
+                                          handleDeleteSlider(
+                                            slider.id,
+                                            slider.page
+                                          )
                                         }
                                         style={{
                                           position: "absolute",
@@ -5199,19 +5420,34 @@ function AdminDashboard() {
                                         }}
                                       >
                                         <span>Order: {slider.order + 1}</span>
-                                        <div style={{ display: "flex", gap: "5px" }}>
+                                        <div
+                                          style={{
+                                            display: "flex",
+                                            gap: "5px",
+                                          }}
+                                        >
                                           <button
                                             onClick={() =>
-                                              handleReorderSlider(page, index, "up")
+                                              handleReorderSlider(
+                                                page,
+                                                index,
+                                                "up"
+                                              )
                                             }
                                             disabled={index === 0}
                                             style={{
-                                              background: index === 0 ? "#ccc" : "#007bff",
+                                              background:
+                                                index === 0
+                                                  ? "#ccc"
+                                                  : "#007bff",
                                               color: "white",
                                               border: "none",
                                               borderRadius: "3px",
                                               padding: "3px 8px",
-                                              cursor: index === 0 ? "not-allowed" : "pointer",
+                                              cursor:
+                                                index === 0
+                                                  ? "not-allowed"
+                                                  : "pointer",
                                               fontSize: "12px",
                                             }}
                                             title="Move up"
@@ -5220,9 +5456,15 @@ function AdminDashboard() {
                                           </button>
                                           <button
                                             onClick={() =>
-                                              handleReorderSlider(page, index, "down")
+                                              handleReorderSlider(
+                                                page,
+                                                index,
+                                                "down"
+                                              )
                                             }
-                                            disabled={index === pageSliders.length - 1}
+                                            disabled={
+                                              index === pageSliders.length - 1
+                                            }
                                             style={{
                                               background:
                                                 index === pageSliders.length - 1
@@ -5250,197 +5492,243 @@ function AdminDashboard() {
                               )}
                             </div>
                           );
-                        }
-                      )}
-                    </div>
-                  )}
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
               )}
 
               {/* Our Products (Uproducts) Management */}
               {settingsView === "ourproducts" && (
-              <div className="settings-card">
-                <h3>Our Products Section (Homepage)</h3>
-                <p className="settings-description">
-                  Upload and manage product images displayed in the "Our Products" section on the homepage.
-                </p>
+                <div className="settings-card">
+                  <h3>Our Products Section (Homepage)</h3>
+                  <p className="settings-description">
+                    Upload and manage product images displayed in the "Our
+                    Products" section on the homepage.
+                  </p>
 
-                {/* Upload Form */}
-                <form onSubmit={handleUproductUpload} style={{ marginBottom: "30px" }}>
-                  {isEditingUproduct && (
-                    <div
-                      style={{
-                        background: "#fff3cd",
-                        padding: "10px",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span style={{ color: "#856404" }}>
-                        <i className="fas fa-edit"></i> Editing product (ID: {editingUproductId})...
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCancelEditUproduct}
+                  {/* Upload Form */}
+                  <form
+                    onSubmit={handleUproductUpload}
+                    style={{ marginBottom: "30px" }}
+                  >
+                    {isEditingUproduct && (
+                      <div
                         style={{
-                          background: "#856404",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "3px",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          fontSize: "12px",
+                          background: "#fff3cd",
+                          padding: "10px",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
                         }}
                       >
-                        Cancel Edit
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label htmlFor="uproduct-image">
-                      Main Image {isEditingUproduct ? "(Optional - leave empty to keep current)" : "*"}
-                    </label>
-                    <div
-                      style={{
-                        background: "#e8f4fd",
-                        border: "1px solid #b3d9f2",
-                        borderRadius: "5px",
-                        padding: "10px",
-                        marginBottom: "10px",
-                        fontSize: "13px",
-                        color: "#0066cc",
-                      }}
-                    >
-                      <strong>📐 Image Requirements:</strong>
-                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
-                        <li>Minimum resolution: <strong>350 x 450 pixels</strong></li>
-                        <li>Aspect ratio: 7:9 (portrait)</li>
-                        <li>Format: JPEG, PNG, WebP</li>
-                        <li>Max file size: 5MB</li>
-                        <li>Both images should have same dimensions</li>
-                      </ul>
-                    </div>
-                    <input
-                      type="file"
-                      id="uproduct-image-input"
-                      accept="image/*"
-                      onChange={(e) => setUproductImageFile(e.target.files[0])}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                      }}
-                    />
-                    {uproductImageFile && (
-                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
-                        Selected: {uproductImageFile.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="uproduct-hover-image">Hover Image (Optional)</label>
-                    <input
-                      type="file"
-                      id="uproduct-hover-image-input"
-                      accept="image/*"
-                      onChange={(e) => setUproductHoverImageFile(e.target.files[0])}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                      }}
-                    />
-                    {uproductHoverImageFile && (
-                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
-                        Selected: {uproductHoverImageFile.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {uproductMessage && (
-                    <div
-                      className={`form-message ${
-                        uproductMessage.startsWith("✓") ? "success" : "error"
-                      }`}
-                      style={{ marginBottom: "15px" }}
-                    >
-                      {uproductMessage}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-create-admin"
-                    disabled={uproductUploadLoading || (!isEditingUproduct && !uproductImageFile)}
-                    style={{
-                      opacity: uproductUploadLoading || (!isEditingUproduct && !uproductImageFile) ? 0.6 : 1,
-                      cursor: uproductUploadLoading || (!isEditingUproduct && !uproductImageFile) ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {uproductUploadLoading
-                      ? "Saving..."
-                      : isEditingUproduct
-                      ? "Update Product"
-                      : "Upload Product Image"}
-                  </button>
-                </form>
-
-                {/* Display Uploaded Uproducts */}
-                <div>
-                  <h4 style={{ marginTop: "30px", marginBottom: "15px", color: "#232946" }}>
-                    Uploaded Product Images ({uproducts.length})
-                  </h4>
-                  {uproductsLoading ? (
-                    <p style={{ color: "#999", fontStyle: "italic" }}>Loading...</p>
-                  ) : uproducts.length === 0 ? (
-                    <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
-                      No product images uploaded yet. Use the form above to add images.
-                    </p>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                        gap: "15px",
-                      }}
-                    >
-                      {uproducts.map((uproduct) => (
-                        <div
-                          key={uproduct.id}
+                        <span style={{ color: "#856404" }}>
+                          <i className="fas fa-edit"></i> Editing product (ID:{" "}
+                          {editingUproductId})...
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCancelEditUproduct}
                           style={{
-                            border: "1px solid #ddd",
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            position: "relative",
+                            background: "#856404",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "3px",
+                            padding: "5px 10px",
+                            cursor: "pointer",
+                            fontSize: "12px",
                           }}
                         >
-                          <div style={{ position: "relative", height: "150px" }}>
-                            <img
-                              src={uproduct.image_url}
-                              alt="Main"
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                              }}
-                            />
-                            {uproduct.hover_image_url && (
+                          Cancel Edit
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label htmlFor="uproduct-image">
+                        Main Image{" "}
+                        {isEditingUproduct
+                          ? "(Optional - leave empty to keep current)"
+                          : "*"}
+                      </label>
+                      <div
+                        style={{
+                          background: "#e8f4fd",
+                          border: "1px solid #b3d9f2",
+                          borderRadius: "5px",
+                          padding: "10px",
+                          marginBottom: "10px",
+                          fontSize: "13px",
+                          color: "#0066cc",
+                        }}
+                      >
+                        <strong>📐 Image Requirements:</strong>
+                        <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                          <li>
+                            Minimum resolution:{" "}
+                            <strong>350 x 450 pixels</strong>
+                          </li>
+                          <li>Aspect ratio: 7:9 (portrait)</li>
+                          <li>Format: JPEG, PNG, WebP</li>
+                          <li>Max file size: 5MB</li>
+                          <li>Both images should have same dimensions</li>
+                        </ul>
+                      </div>
+                      <input
+                        type="file"
+                        id="uproduct-image-input"
+                        accept="image/*"
+                        onChange={(e) =>
+                          setUproductImageFile(e.target.files[0])
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      {uproductImageFile && (
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginTop: "5px",
+                          }}
+                        >
+                          Selected: {uproductImageFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="uproduct-hover-image">
+                        Hover Image (Optional)
+                      </label>
+                      <input
+                        type="file"
+                        id="uproduct-hover-image-input"
+                        accept="image/*"
+                        onChange={(e) =>
+                          setUproductHoverImageFile(e.target.files[0])
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      {uproductHoverImageFile && (
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginTop: "5px",
+                          }}
+                        >
+                          Selected: {uproductHoverImageFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {uproductMessage && (
+                      <div
+                        className={`form-message ${
+                          uproductMessage.startsWith("✓") ? "success" : "error"
+                        }`}
+                        style={{ marginBottom: "15px" }}
+                      >
+                        {uproductMessage}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="btn-create-admin"
+                      disabled={
+                        uproductUploadLoading ||
+                        (!isEditingUproduct && !uproductImageFile)
+                      }
+                      style={{
+                        opacity:
+                          uproductUploadLoading ||
+                          (!isEditingUproduct && !uproductImageFile)
+                            ? 0.6
+                            : 1,
+                        cursor:
+                          uproductUploadLoading ||
+                          (!isEditingUproduct && !uproductImageFile)
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      {uproductUploadLoading
+                        ? "Saving..."
+                        : isEditingUproduct
+                        ? "Update Product"
+                        : "Upload Product Image"}
+                    </button>
+                  </form>
+
+                  {/* Display Uploaded Uproducts */}
+                  <div>
+                    <h4
+                      style={{
+                        marginTop: "30px",
+                        marginBottom: "15px",
+                        color: "#232946",
+                      }}
+                    >
+                      Uploaded Product Images ({uproducts.length})
+                    </h4>
+                    {uproductsLoading ? (
+                      <p style={{ color: "#999", fontStyle: "italic" }}>
+                        Loading...
+                      </p>
+                    ) : uproducts.length === 0 ? (
+                      <p
+                        style={{
+                          color: "#999",
+                          fontStyle: "italic",
+                          padding: "10px",
+                          background: "#f9f9f9",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        No product images uploaded yet. Use the form above to
+                        add images.
+                      </p>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(200px, 1fr))",
+                          gap: "15px",
+                        }}
+                      >
+                        {uproducts.map((uproduct) => (
+                          <div
+                            key={uproduct.id}
+                            style={{
+                              border: "1px solid #ddd",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              position: "relative",
+                            }}
+                          >
+                            <div
+                              style={{ position: "relative", height: "150px" }}
+                            >
                               <img
-                                src={uproduct.hover_image_url}
-                                alt="Hover"
+                                src={uproduct.image_url}
+                                alt="Main"
                                 style={{
                                   width: "100%",
                                   height: "100%",
@@ -5448,36 +5736,372 @@ function AdminDashboard() {
                                   position: "absolute",
                                   top: 0,
                                   left: 0,
-                                  opacity: 0,
-                                  transition: "opacity 0.3s ease",
                                 }}
-                                onMouseEnter={(e) => e.target.style.opacity = 1}
-                                onMouseLeave={(e) => e.target.style.opacity = 0}
                               />
-                            )}
+                              {uproduct.hover_image_url && (
+                                <img
+                                  src={uproduct.hover_image_url}
+                                  alt="Hover"
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    opacity: 0,
+                                    transition: "opacity 0.3s ease",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.target.style.opacity = 1)
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.target.style.opacity = 0)
+                                  }
+                                />
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                padding: "10px 15px",
+                                background: "#f8f9fa",
+                                display: "flex",
+                                gap: "10px",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <span style={{ fontSize: "12px", color: "#666" }}>
+                                ID: {uproduct.id}
+                              </span>
+                              <div style={{ display: "flex", gap: "5px" }}>
+                                <button
+                                  onClick={() => handleEditUproduct(uproduct)}
+                                  style={{
+                                    background: "#007bff",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "5px",
+                                    padding: "5px 10px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  <i className="fas fa-edit"></i> Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteUproduct(uproduct.id)
+                                  }
+                                  style={{
+                                    background: "#dc3545",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "5px",
+                                    padding: "5px 10px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  <i className="fas fa-trash"></i> Delete
+                                </button>
+                              </div>
+                            </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* How It Works Management */}
+              {settingsView === "howitworks" && (
+                <div className="settings-card">
+                  <h3>How It Works (Live Perfume Page)</h3>
+                  <p className="settings-description">
+                    Manage the "How It Works" section items displayed on the
+                    Live Perfume Bar page.
+                  </p>
+
+                  {/* Form */}
+                  <form
+                    onSubmit={handleHowItWorksSubmit}
+                    style={{ marginBottom: "30px" }}
+                  >
+                    {isEditingHowItWorks && (
+                      <div
+                        style={{
+                          background: "#fff3cd",
+                          padding: "10px",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span style={{ color: "#856404" }}>
+                          <i className="fas fa-edit"></i> Editing item...
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCancelEditHowItWorks}
+                          style={{
+                            background: "#856404",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "3px",
+                            padding: "5px 10px",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                          }}
+                        >
+                          Cancel Edit
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label htmlFor="how-it-works-title">Title *</label>
+                      <input
+                        type="text"
+                        id="how-it-works-title"
+                        value={howItWorksFormData.title}
+                        onChange={(e) =>
+                          setHowItWorksFormData({
+                            ...howItWorksFormData,
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Step 1: Choose Your Scent"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="how-it-works-subtitle">
+                        Description *
+                      </label>
+                      <textarea
+                        id="how-it-works-subtitle"
+                        value={howItWorksFormData.subtitle}
+                        onChange={(e) =>
+                          setHowItWorksFormData({
+                            ...howItWorksFormData,
+                            subtitle: e.target.value,
+                          })
+                        }
+                        placeholder="Enter detailed description..."
+                        rows="4"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                          resize: "vertical",
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="how-it-works-image">
+                        Image{" "}
+                        {isEditingHowItWorks
+                          ? "(Optional - leave empty to keep current)"
+                          : "*"}
+                      </label>
+
+                      {/* Helper text with image requirements */}
+                      <div
+                        style={{
+                          background: "#e8f4fd",
+                          border: "1px solid #b3d9f2",
+                          borderRadius: "5px",
+                          padding: "10px",
+                          marginBottom: "10px",
+                          fontSize: "13px",
+                          color: "#0066cc",
+                        }}
+                      >
+                        <strong>📐 Image Requirements:</strong>
+                        <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
+                          <li>
+                            Minimum resolution:{" "}
+                            <strong>350 x 400 pixels</strong>
+                          </li>
+                          <li>Aspect ratio: 7:8 (portrait)</li>
+                          <li>Format: JPEG, PNG, WebP</li>
+                          <li>Max file size: 5MB</li>
+                          <li>
+                            Image will be displayed in "How It Works" section
+                          </li>
+                        </ul>
+                      </div>
+
+                      <input
+                        type="file"
+                        id="how-it-works-image-input"
+                        accept="image/*"
+                        onChange={(e) =>
+                          setHowItWorksFormData({
+                            ...howItWorksFormData,
+                            image: e.target.files[0],
+                          })
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "5px",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      {howItWorksFormData.image && (
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginTop: "5px",
+                          }}
+                        >
+                          Selected: {howItWorksFormData.image.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {howItWorksMessage && (
+                      <div
+                        className={`form-message ${
+                          howItWorksMessage.startsWith("✓")
+                            ? "success"
+                            : "error"
+                        }`}
+                        style={{ marginBottom: "15px" }}
+                      >
+                        {howItWorksMessage}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="btn-create-admin"
+                      disabled={howItWorksUploadLoading}
+                      style={{
+                        opacity: howItWorksUploadLoading ? 0.6 : 1,
+                        cursor: howItWorksUploadLoading
+                          ? "not-allowed"
+                          : "pointer",
+                      }}
+                    >
+                      {howItWorksUploadLoading
+                        ? "Saving..."
+                        : isEditingHowItWorks
+                        ? "Update Item"
+                        : "Create Item"}
+                    </button>
+                  </form>
+
+                  {/* Display How It Works Items */}
+                  <div>
+                    <h4
+                      style={{
+                        marginTop: "30px",
+                        marginBottom: "15px",
+                        color: "#232946",
+                      }}
+                    >
+                      Existing Items ({howItWorks.length})
+                    </h4>
+                    {howItWorksLoading ? (
+                      <p style={{ color: "#999", fontStyle: "italic" }}>
+                        Loading...
+                      </p>
+                    ) : howItWorks.length === 0 ? (
+                      <p
+                        style={{
+                          color: "#999",
+                          fontStyle: "italic",
+                          padding: "10px",
+                          background: "#f9f9f9",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        No items created yet. Use the form above to add items.
+                      </p>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(250px, 1fr))",
+                          gap: "15px",
+                        }}
+                      >
+                        {howItWorks.map((item) => (
                           <div
+                            key={item.id}
                             style={{
-                              padding: "10px 15px",
-                              background: "#f8f9fa",
-                              display: "flex",
-                              gap: "10px",
-                              alignItems: "center",
-                              justifyContent: "space-between",
+                              border: "1px solid #ddd",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              position: "relative",
                             }}
                           >
-                            <span style={{ fontSize: "12px", color: "#666" }}>
-                              ID: {uproduct.id}
-                            </span>
-                            <div style={{ display: "flex", gap: "5px" }}>
-                              <button
-                                onClick={() => handleEditUproduct(uproduct)}
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              style={{
+                                width: "100%",
+                                height: "150px",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <div style={{ padding: "15px" }}>
+                              <h5
                                 style={{
+                                  margin: "0 0 10px 0",
+                                  color: "#232946",
+                                }}
+                              >
+                                {item.title}
+                              </h5>
+                              <p
+                                style={{
+                                  fontSize: "13px",
+                                  color: "#666",
+                                  margin: 0,
+                                  lineHeight: "1.5",
+                                }}
+                              >
+                                {item.subtitle.substring(0, 100)}
+                                {item.subtitle.length > 100 && "..."}
+                              </p>
+                            </div>
+                            <div
+                              style={{
+                                padding: "10px 15px",
+                                background: "#f8f9fa",
+                                display: "flex",
+                                gap: "10px",
+                              }}
+                            >
+                              <button
+                                onClick={() => handleEditHowItWorks(item)}
+                                style={{
+                                  flex: 1,
                                   background: "#007bff",
                                   color: "white",
                                   border: "none",
                                   borderRadius: "5px",
-                                  padding: "5px 10px",
+                                  padding: "8px",
                                   cursor: "pointer",
                                   fontSize: "12px",
                                 }}
@@ -5485,13 +6109,14 @@ function AdminDashboard() {
                                 <i className="fas fa-edit"></i> Edit
                               </button>
                               <button
-                                onClick={() => handleDeleteUproduct(uproduct.id)}
+                                onClick={() => handleDeleteHowItWorks(item.id)}
                                 style={{
+                                  flex: 1,
                                   background: "#dc3545",
                                   color: "white",
                                   border: "none",
                                   borderRadius: "5px",
-                                  padding: "5px 10px",
+                                  padding: "8px",
                                   cursor: "pointer",
                                   fontSize: "12px",
                                 }}
@@ -5500,285 +6125,20 @@ function AdminDashboard() {
                               </button>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              )}
-
-              {/* How It Works Management */}
-              {settingsView === "howitworks" && (
-              <div className="settings-card">
-                <h3>How It Works (Live Perfume Page)</h3>
-                <p className="settings-description">
-                  Manage the "How It Works" section items displayed on the Live Perfume Bar page.
-                </p>
-
-                {/* Form */}
-                <form onSubmit={handleHowItWorksSubmit} style={{ marginBottom: "30px" }}>
-                  {isEditingHowItWorks && (
-                    <div
-                      style={{
-                        background: "#fff3cd",
-                        padding: "10px",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span style={{ color: "#856404" }}>
-                        <i className="fas fa-edit"></i> Editing item...
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCancelEditHowItWorks}
-                        style={{
-                          background: "#856404",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "3px",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                      >
-                        Cancel Edit
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label htmlFor="how-it-works-title">Title *</label>
-                    <input
-                      type="text"
-                      id="how-it-works-title"
-                      value={howItWorksFormData.title}
-                      onChange={(e) =>
-                        setHowItWorksFormData({
-                          ...howItWorksFormData,
-                          title: e.target.value,
-                        })
-                      }
-                      placeholder="e.g., Step 1: Choose Your Scent"
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="how-it-works-subtitle">Description *</label>
-                    <textarea
-                      id="how-it-works-subtitle"
-                      value={howItWorksFormData.subtitle}
-                      onChange={(e) =>
-                        setHowItWorksFormData({
-                          ...howItWorksFormData,
-                          subtitle: e.target.value,
-                        })
-                      }
-                      placeholder="Enter detailed description..."
-                      rows="4"
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                        resize: "vertical",
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="how-it-works-image">
-                      Image {isEditingHowItWorks ? "(Optional - leave empty to keep current)" : "*"}
-                    </label>
-
-                    {/* Helper text with image requirements */}
-                    <div
-                      style={{
-                        background: "#e8f4fd",
-                        border: "1px solid #b3d9f2",
-                        borderRadius: "5px",
-                        padding: "10px",
-                        marginBottom: "10px",
-                        fontSize: "13px",
-                        color: "#0066cc",
-                      }}
-                    >
-                      <strong>📐 Image Requirements:</strong>
-                      <ul style={{ margin: "5px 0 0 20px", paddingLeft: 0 }}>
-                        <li>Minimum resolution: <strong>350 x 400 pixels</strong></li>
-                        <li>Aspect ratio: 7:8 (portrait)</li>
-                        <li>Format: JPEG, PNG, WebP</li>
-                        <li>Max file size: 5MB</li>
-                        <li>Image will be displayed in "How It Works" section</li>
-                      </ul>
-                    </div>
-
-                    <input
-                      type="file"
-                      id="how-it-works-image-input"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setHowItWorksFormData({
-                          ...howItWorksFormData,
-                          image: e.target.files[0],
-                        })
-                      }
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "5px",
-                        marginBottom: "15px",
-                      }}
-                    />
-                    {howItWorksFormData.image && (
-                      <p style={{ fontSize: "14px", color: "#666", marginTop: "5px" }}>
-                        Selected: {howItWorksFormData.image.name}
-                      </p>
+                        ))}
+                      </div>
                     )}
                   </div>
-
-                  {howItWorksMessage && (
-                    <div
-                      className={`form-message ${
-                        howItWorksMessage.startsWith("✓") ? "success" : "error"
-                      }`}
-                      style={{ marginBottom: "15px" }}
-                    >
-                      {howItWorksMessage}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-create-admin"
-                    disabled={howItWorksUploadLoading}
-                    style={{
-                      opacity: howItWorksUploadLoading ? 0.6 : 1,
-                      cursor: howItWorksUploadLoading ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {howItWorksUploadLoading
-                      ? "Saving..."
-                      : isEditingHowItWorks
-                      ? "Update Item"
-                      : "Create Item"}
-                  </button>
-                </form>
-
-                {/* Display How It Works Items */}
-                <div>
-                  <h4 style={{ marginTop: "30px", marginBottom: "15px", color: "#232946" }}>
-                    Existing Items ({howItWorks.length})
-                  </h4>
-                  {howItWorksLoading ? (
-                    <p style={{ color: "#999", fontStyle: "italic" }}>Loading...</p>
-                  ) : howItWorks.length === 0 ? (
-                    <p style={{ color: "#999", fontStyle: "italic", padding: "10px", background: "#f9f9f9", borderRadius: "5px" }}>
-                      No items created yet. Use the form above to add items.
-                    </p>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-                        gap: "15px",
-                      }}
-                    >
-                      {howItWorks.map((item) => (
-                        <div
-                          key={item.id}
-                          style={{
-                            border: "1px solid #ddd",
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            position: "relative",
-                          }}
-                        >
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            style={{
-                              width: "100%",
-                              height: "150px",
-                              objectFit: "cover",
-                            }}
-                          />
-                          <div style={{ padding: "15px" }}>
-                            <h5 style={{ margin: "0 0 10px 0", color: "#232946" }}>
-                              {item.title}
-                            </h5>
-                            <p
-                              style={{
-                                fontSize: "13px",
-                                color: "#666",
-                                margin: 0,
-                                lineHeight: "1.5",
-                              }}
-                            >
-                              {item.subtitle.substring(0, 100)}
-                              {item.subtitle.length > 100 && "..."}
-                            </p>
-                          </div>
-                          <div
-                            style={{
-                              padding: "10px 15px",
-                              background: "#f8f9fa",
-                              display: "flex",
-                              gap: "10px",
-                            }}
-                          >
-                            <button
-                              onClick={() => handleEditHowItWorks(item)}
-                              style={{
-                                flex: 1,
-                                background: "#007bff",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "5px",
-                                padding: "8px",
-                                cursor: "pointer",
-                                fontSize: "12px",
-                              }}
-                            >
-                              <i className="fas fa-edit"></i> Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteHowItWorks(item.id)}
-                              style={{
-                                flex: 1,
-                                background: "#dc3545",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "5px",
-                                padding: "8px",
-                                cursor: "pointer",
-                                fontSize: "12px",
-                              }}
-                            >
-                              <i className="fas fa-trash"></i> Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Careers Section */}
+        {activeSection === "careers" && (
+          <section className="admin-section" style={{ padding: 0 }}>
+            <AdminCareer />
           </section>
         )}
 
