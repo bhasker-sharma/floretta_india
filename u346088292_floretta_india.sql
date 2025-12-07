@@ -3,9 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Dec 06, 2025 at 03:22 AM
+-- Generation Time: Dec 07, 2025 at 09:59 AM
 -- Server version: 11.8.3-MariaDB-log
 -- PHP Version: 7.2.34
+CREATE DATABASE IF NOT EXISTS floretta_india_local;
+USE floretta_india_local;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
