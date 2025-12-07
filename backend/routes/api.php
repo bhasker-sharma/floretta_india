@@ -211,5 +211,8 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::post('/careers/{id}/toggle-status', [CareerController::class, 'adminToggleJobStatus']);
     Route::get('/career-applications', [CareerController::class, 'adminGetApplications']);
     Route::get('/career-applications/{id}/resume', [CareerController::class, 'adminDownloadResume']);
+    Route::get('/career-applications/{id}/cover-letter', [CareerController::class, 'adminDownloadCoverLetter']);
+    Route::put('/career-applications/{id}/status', [CareerController::class, 'adminUpdateApplicationStatus']);
+    Route::put('/career-applications/{id}/comments', [CareerController::class, 'adminUpdateApplicationComments']);
 });
 

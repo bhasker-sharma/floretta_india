@@ -14,7 +14,15 @@ class JobApplication extends Model
         'email',
         'phone',
         'cover_letter',
-        'resume_path'
+        'cover_letter_path',
+        'resume_path',
+        'status',
+        'comments'
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**

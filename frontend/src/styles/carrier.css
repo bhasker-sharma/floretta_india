@@ -596,6 +596,61 @@
   cursor: not-allowed;
 }
 
+/* Cover Letter Options */
+.cover-letter-options {
+  display: inline-flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.radio-option {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.radio-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio-option .radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.radio-option .radio-label i {
+  font-size: 13px;
+}
+
+.radio-option:hover .radio-label {
+  border-color: #a33d3d;
+  background-color: #fff5f5;
+}
+
+.radio-option.active .radio-label {
+  border-color: #a33d3d;
+  background-color: #a33d3d;
+  color: white;
+  box-shadow: 0 2px 6px rgba(163, 61, 61, 0.2);
+}
+
+.radio-option.active .radio-label i {
+  color: white;
+}
+
 @media (max-width: 768px) {
   .application-form-carrier .form-row {
     grid-template-columns: 1fr;
@@ -609,5 +664,9 @@
   .btn-submit-application {
     width: 100%;
     justify-content: center;
+  }
+
+  .cover-letter-options {
+    display: flex;
   }
 }

@@ -31,6 +31,12 @@ function AdminCareer() {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
   const [selectedJobFilter, setSelectedJobFilter] = useState("");
 
+  // File viewer state
+  const [fileViewerOpen, setFileViewerOpen] = useState(false);
+  const [viewerFileUrl, setViewerFileUrl] = useState("");
+  const [viewerFileName, setViewerFileName] = useState("");
+  const [viewerFileType, setViewerFileType] = useState(""); // "resume" or "cover_letter"
+
   // Fetch jobs
   const fetchJobs = async () => {
     try {
@@ -199,29 +205,88 @@ function AdminCareer() {
     }
   };
 
-  // Download resume
-  const handleDownloadResume = async (applicationId, applicantName) => {
-    try {
-      const token = localStorage.getItem("adminToken");
-      const response = await axios.get(
-        API_ENDPOINTS.ADMIN_CAREER_RESUME_DOWNLOAD(applicationId),
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
-      );
+  // View file (Resume or Cover Letter)
+  const handleViewFile = (fileUrl, fileName, fileType) => {
+    setViewerFileUrl(fileUrl);
+    setViewerFileName(fileName);
+    setViewerFileType(fileType);
+    setFileViewerOpen(true);
+  };
 
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+  // Download file from viewer
+  const handleDownloadFromViewer = async () => {
+    try {
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `${applicantName}_resume.pdf`);
+      link.href = viewerFileUrl;
+      link.setAttribute("download", viewerFileName);
+      link.setAttribute("target", "_blank");
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      console.error("Error downloading resume:", error);
-      alert("Failed to download resume");
+      console.error("Error downloading file:", error);
+      alert("Failed to download file");
+    }
+  };
+
+  // Close file viewer
+  const closeFileViewer = () => {
+    setFileViewerOpen(false);
+    setViewerFileUrl("");
+    setViewerFileName("");
+    setViewerFileType("");
+  };
+
+  // Update application status
+  const handleUpdateStatus = async (applicationId, newStatus) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_CAREER_APPLICATION_UPDATE_STATUS(applicationId),
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        // Update the applications list
+        fetchApplications(selectedJobFilter);
+        alert("Application status updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status");
+    }
+  };
+
+  // Update application comments
+  const handleUpdateComments = async (applicationId, comments) => {
+    console.log("handleUpdateComments called", { applicationId, comments });
+    try {
+      const token = localStorage.getItem("adminToken");
+      console.log("Token:", token ? "exists" : "missing");
+      console.log("API Endpoint:", API_ENDPOINTS.ADMIN_CAREER_APPLICATION_UPDATE_COMMENTS(applicationId));
+
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_CAREER_APPLICATION_UPDATE_COMMENTS(applicationId),
+        { comments },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("Response:", response.data);
+
+      if (response.data.success) {
+        // Update the applications list
+        fetchApplications(selectedJobFilter);
+        alert("Comments updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating comments:", error);
+      console.error("Error details:", error.response?.data);
+      alert("Failed to update comments: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -651,19 +716,21 @@ function AdminCareer() {
                       <th>Applicant</th>
                       <th>Job Title</th>
                       <th>Contact</th>
+                      <th>Status</th>
                       <th>Applied On</th>
                       <th>Resume</th>
                       <th>Cover Letter</th>
+                      <th>Comments</th>
                     </tr>
                   </thead>
                   <tbody>
                     {applications.map((app) => (
                       <tr key={app.id}>
-                        <td>
+                        <td data-label="Applicant">
                           <strong>{app.name}</strong>
                         </td>
-                        <td>{app.job_title}</td>
-                        <td>
+                        <td data-label="Job Title">{app.job_title}</td>
+                        <td data-label="Contact">
                           <div className="contact-info">
                             <div>
                               <i className="fas fa-envelope"></i> {app.email}
@@ -673,27 +740,90 @@ function AdminCareer() {
                             </div>
                           </div>
                         </td>
-                        <td>{new Date(app.created_at).toLocaleDateString()}</td>
-                        <td>
+                        <td data-label="Status">
+                          <select
+                            value={app.status || "pending"}
+                            onChange={(e) =>
+                              handleUpdateStatus(app.id, e.target.value)
+                            }
+                            className={`status-select status-${app.status || "pending"}`}
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: "4px",
+                              border: "1px solid #ddd",
+                              fontSize: "13px",
+                              fontWeight: "500",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="shortlisted">Shortlisted</option>
+                            <option value="interviewing">Interviewing</option>
+                            <option value="selected">Selected</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="offered">Offered</option>
+                          </select>
+                        </td>
+                        <td data-label="Applied On">{new Date(app.created_at).toLocaleDateString()}</td>
+                        <td data-label="Resume">
                           <button
                             onClick={() =>
-                              handleDownloadResume(app.id, app.name)
+                              handleViewFile(
+                                app.resume_url,
+                                `${app.name}_resume.pdf`,
+                                "resume"
+                              )
                             }
                             className="btn-download"
-                            title="Download Resume"
+                            title="View Resume"
                           >
-                            <i className="fas fa-download"></i> Download
+                            <i className="fas fa-eye"></i> View
                           </button>
                         </td>
-                        <td>
-                          {app.cover_letter ? (
+                        <td data-label="Cover Letter">
+                          {app.cover_letter_path ? (
+                            <div>
+                              <button
+                                onClick={() =>
+                                  handleViewFile(
+                                    app.cover_letter_url,
+                                    `${app.name}_cover_letter.pdf`,
+                                    "cover_letter"
+                                  )
+                                }
+                                className="btn-download"
+                                title="View Cover Letter File"
+                              >
+                                <i className="fas fa-eye"></i> View
+                              </button>
+                            </div>
+                          ) : app.cover_letter ? (
                             <details className="cover-letter-details">
-                              <summary>View</summary>
+                              <summary>View Text</summary>
                               <p>{app.cover_letter}</p>
                             </details>
                           ) : (
                             <span className="no-data">-</span>
                           )}
+                        </td>
+                        <td data-label="Comments">
+                          <textarea
+                            className="comments-textarea"
+                            placeholder="Add comments..."
+                            defaultValue={app.comments || ""}
+                            onBlur={(e) => {
+                              console.log("onBlur triggered", {
+                                appId: app.id,
+                                newValue: e.target.value,
+                                oldValue: app.comments || "",
+                                isDifferent: e.target.value !== (app.comments || "")
+                              });
+                              if (e.target.value !== (app.comments || "")) {
+                                handleUpdateComments(app.id, e.target.value);
+                              }
+                            }}
+                            rows="2"
+                          />
                         </td>
                       </tr>
                     ))}
@@ -701,6 +831,46 @@ function AdminCareer() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* File Viewer Modal */}
+      {fileViewerOpen && (
+        <div className="file-viewer-modal" onClick={closeFileViewer}>
+          <div
+            className="file-viewer-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="file-viewer-header">
+              <h3>
+                <i className={`fas fa-${viewerFileType === "resume" ? "file-alt" : "envelope"}`}></i>{" "}
+                {viewerFileType === "resume" ? "Resume" : "Cover Letter"}
+              </h3>
+              <button className="close-viewer" onClick={closeFileViewer}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="file-viewer-body">
+              <iframe
+                src={viewerFileUrl}
+                title={viewerFileName}
+                className="file-iframe"
+              />
+            </div>
+
+            <div className="file-viewer-footer">
+              <button
+                className="btn-download-viewer"
+                onClick={handleDownloadFromViewer}
+              >
+                <i className="fas fa-download"></i> Download
+              </button>
+              <button className="btn-close-viewer" onClick={closeFileViewer}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

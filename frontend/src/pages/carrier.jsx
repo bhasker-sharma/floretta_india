@@ -18,9 +18,11 @@ const Carrier = () => {
     name: "",
     email: "",
     phone: "",
-    cover_letter: "",
+    cover_letter_text: "",
+    cover_letter_file: null,
     resume: null,
   });
+  const [coverLetterType, setCoverLetterType] = useState("text"); // "text" or "file"
   const [formLoading, setFormLoading] = useState(false);
   const [formMessage, setFormMessage] = useState("");
 
@@ -61,11 +63,13 @@ const Carrier = () => {
     setSelectedJob(null);
     setShowApplicationForm(false);
     setFormMessage("");
+    setCoverLetterType("text");
     setFormData({
       name: "",
       email: "",
       phone: "",
-      cover_letter: "",
+      cover_letter_text: "",
+      cover_letter_file: null,
       resume: null,
     });
   };
@@ -85,7 +89,7 @@ const Carrier = () => {
   };
 
   // Handle file input
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, fileType) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file size (5MB max)
@@ -105,7 +109,12 @@ const Carrier = () => {
         e.target.value = "";
         return;
       }
-      setFormData({ ...formData, resume: file });
+
+      if (fileType === "resume") {
+        setFormData({ ...formData, resume: file });
+      } else if (fileType === "cover_letter") {
+        setFormData({ ...formData, cover_letter_file: file });
+      }
     }
   };
 
@@ -121,7 +130,14 @@ const Carrier = () => {
       submitData.append("name", formData.name);
       submitData.append("email", formData.email);
       submitData.append("phone", formData.phone);
-      submitData.append("cover_letter", formData.cover_letter);
+
+      // Add cover letter based on type
+      if (coverLetterType === "text" && formData.cover_letter_text) {
+        submitData.append("cover_letter_text", formData.cover_letter_text);
+      } else if (coverLetterType === "file" && formData.cover_letter_file) {
+        submitData.append("cover_letter_file", formData.cover_letter_file);
+      }
+
       submitData.append("resume", formData.resume);
 
       const response = await axios.post(
@@ -141,10 +157,14 @@ const Carrier = () => {
           name: "",
           email: "",
           phone: "",
-          cover_letter: "",
+          cover_letter_text: "",
+          cover_letter_file: null,
           resume: null,
         });
+        setCoverLetterType("text");
         document.getElementById("resume-input").value = "";
+        const coverLetterFileInput = document.getElementById("cover-letter-file-input");
+        if (coverLetterFileInput) coverLetterFileInput.value = "";
 
         // Hide modal after 3 seconds
         setTimeout(() => {
@@ -367,15 +387,60 @@ const Carrier = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="cover_letter">Cover Letter</label>
-                    <textarea
-                      id="cover_letter"
-                      name="cover_letter"
-                      value={formData.cover_letter}
-                      onChange={handleInputChange}
-                      rows="4"
-                      placeholder="Tell us why you're a great fit for this role..."
-                    />
+                    <label>Cover Letter</label>
+                    <div className="cover-letter-options">
+                      <label className={`radio-option ${coverLetterType === "text" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          value="text"
+                          checked={coverLetterType === "text"}
+                          onChange={(e) => setCoverLetterType(e.target.value)}
+                        />
+                        <span className="radio-label">
+                          <i className="fas fa-pen"></i>
+                          Write Text
+                        </span>
+                      </label>
+                      <label className={`radio-option ${coverLetterType === "file" ? "active" : ""}`}>
+                        <input
+                          type="radio"
+                          value="file"
+                          checked={coverLetterType === "file"}
+                          onChange={(e) => setCoverLetterType(e.target.value)}
+                        />
+                        <span className="radio-label">
+                          <i className="fas fa-upload"></i>
+                          Upload File
+                        </span>
+                      </label>
+                    </div>
+
+                    {coverLetterType === "text" ? (
+                      <textarea
+                        id="cover_letter_text"
+                        name="cover_letter_text"
+                        value={formData.cover_letter_text}
+                        onChange={handleInputChange}
+                        rows="4"
+                        placeholder="Tell us why you're a great fit for this role..."
+                      />
+                    ) : (
+                      <>
+                        <input
+                          type="file"
+                          id="cover-letter-file-input"
+                          name="cover_letter_file"
+                          onChange={(e) => handleFileChange(e, "cover_letter")}
+                          accept=".pdf,.doc,.docx"
+                        />
+                        {formData.cover_letter_file && (
+                          <p className="file-selected">
+                            <i className="fas fa-file"></i>{" "}
+                            {formData.cover_letter_file.name}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -386,7 +451,7 @@ const Carrier = () => {
                       type="file"
                       id="resume-input"
                       name="resume"
-                      onChange={handleFileChange}
+                      onChange={(e) => handleFileChange(e, "resume")}
                       accept=".pdf,.doc,.docx"
                       required
                     />

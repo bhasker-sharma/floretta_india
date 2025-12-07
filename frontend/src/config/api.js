@@ -137,6 +137,12 @@ export const API_ENDPOINTS = {
   ADMIN_CAREER_APPLICATIONS: `${API_URL}/api/admin/career-applications`,
   ADMIN_CAREER_RESUME_DOWNLOAD: (id) =>
     `${API_URL}/api/admin/career-applications/${id}/resume`,
+  ADMIN_CAREER_COVER_LETTER_DOWNLOAD: (id) =>
+    `${API_URL}/api/admin/career-applications/${id}/cover-letter`,
+  ADMIN_CAREER_APPLICATION_UPDATE_STATUS: (id) =>
+    `${API_URL}/api/admin/career-applications/${id}/status`,
+  ADMIN_CAREER_APPLICATION_UPDATE_COMMENTS: (id) =>
+    `${API_URL}/api/admin/career-applications/${id}/comments`,
 };
 
 // Storage URLs (for images, files, etc.)
