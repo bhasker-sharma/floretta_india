@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // page and order fields are now added in the create_sliders_table migration
+        // This is an old users table migration
+        // The actual users table is created by 2025_07_10_154359_create_users_table.php
         // This migration is kept for backwards compatibility but does nothing
     }
 
@@ -20,8 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('sliders', function (Blueprint $table) {
-            $table->dropColumn(['page', 'order']);
-        });
+        Schema::dropIfExists('users');
     }
 };

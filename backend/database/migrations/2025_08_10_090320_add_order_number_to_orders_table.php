@@ -8,9 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-                  $table->string('order_number', 20)->unique()->nullable()->after('id');
-        });
+        // order_number is now added in the create_orders_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

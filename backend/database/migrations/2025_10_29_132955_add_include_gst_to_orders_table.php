@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->boolean('include_gst')->default(false)->after('order_items');
-        });
+        // include_gst is now added in the create_orders_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

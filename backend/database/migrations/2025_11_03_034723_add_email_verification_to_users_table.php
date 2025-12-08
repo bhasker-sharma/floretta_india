@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('email_verification_otp', 6)->nullable();
-            $table->timestamp('otp_expires_at')->nullable();
-            $table->boolean('email_verified')->default(false);
-        });
+        // email_verification_otp, otp_expires_at, and email_verified are now added in the create_users_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

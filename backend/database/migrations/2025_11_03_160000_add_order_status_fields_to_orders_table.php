@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,20 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            if (!Schema::hasColumn('orders', 'order_status')) {
-                $table->string('order_status')->default('Order Placed')->after('status');
-            }
-            if (!Schema::hasColumn('orders', 'order_status_changed_at')) {
-                $table->timestamp('order_status_changed_at')->nullable()->after('order_status');
-            }
-        });
-
-        // Backfill existing rows
-        DB::table('orders')->whereNull('order_status')->update([
-            'order_status' => 'Order Placed',
-            'order_status_changed_at' => now(),
-        ]);
+        // order_status and order_status_changed_at are now added in the create_orders_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

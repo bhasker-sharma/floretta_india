@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'bestseller_order')) {
-                $table->integer('bestseller_order')->nullable();
-            }
-        });
+        // bestseller_order is now added in the create_products_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

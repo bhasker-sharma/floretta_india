@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'is_bestseller')) {
-                $table->boolean('is_bestseller')->default(false);
-            }
-        });
+        // is_bestseller is now added in the create_products_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

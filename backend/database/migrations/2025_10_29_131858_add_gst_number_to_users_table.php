@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'gst_number')) {
-                $table->string('gst_number')->nullable();
-            }
-        });
+        // gst_number is now added in the create_users_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**
