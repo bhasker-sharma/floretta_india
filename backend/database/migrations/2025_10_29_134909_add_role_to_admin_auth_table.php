@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tableName = Schema::hasTable('admin_auth') ? 'admin_auth' : 'admins';
-
-        Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-            if (!Schema::hasColumn($tableName, 'role')) {
-                $table->string('role')->default('admin');
-            }
-        });
+        // role is now added in the create_admins_table migration (creates admin_auth table)
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

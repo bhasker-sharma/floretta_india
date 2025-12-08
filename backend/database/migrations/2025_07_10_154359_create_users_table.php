@@ -11,16 +11,29 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id(); // Auto-increment ID
+            $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('google_id')->nullable(); // Google OAuth ID
-            $table->string('password');
+            $table->string('google_id')->nullable()->unique();
+            $table->string('image')->nullable();
+            $table->string('password')->nullable();
             $table->string('mobile')->nullable();
             $table->text('address')->nullable();
+            $table->string('gst_number')->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->rememberToken(); // for "remember me" functionality (optional)
-            $table->timestamps(); // created_at, updated_at
+            $table->rememberToken();
+            $table->timestamps();
+            $table->string('pin', 10)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->string('address1')->nullable();
+            $table->string('address2')->nullable();
+            $table->string('address3')->nullable();
+            $table->string('address4')->nullable();
+            $table->string('address5')->nullable();
+            $table->integer('default_address_index')->default(1);
+            $table->string('email_verification_otp', 6)->nullable();
+            $table->timestamp('otp_expires_at')->nullable();
+            $table->boolean('email_verified')->default(false);
         });
     }
 

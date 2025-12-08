@@ -10,26 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            // Add verified_at if it doesn't exist
-            if (!Schema::hasColumn('orders', 'verified_at')) {
-                $table->timestamp('verified_at')->nullable();
-            }
-
-            // Add verified_by_admin_id if it doesn't exist
-            if (!Schema::hasColumn('orders', 'verified_by_admin_id')) {
-                $table->unsignedBigInteger('verified_by_admin_id')->nullable();
-
-                // Determine correct admin table name
-                $adminTable = Schema::hasTable('admin_auth') ? 'admin_auth' : 'admins';
-
-                // Add foreign key to admin table if both tables/columns are present
-                $table->foreign('verified_by_admin_id')
-                    ->references('id')
-                    ->on($adminTable)
-                    ->nullOnDelete();
-            }
-        });
+        // verified_at and verified_by_admin_id are now added in the create_orders_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

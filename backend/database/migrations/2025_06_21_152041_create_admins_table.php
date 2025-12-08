@@ -9,17 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   // database/migrations/xxxx_xx_xx_create_admins_table.php
-public function up()
-{
-    Schema::create('admins', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('email')->unique();
-        $table->string('password');
-        $table->timestamps();
-    });
-}
+    public function up()
+    {
+        Schema::create('admin_auth', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('email')->unique();
+            $table->string('password')->unique();
+            $table->string('role')->default('admin');
+            $table->timestamps();
+        });
+    }
 
 
     /**
@@ -27,6 +26,6 @@ public function up()
      */
     public function down(): void
     {
-        Schema::dropIfExists('admins');
+        Schema::dropIfExists('admin_auth');
     }
 };

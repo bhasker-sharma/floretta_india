@@ -9,14 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up(): void
-{
-    Schema::create('sliders', function (Blueprint $table) {
-        $table->id();
-        $table->string('image');
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('sliders', function (Blueprint $table) {
+            $table->integer('id')->primary()->autoIncrement();
+            $table->enum('page', ['home', 'products', 'liveperfume', 'hotelamenities'])->default('home');
+            $table->string('image');
+            $table->integer('order')->default(0);
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->string('flag', 50)->nullable();
+        });
+    }
 
     /**
      * Reverse the migrations.

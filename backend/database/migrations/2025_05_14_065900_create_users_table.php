@@ -11,15 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
+        // This is an old users table migration
+        // The actual users table is created by 2025_07_10_154359_create_users_table.php
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

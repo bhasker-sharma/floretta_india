@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sliders', function (Blueprint $table) {
-            if (!Schema::hasColumn('sliders', 'page')) {
-                $table->enum('page', ['home', 'products', 'liveperfume', 'hotelamenities'])->default('home');
-            }
-            if (!Schema::hasColumn('sliders', 'order')) {
-                $table->integer('order')->default(0);
-            }
-        });
+        // page and order fields are now added in the create_sliders_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

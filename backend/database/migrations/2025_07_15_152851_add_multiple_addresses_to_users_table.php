@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-    $table->text('address1')->nullable();
-    $table->text('address2')->nullable();
-    $table->text('address3')->nullable();
-    $table->text('address4')->nullable();
-    $table->text('address5')->nullable();
-});
-
+        // Address fields are now added in the create_users_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**

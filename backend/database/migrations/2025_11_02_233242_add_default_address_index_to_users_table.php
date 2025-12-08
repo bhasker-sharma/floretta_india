@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->integer('default_address_index')->nullable()->default(1);
-        });
+        // default_address_index is now added in the create_users_table migration
+        // This migration is kept for backwards compatibility but does nothing
     }
 
     /**
