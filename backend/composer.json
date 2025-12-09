@@ -12,6 +12,8 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "razorpay/razorpay": "^2.9",
+        "symfony/event-dispatcher": "^7.0",
+        "symfony/string": "^7.0",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

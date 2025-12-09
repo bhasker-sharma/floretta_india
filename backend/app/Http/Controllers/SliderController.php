@@ -33,7 +33,7 @@ class SliderController extends Controller
                     return [
                         'id' => $slider->id,
                         'page' => $slider->page,
-                        'image_url' => $slider->image ? '/storage/' . $slider->image : null,
+                        'image_url' => $slider->image ? '/api/storage/' . $slider->image : null,
                         'order' => $slider->order,
                         'created_at' => $slider->created_at,
                     ];

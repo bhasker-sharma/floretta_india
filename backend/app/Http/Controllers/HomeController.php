@@ -36,7 +36,7 @@ class HomeController extends Controller
                 'name' => $review->user_name ?? $review->user->name ?? 'Anonymous',
                 'rating' => $review->rating,
                 'product' => $review->product->name ?? 'Product',
-                'review' => $review->review,
+                'review' => $review->review_text,
                 'verified_purchase' => $review->verified_purchase,
                 'is_featured' => $review->is_featured,
                 'created_at' => $review->created_at->format('M d, Y'),

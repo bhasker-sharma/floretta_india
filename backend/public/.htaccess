@@ -2,66 +2,26 @@
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
-<IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-    
-    # Security Headers for HTTPS
-    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-# Set index.html as the default directory index (React SPA)
-DirectoryIndex index.html
-
-Options +FollowSymLinks
 
     RewriteEngine On
-
-    # Force HTTPS in Production
-    RewriteCond %{HTTPS} off
-    RewriteCond %{HTTP_HOST} !^localhost [NC]
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-    # Handle X-XSRF-Token Header
-    RewriteCond %{HTTP:x-xsrf-token} .
-    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
-
-    # API routes - send to Laravel (laravel.php)
-    RewriteCond %{REQUEST_URI} ^/api/
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ laravel.php [L]
-    
-    # Storage routes - serve files directly or via Laravel
-    RewriteCond %{REQUEST_URI} ^/storage/
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ laravel.php [L]
-    
-    # Images routes - serve files directly
-    RewriteCond %{REQUEST_URI} ^/images/
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ - [L]
 
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Serve static files directly (React build assets)
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ - [L]
-
-    # All other routes - serve React's index.html (SPA)
-    # This must come AFTER API/storage/images rules
+    # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.html [L]
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN"
 </IfModule>
