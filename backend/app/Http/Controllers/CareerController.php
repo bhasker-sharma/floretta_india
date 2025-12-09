@@ -448,4 +448,42 @@ class CareerController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete job application (Admin)
+     */
+    public function adminDeleteApplication($id)
+    {
+        try {
+            $application = JobApplication::findOrFail($id);
+
+            // Delete associated files
+            if ($application->resume_path) {
+                $resumePath = public_path('storage/' . $application->resume_path);
+                if (file_exists($resumePath)) {
+                    unlink($resumePath);
+                }
+            }
+
+            if ($application->cover_letter_path) {
+                $coverLetterPath = public_path('storage/' . $application->cover_letter_path);
+                if (file_exists($coverLetterPath)) {
+                    unlink($coverLetterPath);
+                }
+            }
+
+            // Delete the application record
+            $application->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Application deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to delete application: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

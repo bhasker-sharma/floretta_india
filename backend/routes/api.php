@@ -214,5 +214,6 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/career-applications/{id}/cover-letter', [CareerController::class, 'adminDownloadCoverLetter']);
     Route::put('/career-applications/{id}/status', [CareerController::class, 'adminUpdateApplicationStatus']);
     Route::put('/career-applications/{id}/comments', [CareerController::class, 'adminUpdateApplicationComments']);
+    Route::delete('/career-applications/{id}', [CareerController::class, 'adminDeleteApplication']);
 });
 

@@ -143,6 +143,8 @@ export const API_ENDPOINTS = {
     `${API_URL}/api/admin/career-applications/${id}/status`,
   ADMIN_CAREER_APPLICATION_UPDATE_COMMENTS: (id) =>
     `${API_URL}/api/admin/career-applications/${id}/comments`,
+  ADMIN_CAREER_APPLICATION_DELETE: (id) =>
+    `${API_URL}/api/admin/career-applications/${id}`,
 };
 
 // Storage URLs (for images, files, etc.)

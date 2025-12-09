@@ -290,6 +290,31 @@ function AdminCareer() {
     }
   };
 
+  // Delete application
+  const handleDeleteApplication = async (applicationId, applicantName) => {
+    if (!window.confirm(`Are you sure you want to delete the application from "${applicantName}"?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.delete(
+        API_ENDPOINTS.ADMIN_CAREER_APPLICATION_DELETE(applicationId),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        alert("Application deleted successfully!");
+        fetchApplications(selectedJobFilter);
+      }
+    } catch (error) {
+      console.error("Error deleting application:", error);
+      alert("Failed to delete application: " + (error.response?.data?.error || error.message));
+    }
+  };
+
   // Export applications to CSV
   const handleExportCSV = () => {
     if (applications.length === 0) {
@@ -721,6 +746,7 @@ function AdminCareer() {
                       <th>Resume</th>
                       <th>Cover Letter</th>
                       <th>Comments</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -824,6 +850,24 @@ function AdminCareer() {
                             }}
                             rows="2"
                           />
+                        </td>
+                        <td data-label="Actions">
+                          <button
+                            onClick={() => handleDeleteApplication(app.id, app.name)}
+                            className="btn-delete"
+                            title="Delete Application"
+                            style={{
+                              padding: "6px 12px",
+                              backgroundColor: "#dc3545",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              fontSize: "14px",
+                            }}
+                          >
+                            <i className="fas fa-trash"></i> Delete
+                          </button>
                         </td>
                       </tr>
                     ))}
