@@ -20,6 +20,14 @@ use App\Http\Controllers\HowItWorksController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CareerController;
 
+// Analytics Controllers
+use App\Http\Controllers\Analytics\OverviewAnalyticsController;
+use App\Http\Controllers\Analytics\SalesAnalyticsController;
+use App\Http\Controllers\Analytics\ProductsAnalyticsController;
+use App\Http\Controllers\Analytics\CustomersAnalyticsController;
+use App\Http\Controllers\Analytics\ReviewsAnalyticsController;
+use App\Http\Controllers\Analytics\OrdersAnalyticsController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes (No Authentication Required)
@@ -215,5 +223,13 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::put('/career-applications/{id}/status', [CareerController::class, 'adminUpdateApplicationStatus']);
     Route::put('/career-applications/{id}/comments', [CareerController::class, 'adminUpdateApplicationComments']);
     Route::delete('/career-applications/{id}', [CareerController::class, 'adminDeleteApplication']);
+
+    // Analytics routes - Organized by section
+    Route::get('/analytics/overview', [OverviewAnalyticsController::class, 'index']);
+    Route::get('/analytics/sales', [SalesAnalyticsController::class, 'index']);
+    Route::get('/analytics/products', [ProductsAnalyticsController::class, 'index']);
+    Route::get('/analytics/customers', [CustomersAnalyticsController::class, 'index']);
+    Route::get('/analytics/reviews', [ReviewsAnalyticsController::class, 'index']);
+    Route::get('/analytics/orders', [OrdersAnalyticsController::class, 'index']);
 });
 

@@ -145,6 +145,14 @@ export const API_ENDPOINTS = {
     `${API_URL}/api/admin/career-applications/${id}/comments`,
   ADMIN_CAREER_APPLICATION_DELETE: (id) =>
     `${API_URL}/api/admin/career-applications/${id}`,
+
+  // Analytics
+  ANALYTICS_OVERVIEW: `${API_URL}/api/admin/analytics/overview`,
+  ANALYTICS_SALES: `${API_URL}/api/admin/analytics/sales`,
+  ANALYTICS_PRODUCTS: `${API_URL}/api/admin/analytics/products`,
+  ANALYTICS_CUSTOMERS: `${API_URL}/api/admin/analytics/customers`,
+  ANALYTICS_REVIEWS: `${API_URL}/api/admin/analytics/reviews`,
+  ANALYTICS_ORDERS: `${API_URL}/api/admin/analytics/orders`,
 };
 
 // Storage URLs (for images, files, etc.)

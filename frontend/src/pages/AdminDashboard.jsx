@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdminReviews from "./AdminReviews";
 import AdminCareer from "./AdminCareer";
+import Analytics from "./Analytics";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -6139,6 +6140,13 @@ function AdminDashboard() {
         {activeSection === "careers" && (
           <section className="admin-section" style={{ padding: 0 }}>
             <AdminCareer />
+          </section>
+        )}
+
+        {/* Analytics Section */}
+        {activeSection === "analytics" && (
+          <section className="admin-section" style={{ padding: 0 }}>
+            <Analytics />
           </section>
         )}
 

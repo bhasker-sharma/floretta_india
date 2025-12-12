@@ -1,0 +1,141 @@
+.date-filter-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.date-filter-presets {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.date-filter-presets label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.date-filter-presets select {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+  cursor: pointer;
+  min-width: 180px;
+  transition: all 0.2s;
+}
+
+.date-filter-presets select:hover {
+  border-color: #a33d3d;
+}
+
+.date-filter-presets select:focus {
+  outline: none;
+  border-color: #a33d3d;
+  box-shadow: 0 0 0 3px rgba(163, 61, 61, 0.1);
+}
+
+.date-filter-custom {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-input-group label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #555;
+}
+
+.date-input-group input[type="date"] {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 160px;
+  transition: all 0.2s;
+}
+
+.date-input-group input[type="date"]:hover {
+  border-color: #a33d3d;
+}
+
+.date-input-group input[type="date"]:focus {
+  outline: none;
+  border-color: #a33d3d;
+  box-shadow: 0 0 0 3px rgba(163, 61, 61, 0.1);
+}
+
+.btn-apply-dates {
+  padding: 10px 20px;
+  background-color: #a33d3d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  height: 42px;
+}
+
+.btn-apply-dates:hover {
+  background-color: #8a3333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(163, 61, 61, 0.2);
+}
+
+.btn-apply-dates:active {
+  transform: translateY(0);
+}
+
+.btn-apply-dates i {
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .date-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-filter-presets,
+  .date-filter-custom {
+    width: 100%;
+  }
+
+  .date-filter-custom {
+    flex-direction: column;
+  }
+
+  .date-input-group input[type="date"],
+  .date-filter-presets select {
+    width: 100%;
+  }
+
+  .btn-apply-dates {
+    width: 100%;
+    justify-content: center;
+  }
+}
