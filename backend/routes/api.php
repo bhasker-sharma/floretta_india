@@ -19,12 +19,14 @@ use App\Http\Controllers\UproductController;
 use App\Http\Controllers\HowItWorksController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CareerController;
-
+use App\Http\Controllers\SessionEventController;
 /*
 |--------------------------------------------------------------------------
 | Public Routes (No Authentication Required)
 |--------------------------------------------------------------------------
 */
+// Session tracking  
+Route::post('/track-event', [SessionEventController::class, 'store']);
 
 // 🌐 User Auth (with rate limiting to prevent brute force attacks)
 Route::middleware('throttle:5,1')->group(function () {
