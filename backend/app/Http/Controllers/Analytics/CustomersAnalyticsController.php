@@ -111,6 +111,11 @@ class CustomersAnalyticsController extends Controller
             ->orderBy('date')
             ->get();
 
+        \Log::info('Customer Segments Debug', [
+            'count' => $customerSegmentsOverTime->count(),
+            'data' => $customerSegmentsOverTime->take(5)
+        ]);
+
         // ===== TOP CUSTOMERS WITH PAGINATION =====
 
         $topCustomersQuery = Order::select(

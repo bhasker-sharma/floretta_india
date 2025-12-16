@@ -40,6 +40,9 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import "../styles/Analytics.css";
 
 function Analytics() {
@@ -83,6 +86,27 @@ function Analytics() {
 
   // Current page number for pagination
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Responsive chart dimensions for mobile
+  const [chartWidth, setChartWidth] = useState(null);
+  const [chartHeight, setChartHeight] = useState(350);
+
+  // Handle window resize for mobile charts
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width <= 600) {
+        setChartWidth(width - 48);
+        setChartHeight(300);
+      } else {
+        setChartWidth(null);
+        setChartHeight(350);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   /**
    * Effect Hook: Load analytics data when tab or date range changes
@@ -252,6 +276,102 @@ function Analytics() {
     document.body.removeChild(link);
   };
 
+  /**
+   * Export Overview Analytics to PDF with Charts as Images
+   */
+  const handleExportPDF = async () => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPos = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text("Analytics Overview Report", pageWidth / 2, yPos, { align: "center" });
+
+    // Date Range
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const dateText = `Period: ${dateRange.start_date || 'N/A'} to ${dateRange.end_date || 'N/A'}`;
+    doc.text(dateText, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+
+    try {
+      // Capture KPI Cards
+      const kpiSection = document.querySelector('.kpi-cards-row');
+      if (kpiSection) {
+        const kpiCanvas = await html2canvas(kpiSection, { scale: 2, backgroundColor: '#ffffff' });
+        const kpiImg = kpiCanvas.toDataURL('image/png');
+        const kpiWidth = pageWidth - 20;
+        const kpiHeight = (kpiCanvas.height * kpiWidth) / kpiCanvas.width;
+
+        if (yPos + kpiHeight > pageHeight - 20) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.addImage(kpiImg, 'PNG', 10, yPos, kpiWidth, kpiHeight);
+        yPos += kpiHeight + 10;
+      }
+
+      // Capture all chart cards
+      const chartCards = document.querySelectorAll('.analytics-charts-grid .chart-card');
+      for (let i = 0; i < chartCards.length; i++) {
+        const card = chartCards[i];
+
+        if (yPos > pageHeight - 80) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        const canvas = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (imgHeight > pageHeight - 40) {
+          const ratio = (pageHeight - 40) / imgHeight;
+          const adjustedHeight = pageHeight - 40;
+          const adjustedWidth = imgWidth * ratio;
+          doc.addImage(imgData, 'PNG', 10, yPos, adjustedWidth, adjustedHeight);
+          yPos = pageHeight - 10;
+        } else {
+          doc.addImage(imgData, 'PNG', 10, yPos, imgWidth, imgHeight);
+          yPos += imgHeight + 10;
+        }
+      }
+
+      // Capture Orders Table
+      const ordersSection = document.querySelector('.analytics-table-container');
+      if (ordersSection && orders.length > 0) {
+        if (yPos > pageHeight - 80) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        const tableCanvas = await html2canvas(ordersSection, { scale: 2, backgroundColor: '#ffffff' });
+        const tableImg = tableCanvas.toDataURL('image/png');
+        const tableWidth = pageWidth - 20;
+        const tableHeight = (tableCanvas.height * tableWidth) / tableCanvas.width;
+
+        if (tableHeight > pageHeight - yPos - 10) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.addImage(tableImg, 'PNG', 10, yPos, tableWidth, tableHeight);
+      }
+
+      // Save PDF
+      doc.save(`analytics-overview-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   return (
     <div className="analytics-container">
       <div className="analytics-header">
@@ -303,6 +423,13 @@ function Analytics() {
       {/* OVERVIEW TAB */}
       {activeTab === "overview" && (
         <>
+          {/* Export Button */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', marginTop: '10px' }}>
+            <button className="btn-export-csv" onClick={handleExportPDF}>
+              <i className="fas fa-file-pdf"></i> Export PDF
+            </button>
+          </div>
+
           {/* KPI Cards */}
           <div className="kpi-cards-row">
             {kpis.total_revenue && (
@@ -369,10 +496,10 @@ function Analytics() {
                 <h3>Revenue & Orders Over Time</h3>
                 <p>Daily breakdown of revenue and order volume</p>
               </div>
-              <div className="chart-card-body">
+              <div className="chart-card-body" style={{ minHeight: chartHeight, overflow: 'auto' }}>
                 {revenueOverTime.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={350}>
-                    <ComposedChart data={revenueOverTime}>
+                  chartWidth ? (
+                    <ComposedChart data={revenueOverTime} width={chartWidth} height={chartHeight}>
                       <defs>
                         <linearGradient
                           id="colorRevenue"
@@ -399,6 +526,9 @@ function Analytics() {
                         stroke="#6b7280"
                         style={{ fontSize: "12px", fontWeight: 500 }}
                         tickLine={false}
+                        angle={-90}
+                        textAnchor="end"
+                        height={100}
                       />
                       <YAxis
                         yAxisId="left"
@@ -508,7 +638,149 @@ function Analytics() {
                         activeDot={{ r: 7 }}
                       />
                     </ComposedChart>
-                  </ResponsiveContainer>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={chartHeight}>
+                      <ComposedChart data={revenueOverTime}>
+                        <defs>
+                          <linearGradient
+                            id="colorRevenue"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#a33d3d"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#a33d3d"
+                              stopOpacity={0.3}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#6b7280"
+                          style={{ fontSize: "12px", fontWeight: 500 }}
+                          tickLine={false}
+                          angle={-90}
+                          textAnchor="end"
+                          height={100}
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          stroke="#a33d3d"
+                          style={{ fontSize: "12px", fontWeight: 500 }}
+                          tickLine={false}
+                          domain={[0, "auto"]}
+                          label={{
+                            value: "Revenue (₹)",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { fill: "#a33d3d", fontSize: "12px" },
+                          }}
+                          tickFormatter={(value) => `₹${value.toLocaleString()}`}
+                        />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          stroke="#10b981"
+                          style={{ fontSize: "12px", fontWeight: 500 }}
+                          tickLine={false}
+                          domain={[0, "auto"]}
+                          label={{
+                            value: "Orders",
+                            angle: 90,
+                            position: "insideRight",
+                            style: { fill: "#10b981", fontSize: "12px" },
+                          }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                            padding: "12px",
+                          }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div
+                                  style={{
+                                    backgroundColor: "#fff",
+                                    border: "1px solid #e5e7eb",
+                                    borderRadius: "8px",
+                                    padding: "12px",
+                                    boxShadow:
+                                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                                  }}
+                                >
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      fontWeight: "bold",
+                                      marginBottom: "8px",
+                                      color: "#374151",
+                                    }}
+                                  >
+                                    {data.date}
+                                  </p>
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      color: "#a33d3d",
+                                      marginBottom: "4px",
+                                    }}
+                                  >
+                                    Revenue: ₹
+                                    {Number(data.revenue).toLocaleString(
+                                      "en-IN",
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      }
+                                    )}
+                                  </p>
+                                  <p style={{ margin: 0, color: "#10b981" }}>
+                                    Orders: {data.orders}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend
+                          wrapperStyle={{ paddingTop: "20px" }}
+                          iconType="circle"
+                        />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="revenue"
+                          fill="url(#colorRevenue)"
+                          name="Revenue (₹)"
+                          radius={[8, 8, 0, 0]}
+                          barSize={40}
+                        />
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          name="Revenue Trend"
+                          dot={{ fill: "#10b981", strokeWidth: 2, r: 5 }}
+                          activeDot={{ r: 7 }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )
                 ) : (
                   <div className="chart-no-data">
                     <i className="fas fa-chart-line"></i>
@@ -519,14 +791,44 @@ function Analytics() {
             </div>
 
             {/* Customer Segments */}
-            <div className="chart-card">
+            <div className="chart-card" style={{ gridColumn: "1 / -1" }}>
               <div className="chart-card-header">
                 <h3>New vs Returning Customers</h3>
                 <p>Customer distribution breakdown</p>
               </div>
-              <div className="chart-card-body">
+              <div className="chart-card-body" style={{ minHeight: 300, overflow: 'auto' }}>
                 {customerSegments.new > 0 || customerSegments.returning > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  chartWidth ? (
+                    <PieChart width={chartWidth} height={300}>
+                      <Pie
+                        data={[
+                          {
+                            name: "New Customers",
+                            value: customerSegments.new,
+                          },
+                          {
+                            name: "Returning Customers",
+                            value: customerSegments.returning,
+                          },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        <Cell fill="#10b981" />
+                        <Cell fill="#8b5cf6" />
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
                         data={[
@@ -555,6 +857,7 @@ function Analytics() {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
+                  )
                 ) : (
                   <div className="chart-no-data">
                     <i className="fas fa-users"></i>
@@ -565,14 +868,79 @@ function Analytics() {
             </div>
 
             {/* Top Products */}
-            <div className="chart-card">
+            <div className="chart-card" style={{ gridColumn: "1 / -1" }}>
               <div className="chart-card-header">
                 <h3>Top 5 Products by Revenue</h3>
                 <p>Best performing products</p>
               </div>
-              <div className="chart-card-body">
+              <div className="chart-card-body" style={{ minHeight: 300, overflow: 'auto' }}>
                 {topProducts.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  chartWidth ? (
+                    <BarChart
+                      data={topProducts}
+                      layout="vertical"
+                      width={chartWidth}
+                      height={300}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorProductRevenue"
+                          x1="0"
+                          y1="0"
+                          x2="1"
+                          y2="0"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#a33d3d"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#a33d3d"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        type="number"
+                        stroke="#666"
+                        style={{ fontSize: "12px", fontWeight: "500" }}
+                        tickLine={false}
+                        tickFormatter={(value) => `₹${value.toLocaleString()}`}
+                      />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        width={150}
+                        stroke="#666"
+                        style={{ fontSize: "11px", fontWeight: "500" }}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                        formatter={(value) => [
+                          `₹${value.toLocaleString()}`,
+                          "Revenue",
+                        ]}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="revenue"
+                        fill="url(#colorProductRevenue)"
+                        name="Revenue (₹)"
+                        radius={[0, 8, 8, 0]}
+                        barSize={30}
+                      />
+                    </BarChart>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
                     <BarChart 
                         data={topProducts} 
                         layout="vertical"
@@ -690,6 +1058,7 @@ function Analytics() {
                       />
                     </BarChart>
                   </ResponsiveContainer>
+                  )
                 ) : (
                   <div className="chart-no-data">
                     <i className="fas fa-box"></i>

@@ -18,6 +18,7 @@ use App\Models\Order;
 use App\Models\productpage\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class SalesAnalyticsController extends Controller
@@ -87,7 +88,9 @@ class SalesAnalyticsController extends Controller
         $conversionTrend = $prevConversionRate > 0 ? (($conversionRate - $prevConversionRate) / $prevConversionRate) * 100 : 0;
         $refundedTrend = $prevRefunded > 0 ? (($refundedOrders - $prevRefunded) / $prevRefunded) * 100 : 0;
 
-        // ===== SALES BY DAY (daily revenue and order trends) =====
+        // ===== SALES BY DATE =====
+        // Shows sales for each date that has orders in the filtered range
+        // Only includes dates with actual orders
 
         $salesByDay = Order::select(
                 DB::raw('DATE(created_at) as date'),
@@ -98,7 +101,14 @@ class SalesAnalyticsController extends Controller
             ->where('status', 'paid')
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->map(function($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('M d'),
+                    'revenue' => (float) $item->revenue,
+                    'orders' => (int) $item->orders
+                ];
+            });
 
         // ===== SALES BY CATEGORY =====
         // Parse JSON order_items and aggregate by product category
@@ -183,17 +193,37 @@ class SalesAnalyticsController extends Controller
         foreach ($orders as $order) {
             $items = $order->order_items ?? [];
             foreach ($items as $item) {
-                if (isset($item['product_id'])) {
-                    $productIds[] = $item['product_id'];
+                // Try both 'id' and 'product_id' keys
+                $pid = $item['id'] ?? $item['product_id'] ?? null;
+                if ($pid) {
+                    $productIds[] = $pid;
                 }
             }
         }
 
-        // Get product details (scent used as category since no category column exists)
-        $products = Product::whereIn('id', array_unique($productIds))
-            ->select('id', 'scent', 'brand')
+        \Log::info('Product IDs extracted from orders', [
+            'product_ids' => array_unique($productIds),
+            'sample_order_item' => isset($orders[0]) ? ($orders[0]->order_items[0] ?? null) : null
+        ]);
+
+        // Get product details (flag used as category: perfume, freshener, facemist)
+        $uniqueProductIds = array_unique($productIds);
+        $products = Product::whereIn('id', $uniqueProductIds)
+            ->select('id', 'flag', 'item_form', 'name', 'scent')
             ->get()
             ->keyBy('id');
+
+        \Log::info('Category Debug - Products fetched', [
+            'unique_product_ids_queried' => $uniqueProductIds,
+            'count' => $products->count(),
+            'all_products' => $products->map(fn($p) => [
+                'id' => $p->id,
+                'flag' => $p->flag,
+                'item_form' => $p->item_form,
+                'scent' => $p->scent,
+                'name' => $p->name
+            ])
+        ]);
 
         // Aggregate sales by category
         $categoryStats = [];
@@ -202,12 +232,56 @@ class SalesAnalyticsController extends Controller
             $items = $order->order_items ?? [];
 
             foreach ($items as $item) {
-                $productId = $item['product_id'] ?? null;
+                $productId = $item['id'] ?? $item['product_id'] ?? null;
                 if (!$productId) continue;
 
                 $product = $products->get($productId);
-                // Use scent as category, brand as fallback, 'Uncategorized' as default
-                $category = $product ? ($product->scent ?? $product->brand ?? 'Uncategorized') : 'Uncategorized';
+
+                // Normalize category to one of: perfume, freshener, facemist
+                $category = 'Uncategorized';
+
+                if ($product) {
+                    // Try flag field first (primary source)
+                    $flagValue = strtolower(trim($product->flag ?? ''));
+
+                    if (!empty($flagValue)) {
+                        // Normalize flag values
+                        if (in_array($flagValue, ['perfume', 'perfumes'])) {
+                            $category = 'perfume';
+                        } elseif (in_array($flagValue, ['freshener', 'freshner', 'air freshener', 'car freshener'])) {
+                            $category = 'freshener';
+                        } elseif (in_array($flagValue, ['facemist', 'face_mist', 'face mist', 'mist'])) {
+                            $category = 'face_mist';
+                        } else {
+                            // Use the flag value as-is if it doesn't match known categories
+                            $category = $flagValue;
+                        }
+                    } else {
+                        // Fallback 1: Try item_form
+                        $itemForm = strtolower(trim($product->item_form ?? ''));
+                        if (!empty($itemForm)) {
+                            if (strpos($itemForm, 'perfume') !== false) {
+                                $category = 'perfume';
+                            } elseif (strpos($itemForm, 'freshener') !== false || strpos($itemForm, 'freshner') !== false) {
+                                $category = 'freshener';
+                            } elseif (strpos($itemForm, 'mist') !== false) {
+                                $category = 'face_mist';
+                            }
+                        }
+
+                        // Fallback 2: Extract from product name
+                        if ($category === 'Uncategorized' && !empty($product->name)) {
+                            $name = strtolower($product->name);
+                            if (stripos($name, 'perfume') !== false) {
+                                $category = 'perfume';
+                            } elseif (stripos($name, 'freshener') !== false || stripos($name, 'freshner') !== false) {
+                                $category = 'freshener';
+                            } elseif (stripos($name, 'face mist') !== false || stripos($name, 'mist') !== false) {
+                                $category = 'face_mist';
+                            }
+                        }
+                    }
+                }
 
                 $quantity = $item['quantity'] ?? 0;
                 $price = $item['price'] ?? 0;
@@ -234,11 +308,52 @@ class SalesAnalyticsController extends Controller
             $categoriesInOrder = [];
 
             foreach ($items as $item) {
-                $productId = $item['product_id'] ?? null;
+                $productId = $item['id'] ?? $item['product_id'] ?? null;
                 if (!$productId) continue;
 
                 $product = $products->get($productId);
-                $category = $product ? ($product->scent ?? $product->brand ?? 'Uncategorized') : 'Uncategorized';
+
+                // Use same normalization logic
+                $category = 'Uncategorized';
+
+                if ($product) {
+                    $flagValue = strtolower(trim($product->flag ?? ''));
+
+                    if (!empty($flagValue)) {
+                        if (in_array($flagValue, ['perfume', 'perfumes'])) {
+                            $category = 'perfume';
+                        } elseif (in_array($flagValue, ['freshener', 'freshner', 'air freshener', 'car freshener'])) {
+                            $category = 'freshener';
+                        } elseif (in_array($flagValue, ['facemist', 'face_mist', 'face mist', 'mist'])) {
+                            $category = 'face_mist';
+                        } else {
+                            $category = $flagValue;
+                        }
+                    } else {
+                        $itemForm = strtolower(trim($product->item_form ?? ''));
+                        if (!empty($itemForm)) {
+                            if (strpos($itemForm, 'perfume') !== false) {
+                                $category = 'perfume';
+                            } elseif (strpos($itemForm, 'freshener') !== false || strpos($itemForm, 'freshner') !== false) {
+                                $category = 'freshener';
+                            } elseif (strpos($itemForm, 'mist') !== false) {
+                                $category = 'face_mist';
+                            }
+                        }
+
+                        if ($category === 'Uncategorized' && !empty($product->name)) {
+                            $name = strtolower($product->name);
+                            if (stripos($name, 'perfume') !== false) {
+                                $category = 'perfume';
+                            } elseif (stripos($name, 'freshener') !== false || stripos($name, 'freshner') !== false) {
+                                $category = 'freshener';
+                            } elseif (stripos($name, 'face mist') !== false || stripos($name, 'mist') !== false) {
+                                $category = 'face_mist';
+                            }
+                        }
+                    }
+                }
+
                 $categoriesInOrder[$category] = true;
             }
 
@@ -250,8 +365,33 @@ class SalesAnalyticsController extends Controller
             }
         }
 
-        // Sort by revenue (descending)
+        Log::info('Category Debug - Final Stats', [
+            'categories' => array_keys($categoryStats),
+            'stats' => $categoryStats
+        ]);
+
+        // Ensure all three main categories always exist (with 0 values if no data)
+        $defaultCategories = ['perfume', 'freshener', 'face_mist'];
+        foreach ($defaultCategories as $cat) {
+            if (!isset($categoryStats[$cat])) {
+                $categoryStats[$cat] = [
+                    'category' => $cat,
+                    'revenue' => 0,
+                    'units_sold' => 0,
+                    'orders' => 0,
+                ];
+            }
+        }
+
+        // Sort by revenue (descending), but keep consistent order for categories with 0 revenue
         usort($categoryStats, function($a, $b) {
+            // If both have same revenue, maintain consistent category order
+            if ($a['revenue'] == $b['revenue']) {
+                $order = ['perfume' => 1, 'freshener' => 2, 'face_mist' => 3];
+                $aOrder = $order[$a['category']] ?? 999;
+                $bOrder = $order[$b['category']] ?? 999;
+                return $aOrder <=> $bOrder;
+            }
             return $b['revenue'] <=> $a['revenue'];
         });
 

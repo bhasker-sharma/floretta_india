@@ -61,7 +61,7 @@ class ProductsAnalyticsController extends Controller
 
         // Top product this period
         $topProductsData = $this->getTopProductsByRevenue($start, $end, 1);
-        $topProduct = $topProductsData->isNotEmpty() ? $topProductsData->first()['name'] : 'N/A';
+        $topProduct = $topProductsData->isNotEmpty() ? $topProductsData->first()['product_name'] : 'N/A';
 
         // Total returns
         $totalReturns = Order::whereBetween('created_at', [$start, $end])
@@ -145,10 +145,72 @@ class ProductsAnalyticsController extends Controller
                     ],
                 ],
                 'top_products_by_revenue' => $topProductsByRevenue,
+                'all_products_revenue' => $this->getAllProductsRevenue($start, $end), // Fetch all products including unsold ones
                 'product_performance' => $productPerformance,
                 'low_stock_products' => $lowStockProducts,
             ]
         ]);
+    }
+
+    /**
+     * Get all products with revenue (including unsold products with 0 revenue)
+     */
+    private function getAllProductsRevenue($start, $end)
+    {
+        // Get all products from database
+        $allProducts = Product::select('id', 'name')->get();
+
+        // Get sales data for the date range
+        $orders = Order::whereBetween('created_at', [$start, $end])
+            ->where('status', 'paid')
+            ->select('id', 'order_items')
+            ->get();
+
+        $productStats = [];
+
+        // Calculate sales for sold products
+        foreach ($orders as $order) {
+            $items = $order->order_items ?? [];
+
+            foreach ($items as $item) {
+                $productId = $item['id'] ?? $item['product_id'] ?? null;
+                if (!$productId) continue;
+
+                $quantity = $item['quantity'] ?? 0;
+                $price = $item['price'] ?? 0;
+                $revenue = $quantity * $price;
+
+                if (!isset($productStats[$productId])) {
+                    $productStats[$productId] = [
+                        'revenue' => 0,
+                        'units_sold' => 0,
+                    ];
+                }
+
+                $productStats[$productId]['revenue'] += $revenue;
+                $productStats[$productId]['units_sold'] += $quantity;
+            }
+        }
+
+        // Build result array with ALL products
+        $allProductsData = [];
+        foreach ($allProducts as $product) {
+            $sales = $productStats[$product->id] ?? ['revenue' => 0, 'units_sold' => 0];
+
+            $allProductsData[] = [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'revenue' => $sales['revenue'],
+                'units_sold' => $sales['units_sold'],
+            ];
+        }
+
+        // Sort by revenue descending (products with 0 revenue will be at the end)
+        usort($allProductsData, function($a, $b) {
+            return $b['revenue'] <=> $a['revenue'];
+        });
+
+        return collect($allProductsData);
     }
 
     /**
@@ -161,13 +223,20 @@ class ProductsAnalyticsController extends Controller
             ->select('id', 'order_items')
             ->get();
 
+        \Log::info('Top Products Debug', [
+            'orders_count' => $orders->count(),
+            'start_date' => $start->toDateTimeString(),
+            'end_date' => $end->toDateTimeString()
+        ]);
+
         $productStats = [];
 
         foreach ($orders as $order) {
             $items = $order->order_items ?? [];
 
             foreach ($items as $item) {
-                $productId = $item['product_id'] ?? null;
+                // Try both 'id' and 'product_id' keys
+                $productId = $item['id'] ?? $item['product_id'] ?? null;
                 if (!$productId) continue;
 
                 $quantity = $item['quantity'] ?? 0;
@@ -187,6 +256,10 @@ class ProductsAnalyticsController extends Controller
                 $productStats[$productId]['units_sold'] += $quantity;
             }
         }
+
+        \Log::info('Product Stats', [
+            'stats' => $productStats
+        ]);
 
         usort($productStats, function($a, $b) {
             return $b['revenue'] <=> $a['revenue'];
@@ -212,7 +285,8 @@ class ProductsAnalyticsController extends Controller
             $items = $order->order_items ?? [];
 
             foreach ($items as $item) {
-                $productId = $item['product_id'] ?? null;
+                // Try both 'id' and 'product_id' keys
+                $productId = $item['id'] ?? $item['product_id'] ?? null;
                 if (!$productId) continue;
 
                 $quantity = $item['quantity'] ?? 0;
@@ -320,7 +394,9 @@ class ProductsAnalyticsController extends Controller
             $items = $order->order_items ?? [];
 
             foreach ($items as $item) {
-                if (($item['product_id'] ?? null) == $productId) {
+                // Try both 'id' and 'product_id' keys
+                $itemProductId = $item['id'] ?? $item['product_id'] ?? null;
+                if ($itemProductId == $productId) {
                     $quantity = $item['quantity'] ?? 0;
                     $price = $item['price'] ?? 0;
 

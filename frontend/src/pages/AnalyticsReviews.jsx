@@ -26,6 +26,7 @@ import {
   Bar,
   LineChart,
   Line,
+  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,6 +34,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 function AnalyticsReviews({ dateRange }) {
   const [loading, setLoading] = useState(false);
@@ -57,6 +61,27 @@ function AnalyticsReviews({ dateRange }) {
   const [reviewsSortBy, setReviewsSortBy] = useState('created_at'); // Sort column
   const [reviewsSortOrder, setReviewsSortOrder] = useState('desc'); // Sort direction (newest first by default)
   const [currentPage, setCurrentPage] = useState(1); // Current page number
+
+  // Responsive chart dimensions for mobile
+  const [chartWidth, setChartWidth] = useState(null);
+  const [chartHeight, setChartHeight] = useState(300);
+
+  // Handle window resize for mobile charts
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width <= 600) {
+        setChartWidth(width - 48);
+        setChartHeight(250);
+      } else {
+        setChartWidth(null);
+        setChartHeight(300);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   /**
    * Effect Hook: Load data when date range changes
@@ -256,8 +281,198 @@ function AnalyticsReviews({ dateRange }) {
     return <span className={`status-badge ${statusClasses[status] || 'status-pending'}`}>{status}</span>;
   };
 
+  /**
+   * Export Reviews Analytics to PDF
+   */
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text("Reviews Analytics Report", pageWidth / 2, yPos, { align: "center" });
+
+    // Date Range
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const dateText = `Period: ${dateRange.start_date || 'N/A'} to ${dateRange.end_date || 'N/A'}`;
+    doc.text(dateText, pageWidth / 2, yPos, { align: "center" });
+
+    yPos += 15;
+
+    // KPIs Section
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text("Key Performance Indicators", 14, yPos);
+    yPos += 7;
+
+    if (kpis && Object.keys(kpis).length > 0) {
+      const kpiData = [
+        ["Total Reviews", kpis.total_reviews?.value || 0, `${kpis.total_reviews?.trend >= 0 ? '+' : ''}${kpis.total_reviews?.trend || 0}%`],
+        ["Average Rating", `${Number(kpis.avg_rating?.value || 0).toFixed(1)}/5.0`, `${kpis.avg_rating?.trend >= 0 ? '+' : ''}${kpis.avg_rating?.trend || 0}%`],
+        ["5-Star Reviews", `${Number(kpis.five_star_percentage?.value || 0).toFixed(1)}%`, `${kpis.five_star_percentage?.trend >= 0 ? '+' : ''}${kpis.five_star_percentage?.trend || 0}%`],
+        ["Low-Star Reviews", `${Number(kpis.low_star_percentage?.value || 0).toFixed(1)}%`, `${kpis.low_star_percentage?.trend >= 0 ? '+' : ''}${kpis.low_star_percentage?.trend || 0}%`],
+      ];
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Metric", "Value", "Trend"]],
+        body: kpiData,
+        theme: 'grid',
+        headStyles: { fillColor: [163, 61, 61], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Rating Distribution
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text("Rating Distribution", 14, yPos);
+    yPos += 7;
+
+    if (ratingDistribution && ratingDistribution.length > 0) {
+      const total = ratingDistribution.reduce((sum, item) => sum + (item.count || 0), 0);
+      const distributionData = ratingDistribution.map(item => [
+        `${item.rating} Star`,
+        item.count || 0,
+        total > 0 ? `${((item.count / total) * 100).toFixed(1)}%` : '0%'
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Rating", "Count", "Percentage"]],
+        body: distributionData,
+        theme: 'grid',
+        headStyles: { fillColor: [163, 61, 61], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Reviews Over Time
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text("Reviews Over Time", 14, yPos);
+    yPos += 7;
+
+    if (reviewsOverTime && reviewsOverTime.length > 0) {
+      const trendsData = reviewsOverTime.map(item => [
+        item.date,
+        item.count || 0,
+        Number(item.avg_rating || 0).toFixed(1)
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Date", "Review Count", "Avg Rating"]],
+        body: trendsData,
+        theme: 'grid',
+        headStyles: { fillColor: [163, 61, 61], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 60, halign: 'right' },
+          2: { cellWidth: 60, halign: 'right' }
+        }
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Top Reviewed Products
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text("Top Reviewed Products", 14, yPos);
+    yPos += 7;
+
+    if (topReviewedProducts && topReviewedProducts.length > 0) {
+      const productsData = topReviewedProducts.map(product => [
+        product.product_name,
+        product.review_count || 0,
+        Number(product.avg_rating || 0).toFixed(1)
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Product Name", "Review Count", "Avg Rating"]],
+        body: productsData,
+        theme: 'grid',
+        headStyles: { fillColor: [163, 61, 61], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 45, halign: 'right' },
+          2: { cellWidth: 45, halign: 'right' }
+        }
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Recent Reviews
+    if (reviews && reviews.length > 0) {
+      if (yPos > 200) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("Recent Reviews", 14, yPos);
+      yPos += 7;
+
+      const reviewsData = reviews.map(review => [
+        review.product_name,
+        review.customer_name,
+        `${review.rating}/5`,
+        review.status
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Product", "Customer", "Rating", "Status"]],
+        body: reviewsData,
+        theme: 'grid',
+        headStyles: { fillColor: [163, 61, 61], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 30, halign: 'center' },
+          3: { cellWidth: 40, halign: 'center' }
+        }
+      });
+    }
+
+    doc.save(`reviews-analytics-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div>
+      {/* Export Button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+        <button className="btn-export-csv" onClick={handleExportPDF}>
+          <i className="fas fa-file-pdf"></i> Export PDF
+        </button>
+      </div>
+
       {/* KPI Cards */}
       <div className="kpi-cards-row">
         {kpis.total_reviews && (
@@ -306,10 +521,50 @@ function AnalyticsReviews({ dateRange }) {
             <h3>Rating Distribution</h3>
             <p>Breakdown by star rating</p>
           </div>
-          <div className="chart-card-body">
+          <div className="chart-card-body" style={{ minHeight: chartHeight, overflow: 'auto' }}>
             {ratingDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={ratingDistribution}>
+              chartWidth ? (
+                <BarChart data={ratingDistribution} width={chartWidth} height={chartHeight}>
+                  <defs>
+                    <linearGradient id="colorRatingDist" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#a33d3d" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="rating"
+                    stroke="#666"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    label={{ value: 'Stars', position: 'insideBottom', offset: -5 }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#666"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    tickLine={false}
+                    domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Legend />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#colorRatingDist)"
+                    name="Reviews"
+                    radius={[8, 8, 0, 0]}
+                    barSize={40}
+                  />
+                </BarChart>
+              ) : (
+                <ResponsiveContainer width="100%" height={chartHeight}>
+                  <BarChart data={ratingDistribution}>
                   <defs>
                     <linearGradient id="colorRatingDist" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
@@ -348,6 +603,7 @@ function AnalyticsReviews({ dateRange }) {
                   />
                 </BarChart>
               </ResponsiveContainer>
+              )
             ) : (
               <div className="chart-no-data">
                 <i className="fas fa-chart-bar"></i>
@@ -361,24 +617,128 @@ function AnalyticsReviews({ dateRange }) {
         <div className="chart-card">
           <div className="chart-card-header">
             <h3>Reviews Over Time</h3>
-            <p>Daily review count and average rating</p>
+            <p>Daily review count</p>
           </div>
-          <div className="chart-card-body">
+          <div className="chart-card-body" style={{ minHeight: chartHeight, overflow: 'auto' }}>
             {reviewsOverTime.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={reviewsOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" stroke="#888" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#888" style={{ fontSize: '12px' }} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="reviews" stroke="#a33d3d" strokeWidth={2} name="Reviews" />
-                  <Line type="monotone" dataKey="avg_rating" stroke="#10b981" strokeWidth={2} name="Avg Rating" />
-                </LineChart>
+              chartWidth ? (
+                <BarChart data={reviewsOverTime} barCategoryGap="0%" width={chartWidth} height={chartHeight}>
+                  <defs>
+                    <linearGradient id="colorReviews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#a33d3d" stopOpacity={0.3}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#666"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#a33d3d"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    tickLine={false}
+                    domain={[0, 'auto']}
+                    label={{
+                      value: 'Review Count',
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fill: '#a33d3d', fontSize: '11px' }
+                    }}
+                  />
+                  <Tooltip
+                    cursor={false}
+                    wrapperStyle={{ outline: 'none', pointerEvents: 'none' }}
+                    isAnimationActive={false}
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      padding: '12px'
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      paddingTop: '20px',
+                      fontSize: '13px',
+                      fontWeight: '500'
+                    }}
+                  />
+                  <Bar
+                    dataKey="reviews"
+                    fill="url(#colorReviews)"
+                    name="Review Count"
+                    radius={[8, 8, 0, 0]}
+                    barSize={30}
+                    isAnimationActive={false}
+                    activeBar={{ opacity: 0.8 }}
+                  />
+                </BarChart>
+              ) : (
+                <ResponsiveContainer width="100%" height={chartHeight}>
+                  <BarChart data={reviewsOverTime} barCategoryGap="0%">
+                  <defs>
+                    <linearGradient id="colorReviews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#a33d3d" stopOpacity={0.3}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#666"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#a33d3d"
+                    style={{ fontSize: '12px', fontWeight: '500' }}
+                    tickLine={false}
+                    domain={[0, 'auto']}
+                    label={{
+                      value: 'Review Count',
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fill: '#a33d3d', fontSize: '11px' }
+                    }}
+                  />
+                  <Tooltip
+                    cursor={false}
+                    wrapperStyle={{ outline: 'none', pointerEvents: 'none' }}
+                    isAnimationActive={false}
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      padding: '12px'
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      paddingTop: '20px',
+                      fontSize: '13px',
+                      fontWeight: '500'
+                    }}
+                  />
+                  <Bar
+                    dataKey="reviews"
+                    fill="url(#colorReviews)"
+                    name="Review Count"
+                    radius={[8, 8, 0, 0]}
+                    barSize={30}
+                    isAnimationActive={false}
+                    activeBar={{ opacity: 0.8 }}
+                  />
+                </BarChart>
               </ResponsiveContainer>
+              )
             ) : (
               <div className="chart-no-data">
-                <i className="fas fa-chart-line"></i>
+                <i className="fas fa-chart-bar"></i>
                 <p>No data available</p>
               </div>
             )}
@@ -393,9 +753,50 @@ function AnalyticsReviews({ dateRange }) {
             <h3>Top Reviewed Products</h3>
             <p>Products with most reviews</p>
           </div>
-          <div className="chart-card-body">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topReviewedProducts} layout="vertical">
+          <div className="chart-card-body" style={{ minHeight: chartHeight, overflow: 'auto' }}>
+            {chartWidth ? (
+              <BarChart data={topReviewedProducts} layout="vertical" width={chartWidth} height={chartHeight}>
+                <defs>
+                  <linearGradient id="colorTopReviewed" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#a33d3d" stopOpacity={0.6}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  type="number"
+                  stroke="#666"
+                  style={{ fontSize: '12px', fontWeight: '500' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  dataKey="product_name"
+                  type="category"
+                  width={150}
+                  stroke="#666"
+                  style={{ fontSize: '11px', fontWeight: '500' }}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Legend />
+                <Bar
+                  dataKey="review_count"
+                  fill="url(#colorTopReviewed)"
+                  name="Reviews"
+                  radius={[0, 8, 8, 0]}
+                  barSize={30}
+                />
+              </BarChart>
+            ) : (
+              <ResponsiveContainer width="100%" height={chartHeight}>
+                <BarChart data={topReviewedProducts} layout="vertical">
                 <defs>
                   <linearGradient id="colorTopReviewed" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="5%" stopColor="#a33d3d" stopOpacity={0.8}/>
@@ -436,6 +837,7 @@ function AnalyticsReviews({ dateRange }) {
                 />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
       )}

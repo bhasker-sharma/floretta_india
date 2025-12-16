@@ -62,9 +62,11 @@
 
 .analytics-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
   gap: 24px;
   margin-bottom: 30px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chart-card {
@@ -73,6 +75,9 @@
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .chart-card-header {
@@ -95,6 +100,7 @@
 
 .chart-card-body {
   min-height: 300px;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,8 +377,25 @@
     grid-template-columns: 1fr;
   }
 
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  .chart-card-body {
+    min-height: 250px;
+    width: 100%;
+  }
+
   .analytics-table {
     font-size: 12px;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 
   .analytics-table th,
@@ -396,5 +419,52 @@
   .table-pagination {
     flex-direction: column;
     gap: 16px;
+  }
+
+  .analytics-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .analytics-container {
+    padding: 12px;
+  }
+
+  .analytics-charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .chart-card {
+    padding: 12px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .chart-card-header h3 {
+    font-size: 16px;
+  }
+
+  .chart-card-header p {
+    font-size: 12px;
+  }
+
+  .chart-card-body {
+    min-height: 200px !important;
+    height: auto !important;
+    max-width: 100%;
+    overflow-x: hidden;
+    display: block !important;
+  }
+
+  .kpi-cards-row {
+    gap: 12px;
+  }
+
+  .analytics-tab {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
