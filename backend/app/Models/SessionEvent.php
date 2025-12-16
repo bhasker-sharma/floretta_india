@@ -14,6 +14,7 @@ class SessionEvent extends Model
         'event',
         'page',
         'metadata',
+        'ip_address',
         
     ];
 
