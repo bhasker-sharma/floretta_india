@@ -86,9 +86,22 @@ function AdminDashboard() {
   // Add Admin form state
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [selectedPermissions, setSelectedPermissions] = useState([
+    "orders",
+    "customers",
+    "products",
+    "analytics",
+    "enquiries",
+    "reviews",
+    "career",
+    "settings",
+  ]); // Default all permissions selected
   const [adminFormLoading, setAdminFormLoading] = useState(false);
   const [adminFormMessage, setAdminFormMessage] = useState("");
   const [allAdmins, setAllAdmins] = useState([]);
+  const [editingAdmin, setEditingAdmin] = useState(null); // Admin being edited
+  const [editPermissions, setEditPermissions] = useState([]); // Permissions for editing
+  const [showEditModal, setShowEditModal] = useState(false); // Show edit modal
 
   // Enquiries state
   const [userEnquiryTab, setUserEnquiryTab] = useState("contact");
@@ -1044,6 +1057,31 @@ function AdminDashboard() {
     invoiceWindow.focus();
   };
 
+  // Helper function to check if admin has permission for a section
+  const hasPermission = (section) => {
+    // Superadmin has access to everything
+    if (adminInfo?.role === "superadmin") return true;
+
+    // For regular admins, check permissions array
+    const permissions = adminInfo?.permissions || [];
+
+    // Map section names to permission keys
+    const sectionPermissionMap = {
+      orders: "orders",
+      customers: "customers",
+      products: "products",
+      analytics: "analytics",
+      addUser: "add_user",
+      enquiries: "enquiries",
+      reviews: "reviews",
+      careers: "career",
+      settings: "settings",
+    };
+
+    const permissionKey = sectionPermissionMap[section];
+    return permissions.includes(permissionKey);
+  };
+
   // Handle creating a new admin
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
@@ -1057,6 +1095,7 @@ function AdminDashboard() {
         {
           email: newAdminEmail,
           password: newAdminPassword,
+          permissions: selectedPermissions,
         },
         {
           headers: {
@@ -1070,6 +1109,16 @@ function AdminDashboard() {
         setAdminFormMessage("✓ Admin created successfully!");
         setNewAdminEmail("");
         setNewAdminPassword("");
+        setSelectedPermissions([
+          "orders",
+          "customers",
+          "products",
+          "analytics",
+          "enquiries",
+          "reviews",
+          "career",
+          "settings",
+        ]); // Reset to all permissions
 
         // Refresh admin list
         const adminsResponse = await axios.get(API_ENDPOINTS.ADMIN_ALL, {
@@ -1133,6 +1182,61 @@ function AdminDashboard() {
         "Failed to delete admin";
       setAdminFormMessage("✗ " + errorMsg);
       setTimeout(() => setAdminFormMessage(""), 5000);
+    }
+  };
+
+  // Handle edit admin permissions
+  const handleEditAdmin = (admin) => {
+    setEditingAdmin(admin);
+    setEditPermissions(admin.permissions || []);
+    setShowEditModal(true);
+  };
+
+  // Handle update permissions
+  const handleUpdatePermissions = async () => {
+    if (!editingAdmin) return;
+
+    try {
+      setAdminFormLoading(true);
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.put(
+        API_ENDPOINTS.ADMIN_UPDATE_PERMISSIONS(editingAdmin.id),
+        { permissions: editPermissions },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setAdminFormMessage("✓ Permissions updated successfully!");
+        setShowEditModal(false);
+        setEditingAdmin(null);
+
+        // Refresh admin list
+        const adminsResponse = await axios.get(API_ENDPOINTS.ADMIN_ALL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (adminsResponse.data.success) {
+          setAllAdmins(adminsResponse.data.admins);
+        }
+
+        setTimeout(() => setAdminFormMessage(""), 5000);
+      }
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to update permissions";
+      setAdminFormMessage("✗ " + errorMsg);
+      setTimeout(() => setAdminFormMessage(""), 5000);
+    } finally {
+      setAdminFormLoading(false);
     }
   };
 
@@ -2731,47 +2835,55 @@ function AdminDashboard() {
         </div>
         <nav className="admin-nav">
           <ul>
-            <li
-              className={activeSection === "orders" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("orders");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-box"></i>
-              <span>Orders</span>
-            </li>
-            <li
-              className={activeSection === "customers" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("customers");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-users"></i>
-              <span>Customers</span>
-            </li>
-            <li
-              className={activeSection === "products" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("products");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-cube"></i>
-              <span>Products</span>
-            </li>
-            <li
-              className={activeSection === "analytics" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("analytics");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-chart-line"></i>
-              <span>Analytics</span>
-            </li>
-            {adminInfo?.role === "superadmin" && (
+            {hasPermission("orders") && (
+              <li
+                className={activeSection === "orders" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("orders");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-box"></i>
+                <span>Orders</span>
+              </li>
+            )}
+            {hasPermission("customers") && (
+              <li
+                className={activeSection === "customers" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("customers");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-users"></i>
+                <span>Customers</span>
+              </li>
+            )}
+            {hasPermission("products") && (
+              <li
+                className={activeSection === "products" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("products");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-cube"></i>
+                <span>Products</span>
+              </li>
+            )}
+            {hasPermission("analytics") && (
+              <li
+                className={activeSection === "analytics" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("analytics");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-chart-line"></i>
+                <span>Analytics</span>
+              </li>
+            )}
+            {hasPermission("addUser") && (
               <li
                 className={activeSection === "addUser" ? "active" : ""}
                 onClick={() => {
@@ -2783,46 +2895,54 @@ function AdminDashboard() {
                 <span>Add User</span>
               </li>
             )}
-            <li
-              className={activeSection === "enquiries" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("enquiries");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-envelope"></i>
-              <span>Enquiries</span>
-            </li>
-            <li
-              className={activeSection === "reviews" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("reviews");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-star"></i>
-              <span>Reviews</span>
-            </li>
-            <li
-              className={activeSection === "careers" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("careers");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-briefcase"></i>
-              <span>Career Page</span>
-            </li>
-            <li
-              className={activeSection === "settings" ? "active" : ""}
-              onClick={() => {
-                setActiveSection("settings");
-                setSidebarOpen(false);
-              }}
-            >
-              <i className="fas fa-cogs"></i>
-              <span>Settings</span>
-            </li>
+            {hasPermission("enquiries") && (
+              <li
+                className={activeSection === "enquiries" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("enquiries");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-envelope"></i>
+                <span>Enquiries</span>
+              </li>
+            )}
+            {hasPermission("reviews") && (
+              <li
+                className={activeSection === "reviews" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("reviews");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-star"></i>
+                <span>Reviews</span>
+              </li>
+            )}
+            {hasPermission("careers") && (
+              <li
+                className={activeSection === "careers" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("careers");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-briefcase"></i>
+                <span>Career Page</span>
+              </li>
+            )}
+            {hasPermission("settings") && (
+              <li
+                className={activeSection === "settings" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("settings");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-cogs"></i>
+                <span>Settings</span>
+              </li>
+            )}
             <li className="logout-item" onClick={handleLogout}>
               <i className="fas fa-sign-out-alt"></i>
               <span>Logout</span>
@@ -2893,7 +3013,7 @@ function AdminDashboard() {
         </header>
 
         {/* Orders Section */}
-        {activeSection === "orders" && (
+        {activeSection === "orders" && hasPermission("orders") && (
           <section className="admin-section">
             <h2 className="mobile-only">
               All Orders ({filteredOrders.length})
@@ -4563,7 +4683,7 @@ function AdminDashboard() {
 
             <div className="add-user-container">
               <div className="settings-card add-user-form">
-                <h3>Add New Admin</h3>
+                <h3>Add New User</h3>
                 <p className="settings-description">
                   Create a new admin account with email and password. The
                   password will be securely hashed.
@@ -4593,6 +4713,113 @@ function AdminDashboard() {
                       required
                       minLength="6"
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Permissions</label>
+                    <p
+                      className="settings-description"
+                      style={{ marginTop: "5px", marginBottom: "10px" }}
+                    >
+                      Select which sections this admin can access
+                    </p>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(140px, 1fr))",
+                        gap: "8px",
+                      }}
+                    >
+                      {[
+                        {
+                          key: "orders",
+                          label: "Orders",
+                          icon: "fa-shopping-cart",
+                        },
+                        {
+                          key: "customers",
+                          label: "Customers",
+                          icon: "fa-users",
+                        },
+                        { key: "products", label: "Products", icon: "fa-box" },
+                        {
+                          key: "analytics",
+                          label: "Analytics",
+                          icon: "fa-chart-line",
+                        },
+                        {
+                          key: "add_user",
+                          label: "Add User",
+                          icon: "fa-user-plus",
+                        },
+                        {
+                          key: "enquiries",
+                          label: "Enquiries",
+                          icon: "fa-envelope",
+                        },
+                        { key: "reviews", label: "Reviews", icon: "fa-star" },
+                        {
+                          key: "career",
+                          label: "Career Page",
+                          icon: "fa-briefcase",
+                        },
+                        { key: "settings", label: "Settings", icon: "fa-cog" },
+                      ].map((perm) => (
+                        <label
+                          key={perm.key}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px",
+                            border: selectedPermissions.includes(perm.key)
+                              ? "1px solid #232946"
+                              : "1px solid #ddd",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            backgroundColor: selectedPermissions.includes(
+                              perm.key
+                            )
+                              ? "#f0f4ff"
+                              : "#fff",
+                            transition: "all 0.2s",
+                            fontSize: "13px",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPermissions.includes(perm.key)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPermissions([
+                                  ...selectedPermissions,
+                                  perm.key,
+                                ]);
+                              } else {
+                                setSelectedPermissions(
+                                  selectedPermissions.filter(
+                                    (p) => p !== perm.key
+                                  )
+                                );
+                              }
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              width: "14px",
+                              height: "14px",
+                            }}
+                          />
+                          <i
+                            className={`fas ${perm.icon}`}
+                            style={{ color: "#232946", fontSize: "12px" }}
+                          ></i>
+                          <span style={{ fontWeight: "500" }}>
+                            {perm.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   {adminFormMessage && (
@@ -4625,10 +4852,10 @@ function AdminDashboard() {
                   {allAdmins.length === 0 ? (
                     <p className="no-admins">Loading admins...</p>
                   ) : (
-                    <ul className="admin-items">
+                    <div className="admin-list-grid">
                       {allAdmins.map((admin) => (
-                        <li key={admin.id} className="admin-item">
-                          <div className="admin-item-header">
+                        <div key={admin.id} className="admin-card">
+                          <div className="admin-card-header">
                             <span className="admin-email">{admin.email}</span>
                             {admin.role === "superadmin" && (
                               <span className="admin-badge superadmin">
@@ -4640,23 +4867,51 @@ function AdminDashboard() {
                             )}
                           </div>
 
-                          <button
-                            className="delete-admin-btn"
-                            onClick={() =>
-                              handleDeleteAdmin(admin.id, admin.email)
-                            }
-                            title="Delete admin"
-                          >
-                            <i className="fas fa-trash"></i> Delete
-                          </button>
+                          {/* Display permissions for regular admins */}
+                          {admin.role !== "superadmin" && admin.permissions && (
+                            <div className="permissions-section">
+                              <span className="permissions-label">
+                                Permissions:
+                              </span>
+                              <div className="permissions-tags">
+                                {admin.permissions.map((perm) => (
+                                  <span key={perm} className="permission-tag">
+                                    {perm.replace("_", " ").toUpperCase()}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="admin-actions">
+                            {admin.role !== "superadmin" && (
+                              <button
+                                className="edit-admin-btn"
+                                onClick={() => handleEditAdmin(admin)}
+                                title="Edit permissions"
+                              >
+                                <i className="fas fa-edit"></i> Edit Permissions
+                              </button>
+                            )}
+
+                            <button
+                              className="delete-admin-btn"
+                              onClick={() =>
+                                handleDeleteAdmin(admin.id, admin.email)
+                              }
+                              title="Delete admin"
+                            >
+                              <i className="fas fa-trash"></i> Delete
+                            </button>
+                          </div>
 
                           <span className="admin-date">
                             Created:{" "}
                             {new Date(admin.created_at).toLocaleDateString()}
                           </span>
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   )}
                 </div>
               </div>
@@ -6295,6 +6550,172 @@ function AdminDashboard() {
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={closeUserModal}>
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Permissions Modal */}
+        {showEditModal && editingAdmin && (
+          <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: "600px" }}>
+              <div className="modal-header">
+                <h2>Edit Admin Permissions</h2>
+                <button
+                  className="close-modal-btn"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingAdmin(null);
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <p style={{ marginBottom: "15px" }}>
+                  Updating permissions for:{" "}
+                  <strong>{editingAdmin.email}</strong>
+                </p>
+
+                <div className="form-group">
+                  <label>Permissions</label>
+                  <p
+                    className="settings-description"
+                    style={{ marginTop: "5px", marginBottom: "10px" }}
+                  >
+                    Select which sections this admin can access
+                  </p>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(140px, 1fr))",
+                      gap: "8px",
+                    }}
+                  >
+                    {[
+                      {
+                        key: "orders",
+                        label: "Orders",
+                        icon: "fa-shopping-cart",
+                      },
+                      {
+                        key: "customers",
+                        label: "Customers",
+                        icon: "fa-users",
+                      },
+                      { key: "products", label: "Products", icon: "fa-box" },
+                      {
+                        key: "analytics",
+                        label: "Analytics",
+                        icon: "fa-chart-line",
+                      },
+                      {
+                        key: "add_user",
+                        label: "Add User",
+                        icon: "fa-user-plus",
+                      },
+                      {
+                        key: "enquiries",
+                        label: "Enquiries",
+                        icon: "fa-envelope",
+                      },
+                      { key: "reviews", label: "Reviews", icon: "fa-star" },
+                      {
+                        key: "career",
+                        label: "Career Page",
+                        icon: "fa-briefcase",
+                      },
+                      { key: "settings", label: "Settings", icon: "fa-cog" },
+                    ].map((perm) => (
+                      <label
+                        key={perm.key}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "8px",
+                          border: editPermissions.includes(perm.key)
+                            ? "1px solid #232946"
+                            : "1px solid #ddd",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          backgroundColor: editPermissions.includes(perm.key)
+                            ? "#f0f4ff"
+                            : "#fff",
+                          transition: "all 0.2s",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editPermissions.includes(perm.key)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditPermissions([
+                                ...editPermissions,
+                                perm.key,
+                              ]);
+                            } else {
+                              setEditPermissions(
+                                editPermissions.filter((p) => p !== perm.key)
+                              );
+                            }
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            width: "14px",
+                            height: "14px",
+                          }}
+                        />
+                        <i
+                          className={`fas ${perm.icon}`}
+                          style={{ color: "#232946", fontSize: "12px" }}
+                        ></i>
+                        <span style={{ fontWeight: "500" }}>{perm.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {adminFormMessage && (
+                  <div
+                    className={`form-message ${
+                      adminFormMessage.startsWith("✓") ? "success" : "error"
+                    }`}
+                    style={{ marginTop: "15px" }}
+                  >
+                    {adminFormMessage}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingAdmin(null);
+                  }}
+                  disabled={adminFormLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={handleUpdatePermissions}
+                  disabled={adminFormLoading}
+                  style={{
+                    backgroundColor: "#232946",
+                    color: "white",
+                    padding: "8px 16px",
+                    borderRadius: "5px",
+                    border: "none",
+                    marginLeft: "10px",
+                    cursor: adminFormLoading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {adminFormLoading ? "Updating..." : "Save Changes"}
                 </button>
               </div>
             </div>

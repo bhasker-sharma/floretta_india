@@ -14,11 +14,16 @@ class AdminAuth extends Authenticatable implements JWTSubject
         'email',
         'password',
         'role',
+        'permissions',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'permissions' => 'array',
     ];
 
     /**

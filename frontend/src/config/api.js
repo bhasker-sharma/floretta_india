@@ -79,6 +79,8 @@ export const API_ENDPOINTS = {
   ADMIN_CREATE: `${API_URL}/api/admin/create-admin`,
   ADMIN_ALL: `${API_URL}/api/admin/all-admins`,
   ADMIN_DELETE: (id) => `${API_URL}/api/admin/delete-admin/${id}`,
+  ADMIN_UPDATE_PERMISSIONS: (id) =>
+    `${API_URL}/api/admin/update-admin-permissions/${id}`,
   ADMIN_USERS: `${API_URL}/api/admin/all-users`,
   ADMIN_PRODUCTS: `${API_URL}/api/admin/products`,
   ADMIN_PRODUCT_UPDATE: (id) => `${API_URL}/api/admin/products/${id}`,

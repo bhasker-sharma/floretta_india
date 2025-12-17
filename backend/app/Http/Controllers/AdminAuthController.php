@@ -43,7 +43,8 @@ class AdminAuthController extends Controller
                 'id' => $admin->id,
                 'email' => $admin->email,
                 'type' => 'admin',
-                'role' => $admin->role ?? 'admin'
+                'role' => $admin->role ?? 'admin',
+                'permissions' => $admin->permissions ?? []
             ],
             'token' => $token,
         ]);
@@ -81,7 +82,8 @@ class AdminAuthController extends Controller
                 'id' => $admin->id,
                 'email' => $admin->email,
                 'type' => 'admin',
-                'role' => $admin->role ?? 'admin'
+                'role' => $admin->role ?? 'admin',
+                'permissions' => $admin->permissions ?? []
             ]
         ]);
     }
@@ -114,14 +116,20 @@ class AdminAuthController extends Controller
             'email' => 'required|email|unique:admin_auth,email',
             'password' => ['required', new StrongPassword()],
             'role' => 'nullable|in:admin,superadmin', // Optional role field
+            'permissions' => 'nullable|array', // Optional permissions array
+            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,career,settings',
         ]);
 
         try {
+            // Default permissions for regular admin
+            $defaultPermissions = ['orders', 'customers', 'products', 'analytics', 'enquiries', 'reviews', 'career', 'settings'];
+            
             // Create new admin with hashed password
             $admin = AdminAuth::create([
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => $request->role ?? 'admin', // Default to 'admin' role
+                'permissions' => $request->permissions ?? $defaultPermissions,
             ]);
 
             return response()->json([
@@ -131,6 +139,7 @@ class AdminAuthController extends Controller
                     'id' => $admin->id,
                     'email' => $admin->email,
                     'role' => $admin->role,
+                    'permissions' => $admin->permissions,
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -166,7 +175,7 @@ class AdminAuthController extends Controller
         }
 
         // Fetch all admins
-        $admins = AdminAuth::select('id', 'email', 'role', 'created_at')->orderBy('created_at', 'desc')->get();
+        $admins = AdminAuth::select('id', 'email', 'role', 'permissions', 'created_at')->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -290,6 +299,76 @@ class AdminAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to delete admin',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update admin permissions (superadmin only, JWT protected)
+     */
+    public function updateAdminPermissions(Request $request, $id)
+    {
+        // Get authenticated admin from JWT
+        $currentAdmin = auth('admin')->user();
+
+        if (!$currentAdmin) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Verify current admin is superadmin
+        if ($currentAdmin->role !== 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Forbidden - Superadmin access required'
+            ], 403);
+        }
+
+        // Validate the request
+        $request->validate([
+            'permissions' => 'required|array',
+            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,career,settings',
+        ]);
+
+        // Find the admin to update
+        $adminToUpdate = AdminAuth::find($id);
+
+        if (!$adminToUpdate) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Admin not found'
+            ], 404);
+        }
+
+        // Don't allow editing superadmin permissions
+        if ($adminToUpdate->role === 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Cannot edit superadmin permissions'
+            ], 400);
+        }
+
+        try {
+            $adminToUpdate->permissions = $request->permissions;
+            $adminToUpdate->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permissions updated successfully',
+                'admin' => [
+                    'id' => $adminToUpdate->id,
+                    'email' => $adminToUpdate->email,
+                    'role' => $adminToUpdate->role,
+                    'permissions' => $adminToUpdate->permissions,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update permissions',
                 'message' => $e->getMessage()
             ], 500);
         }
