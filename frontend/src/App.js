@@ -26,6 +26,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import RefundReturnPolicy from "./pages/RefundReturnPolicy";
+import Blog from "./pages/Blog";
 
 import { initializeAuth } from "./utils/axiosInterceptor";
 
@@ -42,6 +43,7 @@ const App = () => {
         <Route path="/product" element={<Product />} />
         <Route path="/liveperfume" element={<LivePerfume />} />
         <Route path="/hotel-amenities" element={<HotelAmenities />} />
+        <Route path="/blogs" element={<Blog />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/freshner-mist/:id" element={<ProductDetail />} />
 

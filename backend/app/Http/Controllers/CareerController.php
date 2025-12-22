@@ -6,6 +6,7 @@ use App\Models\Career\JobVacancy;
 use App\Models\Career\JobApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class CareerController extends Controller
 {
@@ -53,28 +54,56 @@ class CareerController extends Controller
             // Handle resume upload
             if ($request->hasFile('resume')) {
                 $resume = $request->file('resume');
-                $filename = time() . '_' . uniqid() . '_' . $resume->getClientOriginalName();
-                $folderPath = public_path('storage/resumes');
+                // Sanitize filename - remove spaces and special characters
+                $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $resume->getClientOriginalName());
+                $filename = time() . '_' . uniqid() . '_' . $originalName;
 
-                if (!file_exists($folderPath)) {
-                    mkdir($folderPath, 0755, true);
+                // Save to public_html/storage (web accessible)
+                $publicHtmlPath = dirname(public_path()) . '/public_html/storage/resumes';
+                if (!file_exists($publicHtmlPath)) {
+                    mkdir($publicHtmlPath, 0755, true);
                 }
 
-                $resume->move($folderPath, $filename);
+                // Also save to public/storage (for backward compatibility)
+                $publicPath = public_path('storage/resumes');
+                if (!file_exists($publicPath)) {
+                    mkdir($publicPath, 0755, true);
+                }
+
+                // Save the file to public_html
+                $resume->move($publicHtmlPath, $filename);
+
+                // Copy to public/storage for backup
+                copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
                 $resumePath = 'resumes/' . $filename;
             }
 
             // Handle cover letter file upload
             if ($request->hasFile('cover_letter_file')) {
                 $coverLetter = $request->file('cover_letter_file');
-                $filename = time() . '_' . uniqid() . '_' . $coverLetter->getClientOriginalName();
-                $folderPath = public_path('storage/cover_letters');
+                // Sanitize filename - remove spaces and special characters
+                $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $coverLetter->getClientOriginalName());
+                $filename = time() . '_' . uniqid() . '_' . $originalName;
 
-                if (!file_exists($folderPath)) {
-                    mkdir($folderPath, 0755, true);
+                // Save to public_html/storage (web accessible)
+                $publicHtmlPath = dirname(public_path()) . '/public_html/storage/cover_letters';
+                if (!file_exists($publicHtmlPath)) {
+                    mkdir($publicHtmlPath, 0755, true);
                 }
 
-                $coverLetter->move($folderPath, $filename);
+                // Also save to public/storage (for backward compatibility)
+                $publicPath = public_path('storage/cover_letters');
+                if (!file_exists($publicPath)) {
+                    mkdir($publicPath, 0755, true);
+                }
+
+                // Save the file to public_html
+                $coverLetter->move($publicHtmlPath, $filename);
+
+                // Copy to public/storage for backup
+                copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
                 $coverLetterPath = 'cover_letters/' . $filename;
             }
 

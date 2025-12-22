@@ -27,6 +27,7 @@ use App\Http\Controllers\Analytics\ProductsAnalyticsController;
 use App\Http\Controllers\Analytics\CustomersAnalyticsController;
 use App\Http\Controllers\Analytics\ReviewsAnalyticsController;
 use App\Http\Controllers\Analytics\OrdersAnalyticsController;
+use App\Http\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -225,6 +226,7 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::put('/career-applications/{id}/comments', [CareerController::class, 'adminUpdateApplicationComments']);
     Route::delete('/career-applications/{id}', [CareerController::class, 'adminDeleteApplication']);
 
+
     // Analytics routes - Organized by section
     Route::get('/analytics/overview', [OverviewAnalyticsController::class, 'index']);
     Route::get('/analytics/sales', [SalesAnalyticsController::class, 'index']);
@@ -232,5 +234,26 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/analytics/customers', [CustomersAnalyticsController::class, 'index']);
     Route::get('/analytics/reviews', [ReviewsAnalyticsController::class, 'index']);
     Route::get('/analytics/orders', [OrdersAnalyticsController::class, 'index']);
+
+    // Admin Blog Management
+    Route::get('/blogs', [BlogController::class, 'adminIndex']);
+    Route::post('/blogs', [BlogController::class, 'store']);
+    Route::post('/blogs/{id}', [BlogController::class, 'update']);
+    Route::delete('/blogs/{id}', [BlogController::class, 'destroy']);
+    Route::put('/blogs/{id}/status', [BlogController::class, 'toggleStatus']);
+
+    // Admin Blog Categories Management
+    Route::get('/blog-categories', [BlogController::class, 'getCategories']);
+    Route::post('/blog-categories', [BlogController::class, 'storeCategory']);
+    Route::delete('/blog-categories/{id}', [BlogController::class, 'destroyCategory']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Public Blog Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/blogs', [BlogController::class, 'index']);
+Route::get('/blogs/{id}', [BlogController::class, 'show']);
+
 

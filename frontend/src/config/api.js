@@ -148,6 +148,16 @@ export const API_ENDPOINTS = {
   ADMIN_CAREER_APPLICATION_DELETE: (id) =>
     `${API_URL}/api/admin/career-applications/${id}`,
 
+  // Blogs
+  BLOGS: `${API_URL}/api/blogs`,
+  BLOG_DETAIL: (id) => `${API_URL}/api/blogs/${id}`,
+  ADMIN_BLOGS: `${API_URL}/api/admin/blogs`,
+  ADMIN_BLOG_UPDATE: (id) => `${API_URL}/api/admin/blogs/${id}`,
+  ADMIN_BLOG_DELETE: (id) => `${API_URL}/api/admin/blogs/${id}`,
+  ADMIN_BLOG_STATUS: (id) => `${API_URL}/api/admin/blogs/${id}/status`,
+  ADMIN_BLOG_CATEGORIES: `${API_URL}/api/admin/blog-categories`,
+  ADMIN_BLOG_CATEGORY_DELETE: (id) => `${API_URL}/api/admin/blog-categories/${id}`,
+
   // Analytics
   ANALYTICS_OVERVIEW: `${API_URL}/api/admin/analytics/overview`,
   ANALYTICS_SALES: `${API_URL}/api/admin/analytics/sales`,
@@ -164,6 +174,8 @@ export const STORAGE_URL = `${API_URL}/storage`;
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "/fallback.jpg";
   if (imagePath.startsWith("http")) return imagePath;
+  // For images stored in public folder (like uploads/blogs/)
+  if (imagePath.startsWith("uploads/")) return `${API_URL}/${imagePath}`;
   return `${STORAGE_URL}/${imagePath}`;
 };
 

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import "../styles/navbar.css";
-import logo from '../assets/logo.png';
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -9,7 +9,7 @@ const Navbar = () => {
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('token'); // ✅ get JWT token
+  const token = localStorage.getItem("token"); // ✅ get JWT token
 
   // Close search bar on outside click
   useEffect(() => {
@@ -20,61 +20,100 @@ const Navbar = () => {
     };
 
     if (isSearchOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSearchOpen]);
 
   const handleProfileClick = () => {
     if (token) {
-      navigate('/userprofile');
+      navigate("/userprofile");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
 
   const handleCartClick = () => {
     if (token) {
-      navigate('/addtocart');
+      navigate("/addtocart");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
 
   const handleWishlistClick = () => {
     if (token) {
-      navigate('/wishlist');
+      navigate("/wishlist");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
 
   return (
     <header className="navbar">
-     <NavLink to="/" style={{ textDecoration: 'none' }}>
-      <div className="logo-container">
-        <img src={logo} alt="Floretta Logo" className="logo" />
-        <div>
-          <span className="logo-text">FLORETTA</span>
-          <span className="subtext">INDIA</span>
+      <NavLink to="/" style={{ textDecoration: "none" }}>
+        <div className="logo-container">
+          <img src={logo} alt="Floretta Logo" className="logo" />
+          <div>
+            <span className="logo-text">FLORETTA</span>
+            <span className="subtext">INDIA</span>
+          </div>
         </div>
-      </div>
-     </NavLink>
+      </NavLink>
 
-      <button className="hamburger" onClick={() => setMobileMenuOpen(prev => !prev)}>
+      <button
+        className="hamburger"
+        onClick={() => setMobileMenuOpen((prev) => !prev)}
+      >
         <svg viewBox="0 0 24 24">
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
-      <nav className={mobileMenuOpen ? 'mobile-nav open' : 'mobile-nav'}>
-        <NavLink to="/" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Home</NavLink>
-        <NavLink to="/product" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Products</NavLink>
-        <NavLink to="/liveperfume" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Live Perfumery Bar</NavLink>
-        <NavLink to="/hotel-amenities" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>Hotel Amenities</NavLink>
+      <nav className={mobileMenuOpen ? "mobile-nav open" : "mobile-nav"}>
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          Home
+        </NavLink>
+        <NavLink
+          to="/product"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          Products
+        </NavLink>
+        <NavLink
+          to="/liveperfume"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          Live Perfumery Bar
+        </NavLink>
+        <NavLink
+          to="/hotel-amenities"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          Hotel Amenities
+        </NavLink>
+        <NavLink
+          to="/blogs"
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          Blog
+        </NavLink>
       </nav>
 
       <div className="icon-buttons" ref={searchRef}>
@@ -103,7 +142,12 @@ const Navbar = () => {
 
         {/* ✅ Wishlist Icon */}
         <button onClick={handleWishlistClick} title="Wishlist">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>

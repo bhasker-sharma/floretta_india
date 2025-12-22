@@ -8,6 +8,41 @@ use App\Models\productpage\FreshnerMist;
 
 class ProductController extends Controller
 {
+    /**
+     * Helper method to get storage path that works on both local and Hostinger
+     * Saves to public_html/storage (web accessible) and public/storage (backup)
+     */
+    private function getStoragePath($relativePath)
+    {
+        return dirname(public_path()) . '/public_html/storage/' . $relativePath;
+    }
+
+    /**
+     * Save file to both public_html and public storage
+     */
+    private function saveFileToStorage($file, $relativePath, $filename)
+    {
+        // Save to public_html/storage (web accessible)
+        $publicHtmlPath = $this->getStoragePath($relativePath);
+        if (!is_dir($publicHtmlPath)) {
+            mkdir($publicHtmlPath, 0755, true);
+        }
+
+        // Also save to public/storage (for backward compatibility)
+        $publicPath = public_path('storage/' . $relativePath);
+        if (!is_dir($publicPath)) {
+            mkdir($publicPath, 0755, true);
+        }
+
+        // Move file to public_html
+        $file->move($publicHtmlPath, $filename);
+
+        // Copy to public/storage for backup
+        copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
+        return $relativePath . '/' . $filename;
+    }
+
     // List all perfumes (optionally filter by note)
     public function index(Request $request)
     {
@@ -202,22 +237,17 @@ class ProductController extends Controller
             if ($request->hasFile('images')) {
                 // Create product-specific folder
                 $productFolderName = $this->sanitizeProductName($validated['name']);
-                $productFolderPath = public_path('storage/images/uproducts/' . $productFolderName);
-
-                // Create directory if it doesn't exist
-                if (!is_dir($productFolderPath)) {
-                    mkdir($productFolderPath, 0755, true);
-                }
+                $relativePath = 'images/uproducts/' . $productFolderName;
 
                 foreach ($request->file('images') as $index => $image) {
                     // Generate unique filename
                     $filename = 'img' . ($index + 1) . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
 
-                    // Store in product-specific folder
-                    $image->move($productFolderPath, $filename);
+                    // Save file to both public_html and public storage
+                    $fullPath = $this->saveFileToStorage($image, $relativePath, $filename);
 
                     $uploadedImages[] = [
-                        'path' => 'images/uproducts/' . $productFolderName . '/' . $filename,
+                        'path' => $fullPath,
                         'sort_order' => $index,
                         'is_primary' => $index === 0 // First image is primary
                     ];
@@ -372,12 +402,7 @@ class ProductController extends Controller
                 // Create product-specific folder based on current/updated product name
                 $productName = $validated['name'] ?? $product->name;
                 $productFolderName = $this->sanitizeProductName($productName);
-                $productFolderPath = public_path('storage/images/uproducts/' . $productFolderName);
-
-                // Create directory if it doesn't exist
-                if (!is_dir($productFolderPath)) {
-                    mkdir($productFolderPath, 0755, true);
-                }
+                $relativePath = 'images/uproducts/' . $productFolderName;
 
                 // Get the count of existing images to continue sort_order
                 $existingImagesCount = $product->images()->count();
@@ -387,11 +412,11 @@ class ProductController extends Controller
                     $imageNumber = $existingImagesCount + $index + 1;
                     $filename = 'img' . $imageNumber . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
 
-                    // Store in product-specific folder
-                    $image->move($productFolderPath, $filename);
+                    // Save file to both public_html and public storage
+                    $fullPath = $this->saveFileToStorage($image, $relativePath, $filename);
 
                     $uploadedImages[] = [
-                        'path' => 'images/uproducts/' . $productFolderName . '/' . $filename,
+                        'path' => $fullPath,
                         'sort_order' => $existingImagesCount + $index,
                         'is_primary' => false // New images are never primary unless they're the only ones
                     ];

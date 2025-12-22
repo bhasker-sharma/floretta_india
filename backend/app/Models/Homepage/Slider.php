@@ -14,8 +14,11 @@ class Slider extends Model
     // Add this accessor for full image URL
     public function getImageUrlAttribute()
     {
-        // This assumes images are stored in 'public' disk, e.g. storage/app/public/
-        return Storage::url($this->image); // returns /storage/filename.jpg
+        // Return the correct storage path
+        if (!$this->image) return null;
+        if (str_starts_with($this->image, 'http')) return $this->image;
+        // Construct the correct storage URL manually
+        return '/storage/' . $this->image;
     }
 
     // Optional: if you want to append 'image_url' automatically in JSON

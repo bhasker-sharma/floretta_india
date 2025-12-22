@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdminReviews from "./AdminReviews";
 import AdminCareer from "./AdminCareer";
+import AdminBlogs from "./AdminBlogs";
 import Analytics from "./Analytics";
 
 function AdminDashboard() {
@@ -92,8 +93,10 @@ function AdminDashboard() {
     "products",
     "analytics",
     "enquiries",
+    "enquiries",
     "reviews",
     "career",
+    "blogs",
     "settings",
   ]); // Default all permissions selected
   const [adminFormLoading, setAdminFormLoading] = useState(false);
@@ -1075,6 +1078,7 @@ function AdminDashboard() {
       enquiries: "enquiries",
       reviews: "reviews",
       careers: "career",
+      blogs: "blogs",
       settings: "settings",
     };
 
@@ -2931,6 +2935,18 @@ function AdminDashboard() {
                 <span>Career Page</span>
               </li>
             )}
+            {hasPermission("blogs") && (
+              <li
+                className={activeSection === "blogs" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("blogs");
+                  setSidebarOpen(false);
+                }}
+              >
+                <i className="fas fa-pen-nib"></i>
+                <span>Blogs</span>
+              </li>
+            )}
             {hasPermission("settings") && (
               <li
                 className={activeSection === "settings" ? "active" : ""}
@@ -2982,6 +2998,7 @@ function AdminDashboard() {
             {activeSection === "enquiries" && "Enquiries"}
             {activeSection === "reviews" && "Reviews"}
             {activeSection === "careers" && "Career Page"}
+            {activeSection === "blogs" && "Blog Management"}
             {activeSection === "settings" && "Settings"}
             {![
               "orders",
@@ -6398,6 +6415,13 @@ function AdminDashboard() {
           </section>
         )}
 
+        {/* Blogs Section */}
+        {activeSection === "blogs" && (
+          <section className="admin-section" style={{ padding: 0 }}>
+            <AdminBlogs />
+          </section>
+        )}
+
         {/* Analytics Section */}
         {activeSection === "analytics" && (
           <section className="admin-section" style={{ padding: 0 }}>
@@ -6627,6 +6651,7 @@ function AdminDashboard() {
                         label: "Career Page",
                         icon: "fa-briefcase",
                       },
+                      { key: "blogs", label: "Blogs", icon: "fa-pen-nib" },
                       { key: "settings", label: "Settings", icon: "fa-cog" },
                     ].map((perm) => (
                       <label

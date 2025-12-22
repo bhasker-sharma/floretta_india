@@ -33,7 +33,7 @@ class SliderController extends Controller
                     return [
                         'id' => $slider->id,
                         'page' => $slider->page,
-                        'image_url' => $slider->image ? '/api/storage/' . $slider->image : null,
+                        'image_url' => $slider->image ? '/storage/' . $slider->image : null,
                         'order' => $slider->order,
                         'created_at' => $slider->created_at,
                     ];
@@ -126,18 +126,28 @@ class SliderController extends Controller
 
             // Handle image upload
             $image = $request->file('image');
-            $folderPath = public_path('storage/images/sliders/' . $validated['page']);
-
-            // Create directory if it doesn't exist
-            if (!is_dir($folderPath)) {
-                mkdir($folderPath, 0755, true);
-            }
+            $relativePath = 'images/sliders/' . $validated['page'];
 
             // Generate unique filename
             $filename = 'slider_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
 
-            // Move image to folder
-            $image->move($folderPath, $filename);
+            // Save to public_html/storage (web accessible)
+            $publicHtmlPath = dirname(public_path()) . '/public_html/storage/' . $relativePath;
+            if (!is_dir($publicHtmlPath)) {
+                mkdir($publicHtmlPath, 0755, true);
+            }
+
+            // Also save to public/storage (for backward compatibility)
+            $publicPath = public_path('storage/' . $relativePath);
+            if (!is_dir($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+
+            // Move image to public_html
+            $image->move($publicHtmlPath, $filename);
+
+            // Copy to public/storage for backup
+            copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
 
             // Create slider record
             $slider = Slider::create([
