@@ -117,7 +117,7 @@ class AdminAuthController extends Controller
             'password' => ['required', new StrongPassword()],
             'role' => 'nullable|in:admin,superadmin', // Optional role field
             'permissions' => 'nullable|array', // Optional permissions array
-            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,career,settings',
+            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,blogs,career,settings',
         ]);
 
         try {
@@ -330,7 +330,7 @@ class AdminAuthController extends Controller
         // Validate the request
         $request->validate([
             'permissions' => 'required|array',
-            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,career,settings',
+            'permissions.*' => 'string|in:orders,customers,products,analytics,add_user,enquiries,reviews,blogs,career,settings',
         ]);
 
         // Find the admin to update

@@ -4776,6 +4776,7 @@ function AdminDashboard() {
                           icon: "fa-envelope",
                         },
                         { key: "reviews", label: "Reviews", icon: "fa-star" },
+                        { key: "blogs", label: "Blogs", icon: "fa-blog" },
                         {
                           key: "career",
                           label: "Career Page",
@@ -6651,7 +6652,7 @@ function AdminDashboard() {
                         label: "Career Page",
                         icon: "fa-briefcase",
                       },
-                      { key: "blogs", label: "Blogs", icon: "fa-pen-nib" },
+                      { key: "blogs", label: "Blogs", icon: "fa-blog" },
                       { key: "settings", label: "Settings", icon: "fa-cog" },
                     ].map((perm) => (
                       <label

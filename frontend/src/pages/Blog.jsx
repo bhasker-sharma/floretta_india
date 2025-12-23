@@ -12,12 +12,12 @@ const Blog = () => {
   const [selectedBlog, setSelectedBlog] = useState(null);
 
   const categoryColors = [
-    { bg: '#e3f2fd', color: '#1976d2', border: '#bbdefb' },
-    { bg: '#f3e5f5', color: '#7b1fa2', border: '#e1bee7' },
-    { bg: '#e8f5e9', color: '#388e3c', border: '#c8e6c9' },
-    { bg: '#fff3e0', color: '#f57c00', border: '#ffe0b2' },
-    { bg: '#fce4ec', color: '#c2185b', border: '#f8bbd0' },
-    { bg: '#e0f2f1', color: '#00796b', border: '#b2dfdb' },
+    { bg: "#e3f2fd", color: "#1976d2", border: "#bbdefb" },
+    { bg: "#f3e5f5", color: "#7b1fa2", border: "#e1bee7" },
+    { bg: "#e8f5e9", color: "#388e3c", border: "#c8e6c9" },
+    { bg: "#fff3e0", color: "#f57c00", border: "#ffe0b2" },
+    { bg: "#fce4ec", color: "#c2185b", border: "#f8bbd0" },
+    { bg: "#e0f2f1", color: "#00796b", border: "#b2dfdb" },
   ];
 
   const getCategoryColor = (index) => {
@@ -63,10 +63,19 @@ const Blog = () => {
           <button className="back-btn" onClick={handleBackToList}>
             ← Back to Blogs
           </button>
-          <article className="blog-detail">
+          <div className="blog-detail">
             <div className="blog-detail-header">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: "10px" }}>
-                {selectedBlog.categories && selectedBlog.categories.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                  justifyContent: "center",
+                  marginBottom: "8px",
+                }}
+              >
+                {selectedBlog.categories &&
+                selectedBlog.categories.length > 0 ? (
                   selectedBlog.categories.map((cat, index) => {
                     const colors = getCategoryColor(index);
                     return (
@@ -76,7 +85,7 @@ const Blog = () => {
                         style={{
                           background: colors.bg,
                           color: colors.color,
-                          border: `1px solid ${colors.border}`
+                          border: `1px solid ${colors.border}`,
                         }}
                       >
                         {cat.name}
@@ -87,35 +96,65 @@ const Blog = () => {
                   <span className="blog-category">{selectedBlog.category}</span>
                 )}
               </div>
-              <h1 className="blog-detail-title">{selectedBlog.title}</h1>
-              {selectedBlog.author && (
-                <p className="blog-author" style={{ fontSize: "1.1rem", marginTop: "10px" }}>
-                  By {selectedBlog.author}
-                </p>
-              )}
-              <div className="blog-date">
-                {new Date(selectedBlog.created_at).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+              <h1
+                className="blog-detail-title"
+                dangerouslySetInnerHTML={{ __html: selectedBlog.title }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "12px",
+                  marginTop: "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {selectedBlog.author && (
+                  <p
+                    className="blog-author"
+                    style={{ fontSize: "1.05rem", margin: 0 }}
+                  >
+                    By {selectedBlog.author}
+                  </p>
+                )}
+                {selectedBlog.author && (
+                  <span style={{ color: "#ccc" }}>•</span>
+                )}
+                <div
+                  className="blog-date"
+                  style={{ fontSize: "0.95rem", color: "#666" }}
+                >
+                  {new Date(selectedBlog.created_at).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )}
+                </div>
               </div>
             </div>
-            {selectedBlog.image && (
-              <img
-                src={getImageUrl(selectedBlog.image)}
-                alt={selectedBlog.title}
-                className="blog-detail-image"
-              />
-            )}
-            <div className="blog-detail-content">
-              {selectedBlog.content ? (
-                <p style={{ whiteSpace: "pre-wrap" }}>{selectedBlog.content}</p>
-              ) : (
-                <p>No content available for this blog.</p>
+            <div className="blog-detail-body">
+              {selectedBlog.image && (
+                <div className="blog-detail-image-wrapper">
+                  <img
+                    src={getImageUrl(selectedBlog.image)}
+                    alt={selectedBlog.title}
+                    className="blog-detail-image"
+                  />
+                </div>
               )}
+              <div className="blog-detail-content">
+                {selectedBlog.content ? (
+                  <div dangerouslySetInnerHTML={{ __html: selectedBlog.content }} />
+                ) : (
+                  <p>No content available for this blog.</p>
+                )}
+              </div>
             </div>
-          </article>
+          </div>
         </div>
         <Footer />
       </>
@@ -165,9 +204,28 @@ const Blog = () => {
                   />
                 </div>
                 <div className="blog-card-content">
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", padding: 0 }}>
-                    <h2 className="blog-title" style={{ flex: 1 }}>{blog.title}</h2>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "flex-end" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "8px",
+                      padding: 0,
+                    }}
+                  >
+                    <h2
+                      className="blog-title"
+                      style={{ flex: 1 }}
+                      dangerouslySetInnerHTML={{ __html: blog.title }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                        justifyContent: "flex-end",
+                      }}
+                    >
                       {blog.categories && blog.categories.length > 0 ? (
                         blog.categories.map((cat, index) => {
                           const colors = getCategoryColor(index);
@@ -178,7 +236,7 @@ const Blog = () => {
                               style={{
                                 background: colors.bg,
                                 color: colors.color,
-                                border: `1px solid ${colors.border}`
+                                border: `1px solid ${colors.border}`,
                               }}
                             >
                               {cat.name}
@@ -195,9 +253,9 @@ const Blog = () => {
                       ? blog.content.substring(0, 150) + "..."
                       : "Read more to discover the full story."}
                   </p>
-                      {blog.author && (
-                        <p className="blog-author">By {blog.author}</p>
-                      )}
+                  {blog.author && (
+                    <p className="blog-author">By {blog.author}</p>
+                  )}
                 </div>
               </article>
             ))}

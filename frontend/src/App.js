@@ -17,6 +17,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminReviews from "./pages/AdminReviews";
+import AdminBlogs from "./pages/AdminBlogs";
 import AuthCallback from "./pages/AuthCallback";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -27,6 +28,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import RefundReturnPolicy from "./pages/RefundReturnPolicy";
 import Blog from "./pages/Blog";
+import BlogEditor from "./pages/BlogEditor";
 
 import { initializeAuth } from "./utils/axiosInterceptor";
 
@@ -73,6 +75,9 @@ const App = () => {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
+        <Route path="/admin/blogs" element={<AdminBlogs />} />
+        <Route path="/admin/blogs/new" element={<BlogEditor />} />
+        <Route path="/admin/blogs/edit/:id" element={<BlogEditor />} />
 
         {/* 🔒 Protected Routes */}
         <Route

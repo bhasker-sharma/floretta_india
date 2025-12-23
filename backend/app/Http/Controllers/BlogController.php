@@ -70,9 +70,28 @@ class BlogController extends Controller
         $imagePath = null;
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            // Store in public/blogs
-            $file->move(public_path('uploads/blogs'), $filename);
+            // Sanitize filename - remove spaces and special characters
+            $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $file->getClientOriginalName());
+            $filename = time() . '_' . $originalName;
+
+            // Save to public_html/uploads (web accessible)
+            $publicHtmlPath = dirname(public_path()) . '/public_html/uploads/blogs';
+            if (!is_dir($publicHtmlPath)) {
+                mkdir($publicHtmlPath, 0755, true);
+            }
+
+            // Also save to public/uploads (for backward compatibility)
+            $publicPath = public_path('uploads/blogs');
+            if (!is_dir($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+
+            // Move file to public_html
+            $file->move($publicHtmlPath, $filename);
+
+            // Copy to public/uploads for backup
+            copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
             $imagePath = 'uploads/blogs/' . $filename;
         }
 
@@ -111,14 +130,42 @@ class BlogController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
-            // Delete old image if exists
-            if ($blog->image && file_exists(public_path($blog->image))) {
-                @unlink(public_path($blog->image));
+            // Delete old image if exists (from both locations)
+            if ($blog->image) {
+                $oldPublicHtmlPath = dirname(public_path()) . '/public_html/' . $blog->image;
+                $oldPublicPath = public_path($blog->image);
+
+                if (file_exists($oldPublicHtmlPath)) {
+                    @unlink($oldPublicHtmlPath);
+                }
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
             }
 
             $file = $request->file('image_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/blogs'), $filename);
+            // Sanitize filename - remove spaces and special characters
+            $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $file->getClientOriginalName());
+            $filename = time() . '_' . $originalName;
+
+            // Save to public_html/uploads (web accessible)
+            $publicHtmlPath = dirname(public_path()) . '/public_html/uploads/blogs';
+            if (!is_dir($publicHtmlPath)) {
+                mkdir($publicHtmlPath, 0755, true);
+            }
+
+            // Also save to public/uploads (for backward compatibility)
+            $publicPath = public_path('uploads/blogs');
+            if (!is_dir($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+
+            // Move file to public_html
+            $file->move($publicHtmlPath, $filename);
+
+            // Copy to public/uploads for backup
+            copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
             $blog->image = 'uploads/blogs/' . $filename;
         }
 
@@ -148,8 +195,17 @@ class BlogController extends Controller
             return response()->json(['success' => false, 'message' => 'Blog not found'], 404);
         }
 
-        if ($blog->image && file_exists(public_path($blog->image))) {
-            @unlink(public_path($blog->image));
+        // Delete image from both locations
+        if ($blog->image) {
+            $publicHtmlPath = dirname(public_path()) . '/public_html/' . $blog->image;
+            $publicPath = public_path($blog->image);
+
+            if (file_exists($publicHtmlPath)) {
+                @unlink($publicHtmlPath);
+            }
+            if (file_exists($publicPath)) {
+                @unlink($publicPath);
+            }
         }
 
         $blog->delete();

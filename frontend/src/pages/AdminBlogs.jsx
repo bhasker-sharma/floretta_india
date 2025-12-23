@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import "../styles/Blog.css";
 
 const AdminBlogs = () => {
+  const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingBlog, setEditingBlog] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    author: "",
-    category: "",
-    content: "",
-    is_draft: false,
-    image_file: null,
-  });
   const [searchQuery, setSearchQuery] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [categoryInputs, setCategoryInputs] = useState([{ id: 1, value: "" }]);
+  const [statusFilter, setStatusFilter] = useState("all"); // all, draft, published
 
   useEffect(() => {
     fetchBlogs();
@@ -57,122 +48,8 @@ const AdminBlogs = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, image_file: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("adminToken");
-
-      // First, ensure all category names exist in the database and collect their IDs
-      const categoryIds = [];
-
-      for (const catInput of categoryInputs) {
-        const categoryName = catInput.value.trim();
-        if (categoryName === "") continue;
-
-        try {
-          // Try to create the category (will fail if it already exists)
-          const response = await axios.post(
-            API_ENDPOINTS.ADMIN_BLOG_CATEGORIES,
-            { name: categoryName },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          categoryIds.push(response.data.data.id);
-        } catch (error) {
-          // If category already exists (422 error), find it in the categories list
-          if (error.response?.status === 422) {
-            const existingCat = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-            if (existingCat) {
-              categoryIds.push(existingCat.id);
-            }
-          } else {
-            console.error("Error adding category:", error);
-          }
-        }
-      }
-
-      // Then save the blog
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("author", formData.author || "");
-      data.append("category", formData.category);
-      data.append("content", formData.content);
-      data.append("is_draft", formData.is_draft ? "1" : "0");
-      if (formData.image_file) {
-        data.append("image_file", formData.image_file);
-      }
-
-      // Append category IDs as array
-      categoryIds.forEach((id, index) => {
-        data.append(`category_ids[${index}]`, id);
-      });
-
-      if (editingBlog) {
-        await axios.post(API_ENDPOINTS.ADMIN_BLOG_UPDATE(editingBlog.id), data, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      } else {
-        await axios.post(API_ENDPOINTS.ADMIN_BLOGS, data, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      }
-
-      fetchBlogs();
-      fetchCategories(); // Refresh categories list
-      closeModal();
-    } catch (error) {
-      console.error("Error saving blog:", error);
-      alert("Failed to save blog");
-    }
-  };
-
   const handleEdit = (blog) => {
-    setEditingBlog(blog);
-    setFormData({
-      title: blog.title,
-      author: blog.author || "",
-      category: blog.category,
-      content: blog.content || "",
-      is_draft: blog.is_draft,
-      image_file: null,
-    });
-
-    // Populate category inputs from blog's categories relationship
-    if (blog.categories && blog.categories.length > 0) {
-      const categoryInputsFromBlog = blog.categories.map((cat, index) => ({
-        id: index + 1,
-        value: cat.name,
-      }));
-      setCategoryInputs(categoryInputsFromBlog);
-    } else {
-      setCategoryInputs([{ id: 1, value: blog.category || "" }]);
-    }
-
-    setImagePreview(blog.image ? getImageUrl(blog.image) : null);
-    setShowModal(true);
+    navigate(`/admin/blogs/edit/${blog.id}`);
   };
 
   const handleDelete = async (id) => {
@@ -204,32 +81,26 @@ const AdminBlogs = () => {
     }
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingBlog(null);
-    setFormData({
-      title: "",
-      author: "",
-      category: "",
-      content: "",
-      is_draft: false,
-      image_file: null,
-    });
-    setCategoryInputs([{ id: 1, value: "" }]);
-    setImagePreview(null);
-  };
-
-
   const handleSearch = (e) => {
     e.preventDefault();
     fetchBlogs();
   };
 
+  // Filter blogs based on status
+  const filteredBlogs = blogs.filter((blog) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "draft")
+      return blog.is_draft === 1 || blog.is_draft === true;
+    if (statusFilter === "published")
+      return blog.is_draft === 0 || blog.is_draft === false;
+    return true;
+  });
+
   return (
     <div className="admin-blogs-container">
       <div className="admin-blogs-header">
         <h1>Manage Blogs</h1>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn-primary" onClick={() => navigate('/admin/blogs/new')}>
           Add New Blog
         </button>
       </div>
@@ -244,35 +115,88 @@ const AdminBlogs = () => {
         <button type="submit">Search</button>
       </form>
 
+      {/* Status Filter Tabs */}
+      <div className="status-filter-tabs">
+        <button
+          className={`filter-tab ${statusFilter === "all" ? "active" : ""}`}
+          onClick={() => setStatusFilter("all")}
+        >
+          All ({blogs.length})
+        </button>
+        <button
+          className={`filter-tab ${statusFilter === "draft" ? "active" : ""}`}
+          onClick={() => setStatusFilter("draft")}
+        >
+          Draft (
+          {blogs.filter((b) => b.is_draft === 1 || b.is_draft === true).length})
+        </button>
+        <button
+          className={`filter-tab ${
+            statusFilter === "published" ? "active" : ""
+          }`}
+          onClick={() => setStatusFilter("published")}
+        >
+          Published (
+          {blogs.filter((b) => b.is_draft === 0 || b.is_draft === false).length}
+          )
+        </button>
+      </div>
+
       {loading ? (
         <div className="loading">Loading blogs...</div>
       ) : (
         <div className="blogs-list">
-          {blogs.length === 0 ? (
-            <div style={{
-              textAlign: "center",
-              padding: "80px 20px",
-              background: "white",
-              borderRadius: "16px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)"
-            }}>
+          {/* Show count of filtered results */}
+          {statusFilter !== "all" && filteredBlogs.length > 0 && (
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "12px 20px",
+                background: "#f0f7ff",
+                borderRadius: "8px",
+                color: "#2563eb",
+                fontSize: "0.95rem",
+                fontWeight: "500",
+              }}
+            >
+              Showing {filteredBlogs.length} {statusFilter} blog
+              {filteredBlogs.length !== 1 ? "s" : ""}
+            </div>
+          )}
+          {filteredBlogs.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "80px 20px",
+                background: "white",
+                borderRadius: "16px",
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              }}
+            >
               <div style={{ fontSize: "4rem", marginBottom: "20px" }}>📝</div>
-              <h3 style={{
-                fontSize: "1.5rem",
-                color: "#333",
-                marginBottom: "10px",
-                fontWeight: "600"
-              }}>No blogs found</h3>
+              <h3
+                style={{
+                  fontSize: "1.5rem",
+                  color: "#333",
+                  marginBottom: "10px",
+                  fontWeight: "600",
+                }}
+              >
+                No blogs found
+              </h3>
               <p style={{ color: "#666", marginBottom: "30px" }}>
                 Get started by creating your first blog post
               </p>
-              <button className="btn-primary" onClick={() => setShowModal(true)}>
+              <button
+                className="btn-primary"
+                onClick={() => navigate('/admin/blogs/new')}
+              >
                 Create Your First Blog
               </button>
             </div>
           ) : (
             <div className="admin-blogs-grid">
-              {blogs.map((blog) => (
+              {filteredBlogs.map((blog) => (
                 <div key={blog.id} className="admin-blog-card">
                   <div className="admin-blog-image-container">
                     <img
@@ -280,7 +204,11 @@ const AdminBlogs = () => {
                       alt={blog.title}
                       className="admin-blog-image"
                     />
-                    <span className={`status-badge ${blog.is_draft ? "draft" : "published"}`}>
+                    <span
+                      className={`status-badge ${
+                        blog.is_draft ? "draft" : "published"
+                      }`}
+                    >
                       {blog.is_draft ? "Draft" : "Published"}
                     </span>
                   </div>
@@ -308,13 +236,22 @@ const AdminBlogs = () => {
                       })}
                     </p>
                     <div className="admin-blog-actions">
-                      <button className="btn-edit" onClick={() => handleEdit(blog)}>
+                      <button
+                        className="btn-edit"
+                        onClick={() => handleEdit(blog)}
+                      >
                         Edit
                       </button>
-                      <button className="btn-toggle" onClick={() => toggleStatus(blog.id)}>
+                      <button
+                        className="btn-toggle"
+                        onClick={() => toggleStatus(blog.id)}
+                      >
                         {blog.is_draft ? "Publish" : "Draft"}
                       </button>
-                      <button className="btn-delete" onClick={() => handleDelete(blog.id)}>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDelete(blog.id)}
+                      >
                         Delete
                       </button>
                     </div>
@@ -325,143 +262,6 @@ const AdminBlogs = () => {
           )}
         </div>
       )}
-
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingBlog ? "Edit Blog" : "Add New Blog"}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Author</label>
-                <input
-                  type="text"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleInputChange}
-                  placeholder="Optional"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Category</label>
-                {categoryInputs.map((input, index) => (
-                  <div key={input.id} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-                    <input
-                      type="text"
-                      value={input.value}
-                      onChange={(e) => {
-                        const newInputs = [...categoryInputs];
-                        newInputs[index].value = e.target.value;
-                        setCategoryInputs(newInputs);
-                        // Update formData with the first category value
-                        if (index === 0) {
-                          setFormData({ ...formData, category: e.target.value });
-                        }
-                      }}
-                      placeholder="Enter category name"
-                      style={{ flex: 1 }}
-                      required={index === 0}
-                    />
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
-                        setCategoryInputs([
-                          ...categoryInputs,
-                          { id: Date.now(), value: "" },
-                        ]);
-                      }}
-                      style={{ padding: "10px 16px", whiteSpace: "nowrap" }}
-                    >
-                      + Add
-                    </button>
-                    {categoryInputs.length > 1 && (
-                      <button
-                        type="button"
-                        className="btn-delete"
-                        onClick={() => {
-                          const newInputs = categoryInputs.filter((_, i) => i !== index);
-                          setCategoryInputs(newInputs);
-                          // Update formData if removing the first field
-                          if (index === 0 && newInputs.length > 0) {
-                            setFormData({ ...formData, category: newInputs[0].value });
-                          }
-                        }}
-                        style={{ padding: "10px 16px" }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="form-group">
-                <label>Content</label>
-                <textarea
-                  name="content"
-                  value={formData.content}
-                  onChange={handleInputChange}
-                  rows="10"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="image-preview"
-                  />
-                )}
-              </div>
-
-              <div className="form-group checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="is_draft"
-                    checked={formData.is_draft}
-                    onChange={handleInputChange}
-                  />
-                  Save as Draft
-                </label>
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn-primary">
-                  {editingBlog ? "Update" : "Create"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={closeModal}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
