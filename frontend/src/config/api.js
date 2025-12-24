@@ -155,6 +155,7 @@ export const API_ENDPOINTS = {
   ADMIN_BLOG_UPDATE: (id) => `${API_URL}/api/admin/blogs/${id}`,
   ADMIN_BLOG_DELETE: (id) => `${API_URL}/api/admin/blogs/${id}`,
   ADMIN_BLOG_STATUS: (id) => `${API_URL}/api/admin/blogs/${id}/status`,
+  ADMIN_BLOG_UPLOAD_IMAGE: `${API_URL}/api/admin/blogs/upload-image`,
   ADMIN_BLOG_CATEGORIES: `${API_URL}/api/admin/blog-categories`,
   ADMIN_BLOG_CATEGORY_DELETE: (id) => `${API_URL}/api/admin/blog-categories/${id}`,
 

@@ -3260,10 +3260,7 @@
   margin-bottom: 20px;
 }
 
-.image-upload-container:hover {
-  border-color: #c06;
-  background: #fff5f7;
-}
+/* removed hover effect */
 
 .image-upload-container.drag-active {
   border-color: #c06;

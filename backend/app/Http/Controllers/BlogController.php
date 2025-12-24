@@ -95,10 +95,13 @@ class BlogController extends Controller
             $imagePath = 'uploads/blogs/' . $filename;
         }
 
+
+
         $blog = Blog::create([
             'title' => $request->title,
             'author' => $request->author,
             'category' => $request->category,
+            'content' => $request->content,
             'content' => $request->content,
             'image' => $imagePath,
             'is_draft' => filter_var($request->is_draft, FILTER_VALIDATE_BOOLEAN)
@@ -124,6 +127,7 @@ class BlogController extends Controller
             'author' => 'nullable|string|max:255',
             'category' => 'required|string|max:100',
             'content' => 'nullable|string',
+            'sections' => 'nullable|string',
             'image_file' => 'nullable|image|max:5120',
             'category_ids' => 'nullable|array',
             'category_ids.*' => 'exists:blog_categories,id',
@@ -167,15 +171,40 @@ class BlogController extends Controller
             copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
 
             $blog->image = 'uploads/blogs/' . $filename;
+        } elseif ($request->has('remove_image') && $request->remove_image === 'true') {
+            // Remove existing image
+             if ($blog->image) {
+                $oldPublicHtmlPath = dirname(public_path()) . '/public_html/' . $blog->image;
+                $oldPublicPath = public_path($blog->image);
+
+                if (file_exists($oldPublicHtmlPath)) {
+                    @unlink($oldPublicHtmlPath);
+                }
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
+                $blog->image = null;
+            }
         }
 
         $blog->title = $request->title;
         $blog->author = $request->author;
         $blog->category = $request->category;
         $blog->content = $request->content;
+        
+
 
         if ($request->has('is_draft')) {
              $blog->is_draft = filter_var($request->is_draft, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        // Handle cleanup of removed content images
+        $oldImages = $this->getImagesFromContent($blog->getOriginal('content'));
+        $newImages = $this->getImagesFromContent($request->content);
+        $deletedImages = array_diff($oldImages, $newImages);
+
+        foreach ($deletedImages as $imagePath) {
+            $this->deleteImage($imagePath);
         }
 
         $blog->save();
@@ -195,7 +224,7 @@ class BlogController extends Controller
             return response()->json(['success' => false, 'message' => 'Blog not found'], 404);
         }
 
-        // Delete image from both locations
+        // Delete featured image from both locations
         if ($blog->image) {
             $publicHtmlPath = dirname(public_path()) . '/public_html/' . $blog->image;
             $publicPath = public_path($blog->image);
@@ -206,6 +235,12 @@ class BlogController extends Controller
             if (file_exists($publicPath)) {
                 @unlink($publicPath);
             }
+        }
+
+        // Delete all content images
+        $contentImages = $this->getImagesFromContent($blog->content);
+        foreach ($contentImages as $imagePath) {
+            $this->deleteImage($imagePath);
         }
 
         $blog->delete();
@@ -257,5 +292,88 @@ class BlogController extends Controller
 
         $category->delete();
         return response()->json(['success' => true, 'message' => 'Category deleted successfully']);
+    }
+
+    // Admin: Upload inline image for blog content
+    public function uploadImage(Request $request) {
+        $request->validate([
+            'image' => 'required|image|max:5120', // 5MB max
+        ]);
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            // Sanitize filename - remove spaces and special characters
+            $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $file->getClientOriginalName());
+            $filename = time() . '_' . $originalName;
+
+            // Save to public_html/uploads/blogs/inline (web accessible)
+            $publicHtmlPath = dirname(public_path()) . '/public_html/uploads/blogs/inline';
+            if (!is_dir($publicHtmlPath)) {
+                mkdir($publicHtmlPath, 0755, true);
+            }
+
+            // Also save to public/uploads (for backward compatibility)
+            $publicPath = public_path('uploads/blogs/inline');
+            if (!is_dir($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+
+            // Move file to public_html
+            $file->move($publicHtmlPath, $filename);
+
+            // Copy to public/uploads for backup
+            copy($publicHtmlPath . '/' . $filename, $publicPath . '/' . $filename);
+
+            $url = asset('uploads/blogs/inline/' . $filename);
+            return response()->json(['success' => true, 'url' => $url]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'No image file provided'], 400);
+    }
+
+    /**
+     * Extract image paths from HTML content
+     * Returns array of relative paths (e.g. 'uploads/blogs/inline/image.jpg')
+     */
+    private function getImagesFromContent($content) {
+        $images = [];
+        if (empty($content)) return $images;
+
+        // Match src attributes containing 'uploads/blogs'
+        // Regex: src=".../uploads/blogs/..."
+        preg_match_all('/src="([^"]*uploads\/blogs\/[^"]*)"/i', $content, $matches);
+
+        foreach ($matches[1] as $url) {
+            // Extract relative path from URL
+            // If URL is full (http://...), get path after domain
+            // If relative, just take it
+            $path = parse_url($url, PHP_URL_PATH);
+            // Remove leading slash if present
+            $path = ltrim($path, '/');
+            
+            // Only keep if it starts with uploads/blogs
+            if (strpos($path, 'uploads/blogs') === 0) {
+                $images[] = $path;
+            }
+        }
+
+        return array_unique($images);
+    }
+
+    /**
+     * Delete an image file from server
+     */
+    private function deleteImage($path) {
+        if (empty($path)) return;
+
+        $publicHtmlPath = dirname(public_path()) . '/public_html/' . $path;
+        $publicPath = public_path($path);
+
+        if (file_exists($publicHtmlPath)) {
+            @unlink($publicHtmlPath);
+        }
+        if (file_exists($publicPath)) {
+            @unlink($publicPath);
+        }
     }
 }

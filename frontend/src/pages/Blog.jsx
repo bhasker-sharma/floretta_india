@@ -148,7 +148,9 @@ const Blog = () => {
               )}
               <div className="blog-detail-content">
                 {selectedBlog.content ? (
-                  <div dangerouslySetInnerHTML={{ __html: selectedBlog.content }} />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: selectedBlog.content }}
+                  />
                 ) : (
                   <p>No content available for this blog.</p>
                 )}

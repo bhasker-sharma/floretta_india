@@ -236,6 +236,7 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     Route::get('/analytics/orders', [OrdersAnalyticsController::class, 'index']);
 
     // Admin Blog Management
+    Route::post('/blogs/upload-image', [BlogController::class, 'uploadImage']); // Must be before {id} routes
     Route::get('/blogs', [BlogController::class, 'adminIndex']);
     Route::post('/blogs', [BlogController::class, 'store']);
     Route::post('/blogs/{id}', [BlogController::class, 'update']);
