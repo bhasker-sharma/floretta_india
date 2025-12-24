@@ -33,11 +33,32 @@ const ProductDetail = () => {
   const baseURL = `${STORAGE_URL}/`;
   const isFreshner = location.pathname.startsWith("/freshner-mist");
 
+  // Helper function to create URL-friendly slug from product name and ID
+  const createSlug = (name, productId) => {
+    if (!name) return productId;
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .substring(0, 50); // Limit length
+    return `${slug}-${productId}`;
+  };
+
+  // Helper function to extract ID from slug
+  const extractIdFromSlug = (slug) => {
+    if (!slug) return null;
+    const parts = slug.split('-');
+    return parts[parts.length - 1];
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    const apiURL = isFreshner ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(id) : API_ENDPOINTS.PRODUCT_DETAIL(id);
+    const productId = extractIdFromSlug(id);
+    const apiURL = isFreshner ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(productId) : API_ENDPOINTS.PRODUCT_DETAIL(productId);
 
     axios
       .get(apiURL)
@@ -744,7 +765,7 @@ const ProductDetail = () => {
                 <div
                   key={p.id}
                   className="amazon-related-card"
-                  onClick={() => navigate(`/product/${p.id}`)}
+                  onClick={() => navigate(`/product/${createSlug(p.name, p.id)}`)}
                 >
                   <img
                     src={`${baseURL}${p.image}`}

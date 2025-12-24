@@ -12,6 +12,14 @@ const AdminBlogs = () => {
   const [categories, setCategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all"); // all, draft, published
 
+  // Function to strip HTML tags and get plain text
+  const getPlainText = (html) => {
+    if (!html) return '';
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+  };
+
   useEffect(() => {
     fetchBlogs();
     fetchCategories();
@@ -224,7 +232,7 @@ const AdminBlogs = () => {
                         <span className="blog-category">{blog.category}</span>
                       )}
                     </div>
-                    <h3 className="admin-blog-title">{blog.title}</h3>
+                    <h3 className="admin-blog-title">{getPlainText(blog.title)}</h3>
                     {blog.author && (
                       <p className="admin-blog-author">By {blog.author}</p>
                     )}

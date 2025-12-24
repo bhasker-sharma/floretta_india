@@ -12,6 +12,19 @@ const Wishlist = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
+  // Helper function to create URL-friendly slug from product name and ID
+  const createSlug = (name, productId) => {
+    if (!name) return productId;
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .substring(0, 50); // Limit length
+    return `${slug}-${productId}`;
+  };
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -30,7 +43,7 @@ const Wishlist = () => {
   }, [token, navigate]);
 
   const handleProductClick = (product) => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${createSlug(product.name, product.id)}`);
   };
 
   const handleRemoveFromWishlist = async (productId) => {

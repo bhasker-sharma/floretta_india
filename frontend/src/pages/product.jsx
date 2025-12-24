@@ -17,6 +17,19 @@ const Product = () => {
   const [selectedNote, setSelectedNote] = useState('all');
   const navigate = useNavigate();
 
+  // Helper function to create URL-friendly slug from product name and ID
+  const createSlug = (name, productId) => {
+    if (!name) return productId;
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .substring(0, 50); // Limit length
+    return `${slug}-${productId}`;
+  };
+
   // Fetch products from API based on note
   const fetchProducts = (note) => {
    axios
@@ -42,8 +55,8 @@ const Product = () => {
   };
 
   // Navigate to product detail
-  const handleProductClick = (id) => {
-    navigate(`/product/${id}`);
+  const handleProductClick = (product) => {
+    navigate(`/product/${createSlug(product.name, product.id)}`);
   };
 
   return (
@@ -73,7 +86,7 @@ const Product = () => {
             <ProductCard
               key={product.id}
               item={product}
-              onClick={() => handleProductClick(product.id)}
+              onClick={() => handleProductClick(product)}
             />
           ))}
         </div>

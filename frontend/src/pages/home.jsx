@@ -21,6 +21,19 @@ const Home = () => {
 
   const navigate = useNavigate();
 
+  // Helper function to create URL-friendly slug from product name and ID
+  const createSlug = (name, productId) => {
+    if (!name) return productId;
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .substring(0, 50); // Limit length
+    return `${slug}-${productId}`;
+  };
+
   const handleViewAllClick = () => {
     navigate('/product');
   };
@@ -87,7 +100,7 @@ const Home = () => {
 
   const handleShopNow = () => {
     if (featuredProduct) {
-      navigate(`/product/${featuredProduct.id}`);
+      navigate(`/product/${createSlug(featuredProduct.name, featuredProduct.id)}`);
     }
   };
   
@@ -106,7 +119,7 @@ const Home = () => {
           {homeProducts.map((item) => (
             <div
               key={item.id}
-              onClick={() => navigate(`/product/${item.id}`)}
+              onClick={() => navigate(`/product/${createSlug(item.name, item.id)}`)}
               style={{ cursor: 'pointer' }}
             >
               <ProductCard item={item} />
@@ -127,7 +140,7 @@ const Home = () => {
           <div className="pdp-product-card">
             <div
               className="pdp-product-images"
-              onClick={() => navigate(`/product/${featuredProduct.id}`)}
+              onClick={() => navigate(`/product/${createSlug(featuredProduct.name, featuredProduct.id)}`)}
               style={{ cursor: 'pointer' }}
             >
               <img

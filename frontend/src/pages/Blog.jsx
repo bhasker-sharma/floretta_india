@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS, getImageUrl } from "../config/api";
 import Navbar from "../components/navbar";
@@ -6,6 +7,8 @@ import Footer from "../components/footer";
 import "../styles/Blog.css";
 
 const Blog = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,9 +27,46 @@ const Blog = () => {
     return categoryColors[index % categoryColors.length];
   };
 
+  // Function to strip HTML tags and get plain text
+  const getPlainText = (html) => {
+    if (!html) return '';
+    // Create a temporary div to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+  };
+
+  // Function to create URL-friendly slug from title
+  const createSlug = (title, id) => {
+    const plainTitle = getPlainText(title);
+    const slug = plainTitle
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .substring(0, 50); // Limit length
+    return `${slug}-${id}`;
+  };
+
+  // Function to extract ID from slug
+  const extractIdFromSlug = (slug) => {
+    const parts = slug.split('-');
+    return parts[parts.length - 1];
+  };
+
   useEffect(() => {
     fetchBlogs();
   }, []);
+
+  useEffect(() => {
+    if (id && blogs.length > 0) {
+      const blogId = extractIdFromSlug(id);
+      fetchBlogById(blogId);
+    } else if (!id) {
+      setSelectedBlog(null);
+    }
+  }, [id, blogs]);
 
   const fetchBlogs = async () => {
     try {
@@ -45,13 +85,29 @@ const Blog = () => {
     }
   };
 
+  const fetchBlogById = async (blogId) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_ENDPOINTS.BLOGS}/${blogId}`);
+      if (response.data.success) {
+        setSelectedBlog(response.data.data);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching blog:", err);
+      setError("Failed to load blog.");
+      setLoading(false);
+    }
+  };
+
   const handleReadMore = (blog) => {
-    setSelectedBlog(blog);
+    const slug = createSlug(blog.title, blog.id);
+    navigate(`/blogs/${slug}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleBackToList = () => {
-    setSelectedBlog(null);
+    navigate('/blogs');
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -61,7 +117,8 @@ const Blog = () => {
         <Navbar />
         <div className="blog-page">
           <button className="back-btn" onClick={handleBackToList}>
-            ← Back to Blogs
+            <span className="back-arrow">←</span>
+            <span className="back-text">Back to Blogs</span>
           </button>
           <div className="blog-detail">
             <div className="blog-detail-header">
@@ -100,6 +157,7 @@ const Blog = () => {
                 className="blog-detail-title"
                 dangerouslySetInnerHTML={{ __html: selectedBlog.title }}
               />
+
               <div
                 style={{
                   display: "flex",
@@ -109,7 +167,7 @@ const Blog = () => {
                   marginTop: "12px",
                   flexWrap: "wrap",
                 }}
-              >
+              >                
                 {selectedBlog.author && (
                   <p
                     className="blog-author"
@@ -252,7 +310,7 @@ const Blog = () => {
                   </div>
                   <p className="blog-excerpt">
                     {blog.content
-                      ? blog.content.substring(0, 150) + "..."
+                      ? getPlainText(blog.content).substring(0, 150) + "..."
                       : "Read more to discover the full story."}
                   </p>
                   {blog.author && (

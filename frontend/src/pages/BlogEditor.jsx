@@ -306,7 +306,6 @@ const BlogEditor = () => {
             category: blog.category,
             content: blog.content || "",
             is_draft: blog.is_draft,
-            is_draft: blog.is_draft,
             image_file: null,
             remove_image: false,
           });
@@ -438,10 +437,10 @@ const BlogEditor = () => {
       const objectUrl = URL.createObjectURL(file);
 
       img.onload = function () {
-        // Enforce width between 800px and 1600px
-        if (this.width < 800 || this.width > 1600) {
+        // Enforce width between 800px and 3000px
+        if (this.width < 800 || this.width > 3000) {
           alert(
-            `Invalid image width. Please upload an image between 800px and 1600px wide.\nCurrent width: ${this.width}px`
+            `Invalid image width. Please upload an image between 800px and 3000px wide.\nCurrent width: ${this.width}px`
           );
           // Clear the file input
           e.target.value = "";
@@ -731,7 +730,7 @@ const BlogEditor = () => {
                 </button>
               )}
             </div>
-            <p className="image-upload-hint">Required width: 800px - 1600px</p>
+            <p className="image-upload-hint">Required width: 800px - 3000px</p>
             {imagePreview && (
               <div className="image-preview-container">
                 <img
