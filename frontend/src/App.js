@@ -32,6 +32,8 @@ import BlogEditor from "./pages/BlogEditor";
 
 import { initializeAuth } from "./utils/axiosInterceptor";
 
+import RouteTracker from "./RouteTracker";
+
 const App = () => {
   // Initialize axios interceptors on app load
   useEffect(() => {
@@ -40,6 +42,7 @@ const App = () => {
 
   return (
     <Router>
+      <RouteTracker />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />

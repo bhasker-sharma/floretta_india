@@ -19,6 +19,7 @@ use App\Http\Controllers\UproductController;
 use App\Http\Controllers\HowItWorksController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CareerController;
+use App\Http\Controllers\SessionEventController;
 
 // Analytics Controllers
 use App\Http\Controllers\Analytics\OverviewAnalyticsController;
@@ -28,12 +29,13 @@ use App\Http\Controllers\Analytics\CustomersAnalyticsController;
 use App\Http\Controllers\Analytics\ReviewsAnalyticsController;
 use App\Http\Controllers\Analytics\OrdersAnalyticsController;
 use App\Http\Controllers\BlogController;
-
 /*
 |--------------------------------------------------------------------------
 | Public Routes (No Authentication Required)
 |--------------------------------------------------------------------------
 */
+// Session tracking  
+Route::post('/track-event', [SessionEventController::class, 'store']);
 
 // 🌐 User Auth (with rate limiting to prevent brute force attacks)
 Route::middleware('throttle:5,1')->group(function () {
