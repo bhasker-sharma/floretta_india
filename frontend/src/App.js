@@ -28,6 +28,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import RefundReturnPolicy from "./pages/RefundReturnPolicy";
 import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
 import BlogEditor from "./pages/BlogEditor";
 
 import { initializeAuth } from "./utils/axiosInterceptor";
@@ -46,7 +47,18 @@ const App = () => {
         <Route path="/liveperfume" element={<LivePerfume />} />
         <Route path="/hotel-amenities" element={<HotelAmenities />} />
         <Route path="/blogs" element={<Blog />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
+        {/* Pure Slug Route */}
+        <Route path="/blogs/:slug" element={<BlogDetail />} />
+        {/* Fallback for ID (optional, can be removed if not needed) */}
+        {/* <Route path="/blogs/:id" element={<BlogDetail />} /> */}
+
+        <Route path="/product" element={<Product />} />
+
+        {/* We use specific routes first to avoid conflict if needed, but here structure is simple */}
+
+        {/* Pure Slug Route for Products */}
+        <Route path="/product/:slug" element={<ProductDetail />} />
+
         <Route path="/freshner-mist/:id" element={<ProductDetail />} />
 
         <Route path="/register" element={<Register />} />

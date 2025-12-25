@@ -2,13 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS, STORAGE_URL } from "../config/api";
+import { getProductUrl, getItemBySlug } from "../utils/urlHelpers";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import ReviewSection from "../components/ReviewSection";
 import "../styles/productDetail.css";
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { slug, id } = useParams(); // Support both slug (new) and id (fallback)
   const location = useLocation();
   const navigate = useNavigate();
   const imageRef = useRef();
@@ -36,21 +37,69 @@ const ProductDetail = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setProduct(null); // Clear previous product
 
-    const apiURL = isFreshner ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(id) : API_ENDPOINTS.PRODUCT_DETAIL(id);
+    const fetchProductData = async () => {
+      try {
+        let productData = null;
 
-    axios
-      .get(apiURL)
-      .then((res) => {
-        processProductData(res.data);
-        checkIfInWishlist(res.data.id);
-      })
-      .catch((err) => {
+        if (slug) {
+          // New Logic: Fetch all and find by slug
+          // Determine endpoint based on type. Freshners have their own list?
+          // Looking at API: FRESHNERS_MIST_ALL is list endpoint.
+          const endpoint = isFreshner
+            ? API_ENDPOINTS.FRESHNERS_MIST_ALL
+            : API_ENDPOINTS.PRODUCTS;
+
+          const response = await axios.get(endpoint);
+          const items = response.data;
+
+          productData = getItemBySlug(items, slug, "name");
+
+          if (!productData) {
+            // Fallback: Check if slug is actually a numeric ID (legacy link without /product/ prefix maybe?)
+            // Not common but safe.
+            throw new Error("Product not found by slug");
+          }
+
+          // Now that we have the product object (which is from the list),
+          // we should ideally fetch the DETAIL to get full info (reviews, specific fields not in list).
+          // However, standard REST usually returns full object in detail.
+          // Let's assume list object is "light" and we want "full".
+          // If we have the ID now, we can hit the detail endpoint.
+
+          if (productData && productData.id) {
+            const detailEndpoint = isFreshner
+              ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(productData.id)
+              : API_ENDPOINTS.PRODUCT_DETAIL(productData.id);
+            const detailResponse = await axios.get(detailEndpoint);
+            productData = detailResponse.data;
+          }
+        } else if (id) {
+          // Fallback Logic: Fetch by ID
+          const apiURL = isFreshner
+            ? API_ENDPOINTS.FRESHNER_MIST_DETAIL(id)
+            : API_ENDPOINTS.PRODUCT_DETAIL(id);
+          const response = await axios.get(apiURL);
+          productData = response.data;
+        }
+
+        if (productData) {
+          processProductData(productData);
+          checkIfInWishlist(productData.id);
+        } else {
+          setError("Sorry, item not found.");
+          setLoading(false);
+        }
+      } catch (err) {
         console.error("Fetch error:", err);
         setError("Sorry, item not found.");
         setLoading(false);
-      });
-  }, [id, location.pathname]);
+      }
+    };
+
+    fetchProductData();
+  }, [slug, id, location.pathname]);
 
   const checkIfInWishlist = async (productId) => {
     const token = localStorage.getItem("token");
@@ -160,13 +209,15 @@ const ProductDetail = () => {
 
   // Image slider navigation
   const handlePrevImage = () => {
-    const newIndex = currentImageIndex === 0 ? thumbnails.length - 1 : currentImageIndex - 1;
+    const newIndex =
+      currentImageIndex === 0 ? thumbnails.length - 1 : currentImageIndex - 1;
     setCurrentImageIndex(newIndex);
     setSelectedImage(thumbnails[newIndex]);
   };
 
   const handleNextImage = () => {
-    const newIndex = currentImageIndex === thumbnails.length - 1 ? 0 : currentImageIndex + 1;
+    const newIndex =
+      currentImageIndex === thumbnails.length - 1 ? 0 : currentImageIndex + 1;
     setCurrentImageIndex(newIndex);
     setSelectedImage(thumbnails[newIndex]);
   };
@@ -335,7 +386,7 @@ const ProductDetail = () => {
         console.error("Error removing from wishlist:", error);
         alert(
           error.response?.data?.message ||
-          "Failed to remove from wishlist. Please try again."
+            "Failed to remove from wishlist. Please try again."
         );
       } finally {
         setAddingToWishlist(false);
@@ -355,7 +406,7 @@ const ProductDetail = () => {
         console.error("Error adding to wishlist:", error);
         alert(
           error.response?.data?.message ||
-          "Failed to add to wishlist. Please try again."
+            "Failed to add to wishlist. Please try again."
         );
       } finally {
         setAddingToWishlist(false);
@@ -390,7 +441,9 @@ const ProductDetail = () => {
   if (!product) return null;
 
   const discount = product.old_price
-    ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
+    ? Math.round(
+        ((product.old_price - product.price) / product.old_price) * 100
+      )
     : 0;
 
   return (
@@ -469,7 +522,9 @@ const ProductDetail = () => {
                       className={`amazon-dot ${
                         currentImageIndex === index ? "active" : ""
                       }`}
-                      onClick={() => handleThumbnailClick(thumbnails[index], index)}
+                      onClick={() =>
+                        handleThumbnailClick(thumbnails[index], index)
+                      }
                       aria-label={`Go to image ${index + 0.5}`}
                     />
                   ))}
@@ -505,11 +560,18 @@ const ProductDetail = () => {
             <div className="amazon-rating-section">
               <div className="amazon-stars">
                 <span className="star-rating">
-                  {product.rating >= 0 ? '★'.repeat(Math.round(Number(product.rating))) + '☆'.repeat(5 - Math.round(Number(product.rating))) : '☆☆☆☆☆'}
+                  {product.rating >= 0
+                    ? "★".repeat(Math.round(Number(product.rating))) +
+                      "☆".repeat(5 - Math.round(Number(product.rating)))
+                    : "☆☆☆☆☆"}
                 </span>
-                <span className="rating-value">{product.rating ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                <span className="rating-value">
+                  {product.rating ? Number(product.rating).toFixed(1) : "0.0"}
+                </span>
               </div>
-              <span className="amazon-rating-count">({product.reviews_count || 0} reviews)</span>
+              <span className="amazon-rating-count">
+                ({product.reviews_count || 0} reviews)
+              </span>
             </div>
 
             <hr className="amazon-divider" />
@@ -528,7 +590,9 @@ const ProductDetail = () => {
               {product.old_price && (
                 <div className="amazon-old-price-row">
                   <span className="amazon-mrp-label">M.R.P.:</span>
-                  <span className="amazon-old-price">₹{product.old_price}.00</span>
+                  <span className="amazon-old-price">
+                    ₹{product.old_price}.00
+                  </span>
                 </div>
               )}
               <div className="amazon-tax-info">Inclusive of all taxes</div>
@@ -538,7 +602,9 @@ const ProductDetail = () => {
 
             {/* Offers Section */}
             <div className="amazon-offers-section">
-              <div className="amazon-offers-title">Save Extra: 2 offers available</div>
+              <div className="amazon-offers-title">
+                Save Extra: 2 offers available
+              </div>
               <div className="amazon-offer-cards">
                 <div className="amazon-offer-card">
                   <div className="amazon-offer-type">Cashback</div>
@@ -621,19 +687,25 @@ const ProductDetail = () => {
                   {product.item_form && (
                     <tr>
                       <td className="amazon-detail-label">Item Form</td>
-                      <td className="amazon-detail-value">{product.item_form}</td>
+                      <td className="amazon-detail-value">
+                        {product.item_form}
+                      </td>
                     </tr>
                   )}
                   {product.power_source && (
                     <tr>
                       <td className="amazon-detail-label">Power Source</td>
-                      <td className="amazon-detail-value">{product.power_source}</td>
+                      <td className="amazon-detail-value">
+                        {product.power_source}
+                      </td>
                     </tr>
                   )}
                   {product.launch_date && (
                     <tr>
                       <td className="amazon-detail-label">Launch Date</td>
-                      <td className="amazon-detail-value">{new Date(product.launch_date).toDateString()}</td>
+                      <td className="amazon-detail-value">
+                        {new Date(product.launch_date).toDateString()}
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -662,7 +734,8 @@ const ProductDetail = () => {
           {/* Right Section - Buy Box */}
           <div className="amazon-buy-box">
             <div className="amazon-buy-price">
-              ₹{product.price}.00 (₹{Math.round(product.price / (product.volume || 8))}.00 / 100ml)
+              ₹{product.price}.00 (₹
+              {Math.round(product.price / (product.volume || 8))}.00 / 100ml)
             </div>
 
             <div className="amazon-stock-status">In stock</div>
@@ -717,7 +790,9 @@ const ProductDetail = () => {
                 onClick={handleAddToWishlist}
                 disabled={addingToWishlist}
               >
-                <i className={isInWishlist ? "fas fa-heart" : "far fa-heart"}></i>{" "}
+                <i
+                  className={isInWishlist ? "fas fa-heart" : "far fa-heart"}
+                ></i>{" "}
                 {addingToWishlist
                   ? "Processing..."
                   : isInWishlist
@@ -729,7 +804,10 @@ const ProductDetail = () => {
         </div>
 
         {/* Review Section */}
-        <div className="amazon-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        <div
+          className="amazon-container"
+          style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px" }}
+        >
           <ReviewSection productId={id} />
         </div>
 
@@ -744,7 +822,7 @@ const ProductDetail = () => {
                 <div
                   key={p.id}
                   className="amazon-related-card"
-                  onClick={() => navigate(`/product/${p.id}`)}
+                  onClick={() => navigate(getProductUrl(p.id, p.name))}
                 >
                   <img
                     src={`${baseURL}${p.image}`}

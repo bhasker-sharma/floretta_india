@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS, getImageUrl } from "../config/api";
+import { getBlogUrl } from "../utils/urlHelpers";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import "../styles/Blog.css";
@@ -45,123 +47,7 @@ const Blog = () => {
     }
   };
 
-  const handleReadMore = (blog) => {
-    setSelectedBlog(blog);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleBackToList = () => {
-    setSelectedBlog(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  if (selectedBlog) {
-    return (
-      <>
-        <Navbar />
-        <div className="blog-page">
-          <button className="back-btn" onClick={handleBackToList}>
-            ← Back to Blogs
-          </button>
-          <div className="blog-detail">
-            <div className="blog-detail-header">
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "8px",
-                  justifyContent: "center",
-                  marginBottom: "8px",
-                }}
-              >
-                {selectedBlog.categories &&
-                selectedBlog.categories.length > 0 ? (
-                  selectedBlog.categories.map((cat, index) => {
-                    const colors = getCategoryColor(index);
-                    return (
-                      <span
-                        key={cat.id}
-                        className="blog-category"
-                        style={{
-                          background: colors.bg,
-                          color: colors.color,
-                          border: `1px solid ${colors.border}`,
-                        }}
-                      >
-                        {cat.name}
-                      </span>
-                    );
-                  })
-                ) : (
-                  <span className="blog-category">{selectedBlog.category}</span>
-                )}
-              </div>
-              <h1
-                className="blog-detail-title"
-                dangerouslySetInnerHTML={{ __html: selectedBlog.title }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "12px",
-                  marginTop: "12px",
-                  flexWrap: "wrap",
-                }}
-              >
-                {selectedBlog.author && (
-                  <p
-                    className="blog-author"
-                    style={{ fontSize: "1.05rem", margin: 0 }}
-                  >
-                    By {selectedBlog.author}
-                  </p>
-                )}
-                {selectedBlog.author && (
-                  <span style={{ color: "#ccc" }}>•</span>
-                )}
-                <div
-                  className="blog-date"
-                  style={{ fontSize: "0.95rem", color: "#666" }}
-                >
-                  {new Date(selectedBlog.created_at).toLocaleDateString(
-                    "en-US",
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="blog-detail-body">
-              {selectedBlog.image && (
-                <div className="blog-detail-image-wrapper">
-                  <img
-                    src={getImageUrl(selectedBlog.image)}
-                    alt={selectedBlog.title}
-                    className="blog-detail-image"
-                  />
-                </div>
-              )}
-              <div className="blog-detail-content">
-                {selectedBlog.content ? (
-                  <div
-                    dangerouslySetInnerHTML={{ __html: selectedBlog.content }}
-                  />
-                ) : (
-                  <p>No content available for this blog.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
+  /* Removed handleReadMore and handleBackToList as we now navigate to a new page */
 
   return (
     <>
@@ -192,11 +78,15 @@ const Blog = () => {
         ) : (
           <div className="blog-grid">
             {blogs.map((blog) => (
-              <article
+              <Link
                 key={blog.id}
+                to={getBlogUrl(blog.id, blog.title)}
                 className="blog-card"
-                onClick={() => handleReadMore(blog)}
-                style={{ cursor: "pointer" }}
+                style={{
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
               >
                 <div className="blog-image-container">
                   <img
@@ -252,14 +142,15 @@ const Blog = () => {
                   </div>
                   <p className="blog-excerpt">
                     {blog.content
-                      ? blog.content.substring(0, 150) + "..."
+                      ? blog.content.replace(/<[^>]+>/g, "").substring(0, 150) +
+                        "..."
                       : "Read more to discover the full story."}
                   </p>
                   {blog.author && (
                     <p className="blog-author">By {blog.author}</p>
                   )}
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}

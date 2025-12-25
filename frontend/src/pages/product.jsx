@@ -1,37 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS } from '../config/api';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_ENDPOINTS } from "../config/api";
+import { getProductUrl } from "../utils/urlHelpers";
 
-import ProductCard from '../components/ProductCard';
-import Navbar from '../components/navbar';
-import Slider from '../components/slider';
-import Footer from '../components/footer';
-import Rfreshner from '../components/rfreshner';
-import '../styles/products.css';
+import ProductCard from "../components/ProductCard";
+import Navbar from "../components/navbar";
+import Slider from "../components/slider";
+import Footer from "../components/footer";
+import Rfreshner from "../components/rfreshner";
+import "../styles/products.css";
 
-const notes = ['All', 'Sweet', 'Woody', 'Floral', 'Citrus'];
+const notes = ["All", "Sweet", "Woody", "Floral", "Citrus"];
 
 const Product = () => {
   const [products, setProducts] = useState([]);
-  const [selectedNote, setSelectedNote] = useState('all');
+  const [selectedNote, setSelectedNote] = useState("all");
   const navigate = useNavigate();
 
   // Fetch products from API based on note
   const fetchProducts = (note) => {
-   axios
-  .get(`${API_ENDPOINTS.PRODUCTS}?note=${note}`) // ✅ only from perfumes
-  .then((res) => {
-    const filtered = res.data.filter(p => p.flag === 'perfume');
-    setProducts(filtered);
-  })
-  .catch((err) => console.error('Error fetching products:', err));
-
+    axios
+      .get(`${API_ENDPOINTS.PRODUCTS}?note=${note}`) // ✅ only from perfumes
+      .then((res) => {
+        const filtered = res.data.filter((p) => p.flag === "perfume");
+        setProducts(filtered);
+      })
+      .catch((err) => console.error("Error fetching products:", err));
   };
 
   // Initial fetch
   useEffect(() => {
-    fetchProducts('all');
+    fetchProducts("all");
   }, []);
 
   // Note filter button click handler
@@ -42,8 +42,8 @@ const Product = () => {
   };
 
   // Navigate to product detail
-  const handleProductClick = (id) => {
-    navigate(`/product/${id}`);
+  const handleProductClick = (product) => {
+    navigate(getProductUrl(product.id, product.name));
   };
 
   return (
@@ -51,7 +51,10 @@ const Product = () => {
       <Navbar />
 
       {/* Slider from API */}
-      <Slider fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE('products')} interval={4000} />
+      <Slider
+        fetchUrl={API_ENDPOINTS.SLIDERS_BY_PAGE("products")}
+        interval={4000}
+      />
 
       <div className="product-section">
         <h2 className="product-title">Shop By Perfume Notes</h2>
@@ -60,7 +63,9 @@ const Product = () => {
           {notes.map((note) => (
             <button
               key={note}
-              className={`note-btn ${selectedNote === note.toLowerCase() ? 'active' : ''}`}
+              className={`note-btn ${
+                selectedNote === note.toLowerCase() ? "active" : ""
+              }`}
               onClick={() => handleFilter(note)}
             >
               {note.toUpperCase()}
@@ -73,7 +78,7 @@ const Product = () => {
             <ProductCard
               key={product.id}
               item={product}
-              onClick={() => handleProductClick(product.id)}
+              onClick={() => handleProductClick(product)}
             />
           ))}
         </div>
@@ -91,13 +96,13 @@ const Product = () => {
       {/* <div className="why-floretta">
         <h2 className="why-heading">WHY FLORETTA PERFUMES ARE BETTER</h2>
         <div className="why-content"> */}
-          {/* <div className="why-box">
+      {/* <div className="why-box">
             <p className="why-small">UPTO</p>
             <h1 className="why-big">30%</h1>
             <p className="why-label">PERFUME OIL CONCENTRATION</p>
           </div> */}
 
-          {/* <div className="why-box">
+      {/* <div className="why-box">
             <div className="clock-icon">
               <svg width="70" height="70" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="#a23b45" strokeWidth="2" />
@@ -109,15 +114,15 @@ const Product = () => {
             <p className="why-label">LONG LASTING</p>
           </div> */}
 
-          {/* <div className="why-box"> */}
-            {/* <img
+      {/* <div className="why-box"> */}
+      {/* <img
               src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"
               alt="Indian Flag"
               className="india-flags"
             /> */}
-            {/* <p className="why-label">MADE IN INDIA</p> */}
-          {/* </div> */}
-        {/* </div>
+      {/* <p className="why-label">MADE IN INDIA</p> */}
+      {/* </div> */}
+      {/* </div>
       </div> */}
 
       <Footer />
