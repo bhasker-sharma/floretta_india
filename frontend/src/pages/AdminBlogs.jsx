@@ -100,7 +100,10 @@ const AdminBlogs = () => {
     <div className="admin-blogs-container">
       <div className="admin-blogs-header">
         <h1>Manage Blogs</h1>
-        <button className="btn-primary" onClick={() => navigate('/admin/blogs/new')}>
+        <button
+          className="btn-primary"
+          onClick={() => navigate("/admin/blogs/new")}
+        >
           Add New Blog
         </button>
       </div>
@@ -189,7 +192,7 @@ const AdminBlogs = () => {
               </p>
               <button
                 className="btn-primary"
-                onClick={() => navigate('/admin/blogs/new')}
+                onClick={() => navigate("/admin/blogs/new")}
               >
                 Create Your First Blog
               </button>
@@ -224,7 +227,15 @@ const AdminBlogs = () => {
                         <span className="blog-category">{blog.category}</span>
                       )}
                     </div>
-                    <h3 className="admin-blog-title">{blog.title}</h3>
+                    <h3 className="admin-blog-title">
+                      {(() => {
+                        const doc = new DOMParser().parseFromString(
+                          blog.title,
+                          "text/html"
+                        );
+                        return doc.body.textContent || "";
+                      })()}
+                    </h3>
                     {blog.author && (
                       <p className="admin-blog-author">By {blog.author}</p>
                     )}

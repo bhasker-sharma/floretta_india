@@ -952,6 +952,15 @@ const BlogEditor = () => {
             {/* Exact Blog Detail Page Structure */}
             <div className="blog-page preview-blog-page">
               <div className="blog-detail">
+                {imagePreview && (
+                  <div className="blog-detail-image-wrapper">
+                    <img
+                      src={imagePreview}
+                      alt="Featured"
+                      className="blog-detail-image"
+                    />
+                  </div>
+                )}
                 <div className="blog-detail-header">
                   <div
                     style={{
@@ -960,29 +969,19 @@ const BlogEditor = () => {
                       gap: "8px",
                       justifyContent: "center",
                       marginBottom: "8px",
+                      color: "#8C3F45",
+                      textTransform: "uppercase",
+                      fontSize: "0.75rem",
+                      fontWeight: "600",
+                      letterSpacing: "1px",
                     }}
                   >
-                    {categoryInputs.filter((c) => c.value).length > 0 ? (
-                      categoryInputs
-                        .filter((c) => c.value)
-                        .map((cat, index) => (
-                          <span
-                            key={cat.id}
-                            className="blog-category"
-                            style={{
-                              background: index === 0 ? "#e3f2fd" : "#f3e5f5",
-                              color: index === 0 ? "#1976d2" : "#7b1fa2",
-                              border: `1px solid ${
-                                index === 0 ? "#bbdefb" : "#e1bee7"
-                              }`,
-                            }}
-                          >
-                            {cat.value}
-                          </span>
-                        ))
-                    ) : (
-                      <span className="blog-category">Category</span>
-                    )}
+                    {categoryInputs.filter((c) => c.value).length > 0
+                      ? categoryInputs
+                          .filter((c) => c.value)
+                          .map((c) => c.value)
+                          .join(", ")
+                      : "Category"}
                   </div>
                   <h1
                     className="blog-detail-title"
@@ -993,11 +992,11 @@ const BlogEditor = () => {
                   <div
                     style={{
                       display: "flex",
+                      flexWrap: "wrap",
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "12px",
                       marginTop: "12px",
-                      flexWrap: "wrap",
                     }}
                   >
                     {formData.author && (
@@ -1024,15 +1023,6 @@ const BlogEditor = () => {
                   </div>
                 </div>
                 <div className="blog-detail-body">
-                  {imagePreview && (
-                    <div className="blog-detail-image-wrapper">
-                      <img
-                        src={imagePreview}
-                        alt="Featured"
-                        className="blog-detail-image"
-                      />
-                    </div>
-                  )}
                   <div className="blog-detail-content">
                     {formData.content ? (
                       <div

@@ -141,10 +141,16 @@ const Blog = () => {
                     </div>
                   </div>
                   <p className="blog-excerpt">
-                    {blog.content
-                      ? blog.content.replace(/<[^>]+>/g, "").substring(0, 150) +
-                        "..."
-                      : "Read more to discover the full story."}
+                    {(() => {
+                      if (!blog.content)
+                        return "Read more to discover the full story.";
+                      const doc = new DOMParser().parseFromString(
+                        blog.content,
+                        "text/html"
+                      );
+                      const plainText = doc.body.textContent || "";
+                      return plainText.substring(0, 150) + "...";
+                    })()}
                   </p>
                   {blog.author && (
                     <p className="blog-author">By {blog.author}</p>

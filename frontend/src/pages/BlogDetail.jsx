@@ -102,41 +102,45 @@ const BlogDetail = () => {
     <>
       <Navbar />
       <div className="blog-page">
-        <button className="back-btn" onClick={() => navigate("/blogs")}>
-          ← Back to Blogs
-        </button>
+        <div className="blog-detail-arrow-wrapper">
+          <button className="back-arrow" onClick={() => navigate("/blogs")}>
+            <i className="fas fa-arrow-left"></i>
+          </button>
+        </div>
+
         <div className="blog-detail">
-          <div className="blog-detail-header">
+          {blog.image && (
+            <div className="blog-detail-image-wrapper">
+              <img
+                src={getImageUrl(blog.image)}
+                alt={blog.title}
+                className="blog-detail-image"
+              />
+            </div>
+          )}
+          <div
+            className="blog-detail-header"
+            style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px" }}
+          >
             <div
               style={{
                 display: "flex",
                 flexWrap: "wrap",
                 gap: "8px",
                 justifyContent: "center",
-                marginBottom: "8px",
+                marginBottom: "16px",
+                color: "#8C3F45", // Using specific brand/theme color or a generic one
+                textTransform: "uppercase",
+                fontSize: "0.75rem",
+                fontWeight: "600",
+                letterSpacing: "1px",
               }}
             >
-              {blog.categories && blog.categories.length > 0 ? (
-                blog.categories.map((cat, index) => {
-                  const colors = getCategoryColor(index);
-                  return (
-                    <span
-                      key={cat.id}
-                      className="blog-category"
-                      style={{
-                        background: colors.bg,
-                        color: colors.color,
-                        border: `1px solid ${colors.border}`,
-                      }}
-                    >
-                      {cat.name}
-                    </span>
-                  );
-                })
-              ) : (
-                <span className="blog-category">{blog.category}</span>
-              )}
+              {blog.categories && blog.categories.length > 0
+                ? blog.categories.map((cat) => cat.name).join(", ")
+                : blog.category}
             </div>
+
             <h1
               className="blog-detail-title"
               dangerouslySetInnerHTML={{ __html: blog.title }}
@@ -173,15 +177,6 @@ const BlogDetail = () => {
             </div>
           </div>
           <div className="blog-detail-body">
-            {blog.image && (
-              <div className="blog-detail-image-wrapper">
-                <img
-                  src={getImageUrl(blog.image)}
-                  alt={blog.title}
-                  className="blog-detail-image"
-                />
-              </div>
-            )}
             <div className="blog-detail-content">
               {blog.content ? (
                 <div dangerouslySetInnerHTML={{ __html: blog.content }} />

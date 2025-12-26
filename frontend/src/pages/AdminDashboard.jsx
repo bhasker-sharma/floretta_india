@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import "../styles/AdminDashboard.css";
@@ -12,6 +12,7 @@ import Analytics from "./Analytics";
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const { section } = useParams(); // Get section from URL
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +21,28 @@ function AdminDashboard() {
   const [endDate, setEndDate] = useState("");
   const [zoomLevel, setZoomLevel] = useState(100);
   const [minZoom, setMinZoom] = useState(50);
-  const [activeSection, setActiveSection] = useState("orders");
+
+  // Set initial active section from URL or default to "orders"
+  const [activeSection, setActiveSection] = useState(section || "orders");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Sync state when URL param changes
+  useEffect(() => {
+    if (section) {
+      setActiveSection(section);
+    } else {
+      // If no section in URL (e.g. /admin/dashboard), default to orders or keep current
+      // Optionally redirect to /admin/orders
+      // navigate('/admin/orders', { replace: true });
+    }
+  }, [section]);
+
+  // Helper to change section and update URL
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    navigate(`/admin/${newSection}`);
+    setSidebarOpen(false); // Close sidebar on mobile after selection
+  };
 
   // New Orders state
   const [newOrders, setNewOrders] = useState([]);
@@ -2842,10 +2863,7 @@ function AdminDashboard() {
             {hasPermission("orders") && (
               <li
                 className={activeSection === "orders" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("orders");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("orders")}
               >
                 <i className="fas fa-box"></i>
                 <span>Orders</span>
@@ -2854,10 +2872,7 @@ function AdminDashboard() {
             {hasPermission("customers") && (
               <li
                 className={activeSection === "customers" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("customers");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("customers")}
               >
                 <i className="fas fa-users"></i>
                 <span>Customers</span>
@@ -2866,10 +2881,7 @@ function AdminDashboard() {
             {hasPermission("products") && (
               <li
                 className={activeSection === "products" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("products");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("products")}
               >
                 <i className="fas fa-cube"></i>
                 <span>Products</span>
@@ -2878,10 +2890,7 @@ function AdminDashboard() {
             {hasPermission("analytics") && (
               <li
                 className={activeSection === "analytics" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("analytics");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("analytics")}
               >
                 <i className="fas fa-chart-line"></i>
                 <span>Analytics</span>
@@ -2890,10 +2899,7 @@ function AdminDashboard() {
             {hasPermission("addUser") && (
               <li
                 className={activeSection === "addUser" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("addUser");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("addUser")}
               >
                 <i className="fas fa-user-plus"></i>
                 <span>Add User</span>
@@ -2902,10 +2908,7 @@ function AdminDashboard() {
             {hasPermission("enquiries") && (
               <li
                 className={activeSection === "enquiries" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("enquiries");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("enquiries")}
               >
                 <i className="fas fa-envelope"></i>
                 <span>Enquiries</span>
@@ -2914,10 +2917,7 @@ function AdminDashboard() {
             {hasPermission("reviews") && (
               <li
                 className={activeSection === "reviews" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("reviews");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("reviews")}
               >
                 <i className="fas fa-star"></i>
                 <span>Reviews</span>
@@ -2926,10 +2926,7 @@ function AdminDashboard() {
             {hasPermission("careers") && (
               <li
                 className={activeSection === "careers" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("careers");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("careers")}
               >
                 <i className="fas fa-briefcase"></i>
                 <span>Career Page</span>
@@ -2938,10 +2935,7 @@ function AdminDashboard() {
             {hasPermission("blogs") && (
               <li
                 className={activeSection === "blogs" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("blogs");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("blogs")}
               >
                 <i className="fas fa-pen-nib"></i>
                 <span>Blogs</span>
@@ -2950,10 +2944,7 @@ function AdminDashboard() {
             {hasPermission("settings") && (
               <li
                 className={activeSection === "settings" ? "active" : ""}
-                onClick={() => {
-                  setActiveSection("settings");
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleSectionChange("settings")}
               >
                 <i className="fas fa-cogs"></i>
                 <span>Settings</span>
@@ -6420,6 +6411,13 @@ function AdminDashboard() {
         {activeSection === "blogs" && (
           <section className="admin-section" style={{ padding: 0 }}>
             <AdminBlogs />
+          </section>
+        )}
+
+        {/* Reviews Section */}
+        {activeSection === "reviews" && (
+          <section className="admin-section" style={{ padding: 0 }}>
+            <AdminReviews />
           </section>
         )}
 
