@@ -30,6 +30,7 @@ import RefundReturnPolicy from "./pages/RefundReturnPolicy";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import BlogEditor from "./pages/BlogEditor";
+import JobDetail from "./pages/JobDetail";
 
 import { initializeAuth } from "./utils/axiosInterceptor";
 
@@ -63,6 +64,7 @@ const App = () => {
 
         <Route path="/register" element={<Register />} />
         <Route path="/carrier" element={<Carrier />} />
+        <Route path="/carrier/:slug" element={<JobDetail />} />
 
         <Route path="/contactus" element={<Contact />} />
         <Route path="/login" element={<Userlogin />} />
