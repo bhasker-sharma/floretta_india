@@ -1,0 +1,181 @@
+/* ============================================================
+   FLORETTA INDIA — Responsive overrides
+   Mobile-first breakpoints
+   ============================================================ */
+
+/* ── Tablet (≤ 1024px) ───────────────────────────────────── */
+@media (max-width: 1024px) {
+  .fl .container { padding: 0 32px !important; }
+
+  .fl .display-1 { font-size: 72px !important; }
+  .fl .display-2 { font-size: 56px !important; }
+  .fl .display-3 { font-size: 40px !important; }
+
+  /* Header */
+  .fl-header { padding: 18px 32px !important; }
+
+  /* Footer columns → 2 rows */
+  .fl-grid-footer-cols { grid-template-columns: 1.4fr repeat(2,1fr) !important; }
+}
+
+/* ── Mobile (≤ 768px) ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .fl .container { padding: 0 20px !important; }
+
+  /* Type scale */
+  .fl .display-1 { font-size: 48px !important; line-height: 1.05 !important; }
+  .fl .display-2 { font-size: 38px !important; }
+  .fl .display-3 { font-size: 30px !important; }
+  .fl .display-4 { font-size: 24px !important; }
+  .fl .display-5 { font-size: 20px !important; }
+  .fl .body-lg   { font-size: 15px !important; }
+
+  /* ── Header ──────────────────────────────────────────── */
+  .fl-header { grid-template-columns: auto 1fr auto !important; padding: 14px 20px !important; }
+  .fl-header-nav { display: none !important; }
+  .fl-hamburger  { display: flex !important; }
+  .fl-mobile-hide { display: none !important; }
+
+  /* ── Two-column grids → single column ────────────────── */
+  .fl-grid-two {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  /* ── Three-column grids ──────────────────────────────── */
+  .fl-grid-three {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* ── Four-column grid ────────────────────────────────── */
+  .fl-grid-four {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+
+  /* ── Seven-column ingredient grid ────────────────────── */
+  .fl-grid-seven {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* ── Product detail: thumb + image + buy box ─────────── */
+  .fl-grid-product {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .fl-thumb-rail { display: flex !important; flex-direction: row !important; gap: 8px !important; width: 100% !important; }
+  .fl-thumb-rail > div { width: 60px !important; height: 60px !important; flex-shrink: 0; }
+
+  /* ── Cart grid ───────────────────────────────────────── */
+  .fl-grid-cart {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* ── Checkout grid ───────────────────────────────────── */
+  .fl-grid-checkout {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* ── Auth split ──────────────────────────────────────── */
+  .fl-grid-auth {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+  }
+  .fl-auth-brand { display: none !important; }
+
+  /* ── Account sidebar + main ──────────────────────────── */
+  .fl-grid-account {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .fl-account-sidebar { width: 100% !important; }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .fl-grid-footer-cols {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+    padding: 40px 0 !important;
+  }
+  footer .container { padding: 48px 20px 24px !important; }
+  .fl-grid-four { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Cart item row ───────────────────────────────────── */
+  .fl-cart-item-row {
+    grid-template-columns: 1fr auto auto !important;
+    gap: 12px !important;
+  }
+
+  /* ── Hero section padding ────────────────────────────── */
+  .fl-hero-section { padding: 48px 0 64px !important; }
+
+  /* ── Ingredient grid section padding ─────────────────── */
+  .fl-section-pad { padding: 72px 0 !important; }
+
+  /* ── Ritual steps ────────────────────────────────────── */
+  .fl-grid-ritual {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  /* ── Testimonials ────────────────────────────────────── */
+  .fl-grid-testimonials {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* ── Promise / specs row ─────────────────────────────── */
+  .fl-grid-promise {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+  .fl-grid-promise > div { padding-left: 0 !important; border-left: none !important; }
+
+  /* ── Product ingredient table ────────────────────────── */
+  .fl-grid-ingredient-table {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1px !important;
+  }
+
+  /* ── FAQ layout ──────────────────────────────────────── */
+  .fl-grid-faq {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* ── Reviews layout ──────────────────────────────────── */
+  .fl-grid-reviews {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  /* ── Specs strip ─────────────────────────────────────── */
+  .fl-grid-specs {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+  .fl-grid-specs > div { padding-left: 0 !important; border-left: none !important; }
+
+  /* ── Contact page layout ─────────────────────────────── */
+  .fl-grid-contact {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  /* Buy box form reset */
+  .fl-buy-box { padding: 0 !important; }
+}
+
+/* ── Small mobile (≤ 480px) ──────────────────────────────── */
+@media (max-width: 480px) {
+  .fl .display-1 { font-size: 38px !important; }
+  .fl .display-2 { font-size: 30px !important; }
+  .fl .display-3 { font-size: 26px !important; }
+
+  .fl-grid-seven { grid-template-columns: repeat(2, 1fr) !important; }
+  .fl-grid-footer-cols { grid-template-columns: 1fr !important; }
+  .fl-grid-four { grid-template-columns: 1fr !important; }
+}
